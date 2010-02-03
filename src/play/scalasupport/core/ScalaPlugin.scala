@@ -32,7 +32,7 @@ class ScalaPlugin extends PlayPlugin {
             }
         }
         Play.javaPath foreach scan
-        play.Logger.trace("SCALA compileAll")
+        play.Logger.debug("SCALA compileAll")
         classes.addAll(compile(sources))
     }
 
@@ -59,7 +59,7 @@ class ScalaPlugin extends PlayPlugin {
     private var compiler = new ScalaCompiler()
 
     def compile(sources: JList[VFile]) = {
-        play.Logger.trace("SCALA compile %s", sources)
+        play.Logger.debug("SCALA compile %s", sources)
         compiler compile sources.toList
     }
 
@@ -103,7 +103,7 @@ class ScalaPlugin extends PlayPlugin {
             }
 
             // Clear compilation results
-            //virtualDirectory.clear
+            virtualDirectory.clear
 
             // Compile
             play.Logger.trace("SCALA Start compiling")
