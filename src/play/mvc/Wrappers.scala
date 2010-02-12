@@ -48,6 +48,10 @@ class ScalaController extends LocalVariablesSupport with ControllerSupport {
         ControllerWrapper.renderBinary(stream)
     }
 
+	def renderBinary(stream: InputStream, name: String) {
+        ControllerWrapper.renderBinary(stream, name)
+    }
+
     def renderJSON(json: String) {
         ControllerWrapper.renderJSON(json)
     }

@@ -57,7 +57,8 @@ class Post(
  
 }
 
-object Post extends QueryOn[Post]{
+object Post extends QueryOn[Post] {
+	
     def findTaggedWith(tag: String) = {
         Post.find("select distinct p from Post p join p.tags as t where t.name = ?", tag).fetch
     }
