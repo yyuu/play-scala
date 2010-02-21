@@ -17,8 +17,8 @@ if play_command == 'scala:console':
 # ~~~~~~~~~~~~~~~~~~~~~~ New
 if play_command == 'new':
 	os.remove(os.path.join(application_path, 'app/controllers/Application.java'))
-	plugin_dir = inspect.getfile(inspect.currentframe()).replace("commands.py","") 
-	shutil.copyfile(plugin_dir+'/resources/Application.scala', os.path.join(application_path, 'app/controllers/Application.scala'))
+	module_dir = inspect.getfile(inspect.currentframe()).replace("commands.py","") 
+	shutil.copyfile(os.path.join(module_dir,'resources/Application.scala'), os.path.join(application_path, 'app/controllers/Application.scala'))
 
 # ~~~~~~~~~~~~~~~~~~~~~~ Eclipsify
 if play_command == 'ec' or play_command == 'eclipsify':
