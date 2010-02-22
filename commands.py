@@ -1,5 +1,5 @@
 # Scala
-import sys,inspect
+import sys,inspect,os
 if play_command == 'scala:console':
 	check_application()
   	load_modules()
@@ -18,7 +18,8 @@ if play_command == 'scala:console':
 if play_command == 'new':
 	os.remove(os.path.join(application_path, 'app/controllers/Application.java'))
 	module_dir = inspect.getfile(inspect.currentframe()).replace("commands.py","") 
-	shutil.copyfile(os.path.join(module_dir,'resources/Application.scala'), os.path.join(application_path, 'app/controllers/Application.scala'))
+    if os.path.exists(os.path.join(application_path, 'app/controllers/Application.scala')) == False:
+     	shutil.copyfile(os.path.join(module_dir,'resources/Application.scala'), os.path.join(application_path, 'app/controllers/Application.scala'))
 
 # ~~~~~~~~~~~~~~~~~~~~~~ Eclipsify
 if play_command == 'ec' or play_command == 'eclipsify':

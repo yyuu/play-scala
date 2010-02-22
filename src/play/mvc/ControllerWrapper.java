@@ -1,14 +1,18 @@
-package play.scalasupport.wrappers;
+package play.mvc;
 
 import java.io.InputStream;
 import play.mvc.Controller;
 
-public class ControllerWrapper extends Controller {
+class ControllerWrapper extends Controller {
     
     public static void render(Object... args) {
         Controller.render(args);
     }
     
+		public static void renderTemplate(String template, Object... args) {
+        Controller.renderTemplate(template,args);
+		}
+
     public static void renderText(Object text) {
         Controller.renderText(text);
     }
