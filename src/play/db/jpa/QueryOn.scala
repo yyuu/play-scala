@@ -8,7 +8,7 @@ trait QueryOn[T] {
   import JPQL.{instance => i}
   type M[T] = Manifest[T]
   implicit private def manifest2entity[T](m: M[T]): String = m.erasure.getName()
-  def count(implicit m: M[T]) = i.count(m)
+  def count()(implicit m: M[T]) = i.count(m)
 
   def count(q: String, ps: AnyRef*)(implicit m: M[T]) = i.count(m, q, ps.toArray)
   def findAll(implicit m: M[T]) = i.findAll(m)

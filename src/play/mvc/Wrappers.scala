@@ -24,6 +24,10 @@ class ScalaController extends LocalVariablesSupport with ControllerSupport {
 
     // ~~~ Results
 
+	def render {
+		ControllerWrapper.render()
+	}
+
     def render(args: Any*) {
         ControllerWrapper.render(args.map(_.asInstanceOf[AnyRef]): _*)
     }
