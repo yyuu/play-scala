@@ -2,24 +2,24 @@
 import sys,inspect,os
 if play_command == 'scala:console':
 	check_application()
-  	load_modules()
-       	do_classpath()
+	load_modules()
+	do_classpath()
 	#add precompiled classes to classpath
 	cp_args += ":"+os.path.normpath(os.path.join(application_path,'tmp/classes'))
-     	do_java()
+	do_java()
 	# replace last element with the console app
 	java_cmd[len(java_cmd)-1]="play.console.Console"
 	java_cmd.insert(2, '-Xmx256M -Xms32M')
-  	subprocess.call(java_cmd, env=os.environ)
-     	print
+	subprocess.call(java_cmd, env=os.environ)
+	print
 	sys.exit(0)
 	
 # ~~~~~~~~~~~~~~~~~~~~~~ New
 if play_command == 'new':
 	os.remove(os.path.join(application_path, 'app/controllers/Application.java'))
 	module_dir = inspect.getfile(inspect.currentframe()).replace("commands.py","") 
-    if os.path.exists(os.path.join(application_path, 'app/controllers/Application.scala')) == False:
-     	shutil.copyfile(os.path.join(module_dir,'resources/Application.scala'), os.path.join(application_path, 'app/controllers/Application.scala'))
+	if os.path.exists(os.path.join(application_path, 'app/controllers/Application.scala')) == False:
+		shutil.copyfile(os.path.join(module_dir,'resources/Application.scala'), os.path.join(application_path, 'app/controllers/Application.scala'))
 
 # ~~~~~~~~~~~~~~~~~~~~~~ Eclipsify
 if play_command == 'ec' or play_command == 'eclipsify':
