@@ -8,7 +8,6 @@ import java.io.InputStream
 import play.mvc.Http._
 import play.mvc.Scope._
 import play.data.validation.Validation
-import play.scalasupport.wrappers.ControllerWrapper
 import play.classloading.enhancers.LocalvariablesNamesEnhancer.LocalVariablesSupport
 import play.classloading.enhancers.ControllersEnhancer.ControllerSupport
 
@@ -52,7 +51,7 @@ class ScalaController extends LocalVariablesSupport with ControllerSupport {
         ControllerWrapper.renderBinary(stream)
     }
 
-	def renderBinary(stream: InputStream, name: String) {
+	  def renderBinary(stream: InputStream, name: String) {
         ControllerWrapper.renderBinary(stream, name)
     }
 
@@ -83,7 +82,9 @@ class ScalaController extends LocalVariablesSupport with ControllerSupport {
     def unauthorized {
         ControllerWrapper.unauthorized("")
     }
-
+    protected def renderTemplate(template:String, args:Seq[AnyRef]) {
+        ControllerWrapper.renderTemplate(template,args)
+    }
 }
 
 class RichRenderArgs(val renderArgs: RenderArgs) {
