@@ -9,9 +9,9 @@ class ControllerWrapper extends Controller {
         Controller.render(args);
     }
     
-		public static void renderTemplate(String template, Object... args) {
+    public static void renderTemplate(String template, Object... args) {
         Controller.renderTemplate(template,args);
-		}
+    }
 
     public static void renderText(Object text) {
         Controller.renderText(text);
