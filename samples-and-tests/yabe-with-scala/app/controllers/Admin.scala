@@ -84,8 +84,8 @@ object Security extends Secure.Security {
 
 // CRUD
 
-@Check(Array("admin")) @With(Array(classOf[Secure])) class Comments extends CRUD
-@Check(Array("admin")) @With(Array(classOf[Secure])) class Posts extends CRUD 
-@Check(Array("admin")) @With(Array(classOf[Secure])) class Tags extends CRUD
-@Check(Array("admin")) @With(Array(classOf[Secure])) class Users extends CRUD 
+@Check(Array("admin")) @With(Array(classOf[Secure])) class Comments extends CRUD[Comment]
+@Check(Array("admin")) @With(Array(classOf[Secure])) class Posts extends CRUD[Post] 
+@Check(Array("admin")) @With(Array(classOf[Secure])) class Tags extends CRUD[Tag]
+@Check(Array("admin")) @With(Array(classOf[Secure])) class Users extends CRUD[User] 
 

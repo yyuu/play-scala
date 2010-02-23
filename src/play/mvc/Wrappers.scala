@@ -11,7 +11,7 @@ import play.data.validation.Validation
 import play.classloading.enhancers.LocalvariablesNamesEnhancer.LocalVariablesSupport
 import play.classloading.enhancers.ControllersEnhancer.ControllerSupport
 
-class ScalaController extends LocalVariablesSupport with ControllerSupport {
+abstract class ScalaController extends LocalVariablesSupport with ControllerSupport {
 
     def request = Request.current()
     def response = Response.current()
