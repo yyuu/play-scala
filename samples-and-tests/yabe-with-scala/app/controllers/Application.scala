@@ -11,9 +11,9 @@ import models._
 trait Defaults extends Controller {
     
     @Before
-    private def setDefaults {
+    def setDefaults {
         renderArgs += "blogTitle" -> configuration("blog.title")
-        renderArgs += "blogBaseline" -> configuration("blog.baseline")
+        renderArgs += "blogBaseline" -> configuration("blog.baseline") 
     }
     
 }

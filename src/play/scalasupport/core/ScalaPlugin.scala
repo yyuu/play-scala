@@ -27,7 +27,7 @@ class ScalaPlugin extends PlayPlugin {
         def scan(path: VFile): Unit = {
             path match {
                 case _ if path.isDirectory => path.list foreach scan
-                case _ if (path.getName().endsWith(".scala") || path.getName().endsWith(".java")) && !path.getName().startsWith(".") && !path.getName().startsWith("CRUD.")  && !path.getName().startsWith("Secure.") => sources add path
+                case _ if (path.getName().endsWith(".scala") || path.getName().endsWith(".java")) && !path.getName().startsWith(".") => sources add path
                 case _ => 
             }
         }

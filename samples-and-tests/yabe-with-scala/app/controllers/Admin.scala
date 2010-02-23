@@ -6,11 +6,10 @@ import play.data.validation._
  
 import models._
 
-@With(Array(classOf[Secure])) 
-object Admin extends Controller with Defaults {
+object Admin extends Controller with Defaults with Secured {
     
     @Before
-    private def setConnectedUser{
+    def setConnectedUser{
         if(Secure.Security.isConnected()) {
             val user = User.find("byEmail", Secure.Security.connected()).first
             renderArgs += "user" -> user.fullname
@@ -84,8 +83,8 @@ object Security extends Secure.Security {
 
 // CRUD
 
-@Check(Array("admin")) object Comments extends CRUD[Comment] with Secure
-@Check(Array("admin")) object Posts extends CRUD[Post] with Secure
-@Check(Array("admin")) object Tags extends CRUD[Tag] with Secure
-@Check(Array("admin")) object Users extends CRUD[User] with Secure
+@Check(Array("admin")) object Comments extends Controller with CRUDFor[Comment] with Secured
+@Check(Array("admin")) object Posts extends Controller with CRUDFor[Post] with Secured
+@Check(Array("admin")) object Tags extends Controller with CRUDFor[Tag] with Secured
+@Check(Array("admin")) object Users extends Controller with CRUDFor[User] with Secured
 

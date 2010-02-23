@@ -1,6 +1,6 @@
 package object controllers {
 
-    type CRUD[T] = play.scalasupport.crud.CRUDWrapper[T]
-    type Secure = play.scalasupport.secure.SecureWrapper
+    type CRUDFor[T] = play.scalasupport.crud.CRUDWrapper[T]
+    type Secured = play.scalasupport.secure.SecureWrapper
 
 }
