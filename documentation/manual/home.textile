@@ -208,6 +208,16 @@ res0: Long = 3
 
 p(note). commands are executed in a transaction, so changes to your models will be persistent
 
+h2. <a>Modules wrapper</a>
+
+Play comes with 2 default modules (secure and crud) and the scala module provides wrapper for them. For example you can create a CRUD controller by mixing the **CRUDFor** trait:
+
+bc. object Companies extends Controller with CRUDFor[Company]
+
+And you can make it secured by mixing the **Secured** trait as well:
+
+bc. object Companies extends Controller with CRUDFor[Company] with Secured
+
 h2. <a>Yabe with Scala</a>
 
 A scala version of the blog application is boundled with play-scala and can be found "here":http://github.com/guillaumebort/play-scala/tree/master/samples-and-tests/ 
