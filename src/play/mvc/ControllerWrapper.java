@@ -2,6 +2,7 @@ package play.mvc;
 
 import java.io.InputStream;
 import play.mvc.Controller;
+import java.util.concurrent.Future;
 
 class ControllerWrapper extends Controller {
     
@@ -77,5 +78,9 @@ class ControllerWrapper extends Controller {
     public static void forbidden() {
         Controller.forbidden();
     }
+
+		public static void waitFor(Future task) {
+			 	Controller.waitFor(task);
+		}
 
 }
