@@ -4,6 +4,7 @@ import scala.xml.NodeSeq
 import scala.io.Source
 
 import java.io.InputStream
+import java.util.concurrent.Future
 
 import play.mvc.Http._
 import play.mvc.Scope._
@@ -82,6 +83,10 @@ abstract class ScalaController extends LocalVariablesSupport with ControllerSupp
     def unauthorized {
         ControllerWrapper.unauthorized("")
     }
+    def waitFor(task:Future[_]) {
+        ControllerWrapper.waitFor(task);
+    }
+
     protected def renderTemplate(template:String, args:Seq[AnyRef]) {
         ControllerWrapper.renderTemplate(template,args)
     }
