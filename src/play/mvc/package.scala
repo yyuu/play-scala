@@ -28,7 +28,7 @@ package play {
 
         // -- TYPES REDEFINITION
 
-        type Controller = play.mvc.ScalaController
+        type Controller = ScalaController
 
     }
 
