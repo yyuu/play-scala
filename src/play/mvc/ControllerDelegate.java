@@ -30,8 +30,7 @@ abstract class ControllerDelegate {
     public void renderJSON(String json) {
         Controller.renderJSON(json);
     }
-    
-		public void notModified() {
+    public void notModified() {
 			  Controller.notModified();
 		}
 
@@ -83,7 +82,6 @@ abstract class ControllerDelegate {
     public void ok() {
         Controller.ok();
     }
-
 		public void error(String reason) {
 		    Controller.error(reason);	 
 		}
@@ -118,6 +116,6 @@ abstract class ControllerDelegate {
 
     public void waitFor(Future task) {
         Controller.waitFor(task);
-		}
+    }
 
 }
