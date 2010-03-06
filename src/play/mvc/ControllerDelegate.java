@@ -3,6 +3,7 @@ package play.mvc;
 import java.io.InputStream;
 import play.mvc.Controller;
 import java.util.concurrent.Future;
+import java.io.File;
 
 abstract class ControllerDelegate {
     
@@ -30,13 +31,22 @@ abstract class ControllerDelegate {
         Controller.renderJSON(json);
     }
     
-    public void redirect(String url) {
-        Controller.redirect(url);
-    }
+		public void notModified() {
+			  Controller.notModified();
+		}
+
+		public void todo() {
+			  Controller.todo();
+		}
 
     public void redirectToStatic(String file) {
         Controller.redirectToStatic(file);
     }
+
+    public void redirect(String url) {
+        Controller.redirect(url);
+    }
+
 
     public void redirect(String url, boolean permanent) {
         Controller.redirect(url, permanent);
@@ -74,8 +84,28 @@ abstract class ControllerDelegate {
         Controller.ok();
     }
 
+		public void error(String reason) {
+		    Controller.error(reason);	 
+		}
+
+		public void error(Exception reason) {
+		    Controller.error(reason);	 
+		}
+
+		public void error() {
+		    Controller.error();	 
+		}
+
+		public void error(int status, String reason) {
+		    Controller.error(status,reason);	 
+		}
+
     public void renderBinary(InputStream stream) {
         Controller.renderBinary(stream);
+    }
+
+    public void renderBinary(File file) {
+        Controller.renderBinary(file);
     }
     
     public void renderBinary(InputStream stream, String name) {
@@ -86,8 +116,8 @@ abstract class ControllerDelegate {
         Controller.forbidden();
     }
 
-		public void waitFor(Future task) {
-			 	Controller.waitFor(task);
+    public void waitFor(Future task) {
+        Controller.waitFor(task);
 		}
 
 }
