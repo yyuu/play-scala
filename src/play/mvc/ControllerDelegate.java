@@ -31,12 +31,12 @@ abstract class ControllerDelegate {
         Controller.renderJSON(json);
     }
     public void notModified() {
-			  Controller.notModified();
-		}
+        Controller.notModified();
+    }
 
-		public void todo() {
-			  Controller.todo();
-		}
+    public void todo() {
+        Controller.todo();
+    }
 
     public void redirectToStatic(String file) {
         Controller.redirectToStatic(file);
@@ -82,21 +82,21 @@ abstract class ControllerDelegate {
     public void ok() {
         Controller.ok();
     }
-		public void error(String reason) {
-		    Controller.error(reason);	 
-		}
+    public void error(String reason) {
+       Controller.error(reason);	 
+    }
 
-		public void error(Exception reason) {
-		    Controller.error(reason);	 
-		}
+    public void error(Exception reason) {
+       Controller.error(reason);	 
+    }
 
-		public void error() {
-		    Controller.error();	 
-		}
+    public void error() {
+       Controller.error();	 
+    }
 
-		public void error(int status, String reason) {
-		    Controller.error(status,reason);	 
-		}
+    public void error(int status, String reason) {
+       Controller.error(status,reason);	 
+    }
 
     public void renderBinary(InputStream stream) {
         Controller.renderBinary(stream);
