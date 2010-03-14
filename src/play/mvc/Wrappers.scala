@@ -21,7 +21,9 @@ abstract class ScalaController extends ControllerDelegate with LocalVariablesSup
     def params = Params.current()
     def renderArgs = RenderArgs.current()
     def validation = Validation.current()
-    def renderXml(node: NodeSeq): Unit = renderXml(node.toString)
+    def renderXml(node: NodeSeq) { renderXml(node.toString) }
+    def renderHtml(node: NodeSeq) { throw new results.RenderHtml(node.toString, "text/xhtml") }
+    def renderHtml(content: String) { throw new results.RenderHtml(content) }
 
 }
 

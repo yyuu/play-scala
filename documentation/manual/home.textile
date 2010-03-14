@@ -31,7 +31,7 @@ It is very close to the Java version of the default Application controller.
 
 Now just run the application as usual using **play run** and it will display the standard welcome page. Now just edit the **Application.scala** file to replace the **render()** call:
 
-bc. def index = "Hello scala !"
+bc. def index = renderHtml("Hello scala!")
 
 Refresh the page, and see the magic. 
 
@@ -41,17 +41,13 @@ As always, if you make a mistake, play will just show you the error in a perfect
 
 h2. <a>Direct return types</a>
 
-As shown above, for simple action methods you can directly use the inferred return type to send the action result. For example using a String:
+As shown above, for simple action methods you can directly write to the response object. For example using a String:
 
-bc. def index = "<h1>Hello world</h1>"
+bc. def index = renderHtml("<h1>Hello world</h1>")
 
 And you can even use the built-in XML support to write XHTML in a literal way:
 
-bc. def index = <h1>Hello world</h1>
-
-If the return type looks like a binary stream, play will automatically use **renderBinary()**. So generating a captcha image using the built-in Captcha helper can be written as:
-
-bc. def index = Images.captcha
+bc. def index = renderHtml(<h1>Hello world</h1>)
 
 h2. <a>Action parameters, and scala default arguments</a>
 
@@ -61,7 +57,7 @@ bc. def index(name: String) = <h1>Hello {name}</h1>
 
 To big plus of scala is the ability to define some default values to these parameters:
 
-bc. def index(name: String = "Guest") = <h1>Hello {name}</h1>
+bc. def index(name: String = "Guest") = renderHtml(<h1>Hello {name}</h1>)
 
 This way if the **name** HTTP parameter is missing, play will use the default argument value.
 
@@ -76,7 +72,8 @@ bc. package controllers
 import play._
 import play.mvc._ 
  
-trait Secure extends Controller {
+trait Secure {
+  self: Controller =>
   @Before
   def check {
     session("user") match {
@@ -91,7 +88,7 @@ And you can them use it in the Application controller:
 bc. package controllers
  
 object Application extends Controller with Secure {
-  def index = "Hello world"
+  def index = renderHtml ("Hello world")
 }
 
 

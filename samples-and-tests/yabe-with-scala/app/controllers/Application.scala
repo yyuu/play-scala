@@ -59,7 +59,7 @@ object Application extends Controller with Defaults {
         val captchaInstance = Images.captcha
         val code = captchaInstance.getText("#E4EAFD")
         Cache.set(id, code, "30mn")
-        captchaInstance
+        renderBinary(captchaInstance)
     }
     
     def listTagged(tag: String) {
