@@ -55,12 +55,11 @@ object Application extends Controller with Defaults {
         
         show(postId)
     }
-    
-    def captcha(id: String) = {
-        val captcha = Images.captcha
-        val code = captcha getText "#E4EAFD"
+    def captcha(id: String) {
+        val captchaInstance = Images.captcha
+        val code = captchaInstance.getText("#E4EAFD")
         Cache.set(id, code, "30mn")
-        captcha
+        renderBinary(captchaInstance)
     }
     
     def listTagged(tag: String) {
