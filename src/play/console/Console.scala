@@ -15,29 +15,30 @@ object Console {
      println("~ Starting up, please be patient")
      println("~ Ctrl+D to stop")
      println("~")
-     Play.start()
-     JPAPlugin.startTx(false)  
-     try {
-       //launch readline loop using play's classloader
-       val command = new GenericRunnerCommand(Nil, (error:String) => println(error))
-       command.settings.classpath.value = System.getProperty("java.class.path")
-       JLine.withJLine {
-            val loop = new InterpreterLoop {
-              override def createInterpreter() = {
-                super.createInterpreter()
-              }
-            }
-            loop.main(command.settings)
-        }     
-     } catch {
-	      case e:Exception=> e.printStackTrace()
-     }
-     // After the repl exits, kill the scala script
-     JPAPlugin.closeTx(false)
+     play.Invoker.invokeInThread(new ConsoleThread())
      exit(0)
-   }
+   }   		 
 }
 
+class ConsoleThread extends play.Invoker.DirectInvocation {
+  override def execute() {
+    try {
+      //launch readline loop using play's classloader
+      val command = new GenericRunnerCommand(Nil, (error:String) => println(error))
+      command.settings.classpath.value = System.getProperty("java.class.path")
+      JLine.withJLine {
+          val loop = new InterpreterLoop {
+          override def createInterpreter() = {
+               super.createInterpreter()
+         }            
+        }
+      loop.main(command.settings)
+     }     
+   } catch {
+     case e:Exception=> e.printStackTrace()
+   }
+  }
+}
 /**
 * lifted from <a href="http://github.com/harrah/sbt/blob/master/src/main/scala/sbt/LineReader.scala">sbt</a>
 * credit goes to Mark Harrah 
