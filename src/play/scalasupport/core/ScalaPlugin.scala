@@ -21,17 +21,36 @@ import org.scalatest.Suite
 import org.scalatest.tools.ScalaTestRunner
 
 class ScalaPlugin extends PlayPlugin {
-
-    override def compileAll(classes: JList[ApplicationClass]) = {
+    
+    var lastHash = 0
+    
+    // Source scan
+    
+    def scanSources = {
         val sources = ListBuffer[VFile]()
+        val hash = new StringBuffer
         def scan(path: VFile): Unit = {
             path match {
                 case _ if path.isDirectory => path.list foreach scan
-                case _ if (path.getName().endsWith(".scala") || path.getName().endsWith(".java")) && !path.getName().startsWith(".") => sources add path
+                case _ if (path.getName().endsWith(".scala") || path.getName().endsWith(".java")) && !path.getName().startsWith(".") => sources add path; hash.append(path.relativePath)
                 case _ => 
             }
         }
         Play.javaPath foreach scan
+        (sources, hash.toString.hashCode)
+    }
+    
+    // Plugin impl
+    
+    override def detectChange = {
+        if(lastHash != scanSources._2) {
+            throw new Exception("Path change")
+        }
+    }
+
+    override def compileAll(classes: JList[ApplicationClass]) = {
+        val (sources, hash) = scanSources
+        lastHash = hash
         play.Logger.debug("SCALA compileAll")
         classes.addAll(compile(sources))
     }
