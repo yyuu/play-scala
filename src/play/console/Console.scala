@@ -11,10 +11,10 @@ object Console {
    def main(args : Array[String]) {
      val root = new File(System.getProperty("application.path"));
      Play.init(root, System.getProperty("play.id", ""));
-     println("~")
-     println("~ Starting up, please be patient")
-     println("~ Ctrl+D to stop")
-     println("~")
+     play.Logger.info("~")
+     play.Logger.info("Starting up, please be patient")
+     play.Logger.info("Ctrl+D to stop")
+     play.Logger.info("~")
      play.Invoker.invokeInThread(new ConsoleThread())
      exit(0)
    }   		 
