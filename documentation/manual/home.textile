@@ -153,7 +153,7 @@ As you can see, it's really similar to the java API, so for example to count the
 
 bc. User.count
 
-p(note). One known limitation of the Scala Model API is that the Scala compiler can not infer the return type of *save*, *delete* and *edit* methods. So if you want to save/edit/delete a Model inplace, by convention you should use a so-called *Inplace* method, ie  *saveInplace*, *deleteInplace* and *editInplace*. If, however, you need the return type, you will need to explicitly ask for it ie. *var user2:User = user.save()* or *var u2 = user.save().asInstanceOf[User]* 
+p(note). One known limitation of the Scala Model API is that the Scala compiler can not infer the return type of *save*, *delete* and *edit* methods. So if you want to save/edit/delete a Model in place, by convention you should use a so-called *in place* method, ie  *saveThis*, *deleteThis* and *editThis*. If, however, you need the return type, you will need to explicitly ask for it ie. *var user2:User = user.save()* or *var u2 = user.save().asInstanceOf[User]* 
 
 Another approach to access models is to utilize *play.db.jpa.QueryOn* object, so using the previous example: *User.count* becomes *QueryOn[User].count* 
 
