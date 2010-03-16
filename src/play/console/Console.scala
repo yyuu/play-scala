@@ -95,6 +95,7 @@ object Run {
         override protected def newCompiler(settings: Settings, reporter: Reporter) = super.newCompiler(compilerSettings, reporter)
       }
       interpreter.setContextClassLoader()
+      interpreter.interpret("import play._")
     }
   }
 }

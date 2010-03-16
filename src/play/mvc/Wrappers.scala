@@ -13,7 +13,6 @@ import play.classloading.enhancers.LocalvariablesNamesEnhancer.LocalVariablesSup
 import play.classloading.enhancers.ControllersEnhancer.ControllerSupport
 
 abstract class ScalaController extends ControllerDelegate with LocalVariablesSupport with ControllerSupport {
-
     def request = Request.current()
     def response = Response.current()
     def session = Session.current()
