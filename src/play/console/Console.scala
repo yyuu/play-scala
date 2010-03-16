@@ -4,6 +4,9 @@ import java.io.File
 import play.Play
 import play.db.jpa.JPAPlugin
 import jline.ConsoleReader
+import scala.tools.nsc.reporters.Reporter
+import scala.tools.nsc.interpreter.InteractiveReader
+
 /**
 * provides a simple REPL while keeping play's classpath
 **/
@@ -24,17 +27,8 @@ class ConsoleThread extends play.Invoker.DirectInvocation {
   override def execute() {
     try {
       //launch readline loop using play's classloader
-      val command = new GenericRunnerCommand(Nil, (error:String) => println(error))
-      command.settings.classpath.value = System.getProperty("java.class.path")
-      JLine.withJLine {
-          val loop = new InterpreterLoop {
-          override def createInterpreter() = {
-               super.createInterpreter()
-         }            
-        }
-      loop.main(command.settings)
-     }     
-   } catch {
+      Run.projectConsole(Play.classloader) 
+    } catch {
      case e:Exception=> e.printStackTrace()
    }
   }
@@ -47,21 +41,60 @@ private object JLine
 {
   def terminal = jline.Terminal.getTerminal
   def createReader() =
-    terminal.synchronized
-    {
+    terminal.synchronized {
       val cr = new ConsoleReader
       terminal.enableEcho()
       cr.setBellEnabled(false)
       cr
     }
-  def withJLine[T](action: => T): T =
-  {
+  def withJLine[T](action: => T) {
     val t = terminal
     t.synchronized
     {
       t.disableEcho()
       try { action }
       finally { t.enableEcho() }
+    }
+  }
+}
+
+/**
+* modified after <a href="http://github.com/harrah/sbt/raw/3493aa528566a41a0a3bc781131f4f39c116a0ed/src/main/scala/sbt/Run.scala"> sbt</a>
+* credit goes to Mark Harrah
+*/
+object Run {
+
+  def projectConsole(classloader:ClassLoader) {
+    createSettings { interpreterSettings =>
+    createSettings { compilerSettings =>
+      {
+        JLine.withJLine {
+          val loop = new ProjectInterpreterLoop(compilerSettings, classloader)
+          loop.main(interpreterSettings)
+        }
+      }
+    }}
+  }
+  /** Create a settings object and execute the provided function if the settings are created ok.*/
+  private def createSettings(f: Settings => Unit)  {
+    val command = new GenericRunnerCommand(Nil, message => play.Logger.error(message))
+    if(command.ok)
+      f(command.settings)
+    else
+      command.usageMsg
+  }
+
+  private class ProjectInterpreterLoop(compilerSettings: Settings,  classloader:ClassLoader) extends InterpreterLoop {
+    override def createInterpreter()
+    {
+      compilerSettings.classpath.value = System.getProperty("java.class.path")
+      in = InteractiveReader.createDefault()
+      interpreter = new Interpreter(settings)
+      {
+        override protected def parentClassLoader = classloader
+        override protected def newCompiler(settings: Settings, reporter: Reporter) = super.newCompiler(compilerSettings, reporter)
+      }
+      interpreter.setContextClassLoader()
     }
   }
 }
