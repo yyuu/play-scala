@@ -51,8 +51,12 @@ class ScalaPlugin extends PlayPlugin {
     override def compileAll(classes: JList[ApplicationClass]) = {
         val (sources, hash) = scanSources
         lastHash = hash
-        play.Logger.debug("SCALA compileAll")
-        classes.addAll(compile(sources))
+        play.Logger.trace("SCALA compileAll")
+        if(Play.usePrecompiled) {
+            new java.util.ArrayList[ApplicationClass]()            
+        } else {
+            classes.addAll(compile(sources))
+        }  
     }
 
     override def runTest(testClass: Class[BaseTest]) = {
@@ -75,9 +79,12 @@ class ScalaPlugin extends PlayPlugin {
 
     // Compiler
 
-    private var compiler = new ScalaCompiler()
+    private var compiler: ScalaCompiler = _
 
     def compile(sources: JList[VFile]) = {
+        if(compiler == null) {
+            compiler = new ScalaCompiler
+        }
         play.Logger.debug("SCALA compile %s", sources)
         compiler compile sources.toList
     }
