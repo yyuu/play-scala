@@ -166,7 +166,7 @@ ScalaTest support is integrated into Play, so one can easily write unit tests us
 bc. class SpecStyle extends UnitTest with FlatSpec with ShouldMatchers {
 "Creating a user" should "be succesfull" in {
   val user = new User("bob@gmail.com", "secret", "Bob")
-  user.saveInplace()
+  user.saveThis()
   bob = User.find("byEmail", "bob@gmail.com").first
   bob should not be (null)
   bob.fullname should be ("Bob")
