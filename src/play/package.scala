@@ -21,7 +21,6 @@ package object play {
 
 
     // - IMPLICITS
-    implicit def enrichModel(m:play.db.jpa.Model) = new play.db.jpa.RichModel(m)
     implicit def withEscape(x: Any) = new WithEscape(x)
 
 }

@@ -20,7 +20,6 @@ trait QueryOn[T] {
   def deleteAll(implicit m: M[T]) = i.deleteAll(m)
   def findOneBy(q: String, ps: AnyRef*)(implicit m: M[T]): T = i.findOneBy(m, q, ps.toArray).asInstanceOf[T]
   def create(name: String, ps: play.mvc.Scope.Params)(implicit m: M[T]): T = i.create(m, name, ps).asInstanceOf[T]
-
 }
 
 /**
