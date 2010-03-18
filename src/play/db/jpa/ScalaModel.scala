@@ -5,6 +5,7 @@ import javax.persistence.Id
 import javax.persistence.MappedSuperclass
 import java.lang.annotation.Annotation
 import play.data.validation.Validation
+import play.mvc.Scope.Params
 
 @MappedSuperclass
 class ScalaModel extends JPABase {
@@ -29,10 +30,15 @@ class ScalaModel extends JPABase {
     this
   }
 
-  def edit(name: String, params: java.util.Map[String,Array[String]]): this.type = {
+  def edit(name: String, params: Params):this.type ={
+   _edit(name,params)
+   this
+  }
+
+ def edit(name: String, params: java.util.Map[String,Array[String]]): this.type = {
     JPASupport.edit(this, name, params, Array[Annotation]())
     this
-  } 
+ } 
 
   def validateAndSave(): Boolean = {
     if (Validation.current().valid(this).ok) {
