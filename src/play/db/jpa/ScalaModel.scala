@@ -9,14 +9,16 @@ import play.mvc.Scope.Params
 
 @MappedSuperclass
 class ScalaModel extends JPABase {
+    
+  def em() = JPA.em()
 
   def refresh(): this.type = {
-    _refresh() 
+    em().refresh(this) 
     this
   }
   
   def merge(): this.type = {
-    _merge() 
+    em().merge(this)
     this
   }
   
@@ -29,16 +31,12 @@ class ScalaModel extends JPABase {
     _delete() 
     this
   }
+  
 
-  def edit(name: String, params: Params):this.type ={
-   _edit(name,params)
-   this
-  }
-
- def edit(name: String, params: java.util.Map[String,Array[String]]): this.type = {
-    JPASupport.edit(this, name, params, Array[Annotation]())
-    this
- } 
+  def edit(name: String, params: java.util.Map[String,Array[String]]): this.type = {
+     JPASupport.edit(this, name, params, Array[Annotation]())
+     this
+  } 
 
   def validateAndSave(): Boolean = {
     if (Validation.current().valid(this).ok) {
