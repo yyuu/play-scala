@@ -135,7 +135,7 @@ object User extends QueryOn[User] {
 
 h3. <a>Running queries against Models</a>
 
-The following methods are available:
+The following methods are available as part of QueryOn:
 
 bc. def count(implicit m: M[T]) = i.count(m)
 def count(q: String, ps: AnyRef*)(implicit m: M[T])  
@@ -143,21 +143,38 @@ def findAll(implicit m: M[T])
 def findById(id: Any)(implicit m: M[T]) 
 def findBy(q: String, ps: AnyRef*)(implicit m: M[T]) 
 def find(q: String, ps: AnyRef*)(implicit m: M[T]) 
+def find(q: String, ps: AnyRef*)(implicit m: M[T]) 
+def find(q: String, params: Map[String, Any])(implicit m: M[T]): ScalaQuery[T]
+def findOneBy(q: String, ps: AnyRef*)(implicit m: M[T]): T 
 def all(implicit m: M[T]) 
 def delete(q: String, ps: AnyRef*)(implicit m: M[T]) 
 def deleteAll(implicit m: M[T]) = 
-def findOneBy(q: String, ps: AnyRef*)(implicit m: M[T]): T 
 def create(name: String, ps: play.mvc.Scope.Params)(implicit m: M[T]): T
 
 As you can see, it's really similar to the java API, so for example to count the number of users, you can just call count on the User class (assuming you defined the appropriate companion object):
 
 bc. User.count
 
-p(note). One known limitation of the Scala Model API is that the Scala compiler can not infer the return type of *save*, *delete* and *edit* methods. So if you want to save/edit/delete a Model in place, by convention you should use a so-called *in place* method, ie  *saveThis*, *deleteThis* and *editThis*. If, however, you need the return type, you will need to explicitly ask for it ie. *var user2:User = user.save()* or *var u2 = user.save().asInstanceOf[User]* 
+or if you want to run a complex find query with bindings, that would look something like this:
+
+bc. QueryOn[Post].find("select distinct p.id from Post p join p.tags as t where t.name in (:tags) group by p.id having count(t.id) = :size", Map("tags" -> tags.toArray, "size" -> tags.size)).fetch
 
 Another approach to access models is to utilize *play.db.jpa.QueryOn* object, so using the previous example: *User.count* becomes *QueryOn[User].count* 
 
-p(note). Usually it's recommended to use the companinon object form to provide query functionality (ie. User.count). The main advantage of the more generic *QueryOn* approach is that it's working with both *scala and java* models. 
+p(note). Usually, it's recommended to use the companinon object form to provide query functionality (ie. User.count). The main advantage of the more generic *QueryOn* approach is that it's working with both *scala and java* models. 
+
+h2. model instance methods
+
+The available instance methods are almost identical to the java version:  
+
+bc.def refresh(): this.type
+def em()
+def merge(): this.type
+def save(): this.type
+def delete(): this.type
+def edit(name: String, params: java.util.Map[String,Array[String]]): this.type
+def validateAndSave(): Boolean 
+
 
 h2. <a>Unit Testing</a>
 
@@ -165,8 +182,7 @@ ScalaTest support is integrated into Play, so one can easily write unit tests us
 
 bc. class SpecStyle extends UnitTest with FlatSpec with ShouldMatchers {
 "Creating a user" should "be succesfull" in {
-  val user = new User("bob@gmail.com", "secret", "Bob")
-  user.saveThis()
+  val user = new User("bob@gmail.com", "secret", "Bob").save()
   bob = User.find("byEmail", "bob@gmail.com").first
   bob should not be (null)
   bob.fullname should be ("Bob")
