@@ -96,6 +96,8 @@ object Run {
       }
       interpreter.setContextClassLoader()
       interpreter.interpret("import play._")
+      interpreter.interpret("import play.db.jpa_")
+      interpreter.interpret("import scala.collection.JavaConversions._")
     }
   }
 }
