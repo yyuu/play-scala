@@ -15,6 +15,11 @@ trait QueryOn[T] {
   def findById(id: Any)(implicit m: M[T]) = i.findById(m, id).asInstanceOf[T]
   def findBy(q: String, ps: AnyRef*)(implicit m: M[T]) = i.findBy(m, q, ps.toArray)
   def find(q: String, ps: AnyRef*)(implicit m: M[T]) = new ScalaQuery[T](i.find(m, q, ps.toArray))
+  def find(q: String, params: Map[String, Any])(implicit m: M[T]): ScalaQuery[T] = {
+      val query = find(q)
+      params.foreach { case (name, param) => query.bind(name, param)}
+      query
+  }
   def all(implicit m: M[T]) = i.all(m)
   def delete(q: String, ps: AnyRef*)(implicit m: M[T]) = i.delete(m, q, ps.toArray)
   def deleteAll(implicit m: M[T]) = i.deleteAll(m)
@@ -49,6 +54,8 @@ private[jpa] class ScalaQuery[T](val query: JPASupport.JPAQuery) {
         query.from(offset)
         this
     }
+
+    def bind(name: String, param: Any) = query.bind(name, param)
 
     private def asList[T](jlist: java.util.List[T]): List[T] = {
         import scala.collection.mutable.ListBuffer
