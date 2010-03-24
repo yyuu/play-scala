@@ -9,9 +9,8 @@ trait QueryOn[T] {
   type M[T] = Manifest[T]
   implicit private def manifest2entity[T](m: M[T]): String = m.erasure.getName()
   def count()(implicit m: M[T]) = i.count(m)
-
   def count(q: String, ps: AnyRef*)(implicit m: M[T]) = i.count(m, q, ps.toArray)
-  def findAll(implicit m: M[T]) = i.findAll(m)
+  def findAll(implicit m: M[T]) = i.all(m).fetch[T]
   def findById(id: Any)(implicit m: M[T]) = i.findById(m, id).asInstanceOf[T]
   def findBy(q: String, ps: AnyRef*)(implicit m: M[T]) = i.findBy(m, q, ps.toArray)
   def find(q: String, ps: AnyRef*)(implicit m: M[T]) = new ScalaQuery[T](i.find(m, q, ps.toArray))
