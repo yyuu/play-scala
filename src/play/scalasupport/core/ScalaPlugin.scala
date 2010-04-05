@@ -81,11 +81,15 @@ class ScalaPlugin extends PlayPlugin {
 
     private var compiler: ScalaCompiler = _
 
+
     def compile(sources: JList[VFile]) = {
         if(compiler == null) {
             compiler = new ScalaCompiler
         }
-        play.Logger.debug("SCALA compile %s", sources)
+        if (Play.mode == Play.Mode.DEV) {
+          play.Logger.info("Compiling: %s", sources)
+        } else  
+          play.Logger.debug("Compiling: %s", sources)
         compiler compile sources.toList
     }
 
