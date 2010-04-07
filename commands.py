@@ -5,6 +5,8 @@ import os
 import subprocess
 import shutil
 
+from framework.pym.utils import *
+
 MODULE = 'scala'
 
 COMMANDS = ['scala:console']
