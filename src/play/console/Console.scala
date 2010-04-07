@@ -23,7 +23,7 @@ object Console {
    }   		 
 }
 
-class ConsoleThread extends play.Invoker.DirectInvocation {
+private[this] class ConsoleThread extends play.Invoker.DirectInvocation {
   override def execute() {
     try {
       //launch readline loop using play's classloader

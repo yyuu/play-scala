@@ -1,3 +1,8 @@
+/**
+* stuffing a few scala specific helpers into play namespace
+* 
+*/
+
 package object play {
 
     // -- LOGGING

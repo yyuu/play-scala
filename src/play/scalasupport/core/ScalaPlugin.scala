@@ -20,12 +20,18 @@ import java.util.{List => JList}
 import org.scalatest.Suite
 import org.scalatest.tools.ScalaTestRunner
 
+/**
+* this play plugin is responsible for compiling both scala and java files.
+* It is using the same compilation technique as fsc
+* 
+*/
 class ScalaPlugin extends PlayPlugin {
     
     var lastHash = 0
     
-    // Source scan
-    
+    /*
+    * Scanning both java and scala sources for compilation
+    */
     def scanSources = {
         val sources = ListBuffer[VFile]()
         val hash = new StringBuffer
@@ -40,14 +46,20 @@ class ScalaPlugin extends PlayPlugin {
         (sources, hash.toString.hashCode)
     }
     
-    // Plugin impl
-    
+    /**
+    * try to detect source changes
+    **/
     override def detectChange = {
         if(lastHash != scanSources._2) {
             throw new Exception("Path change")
         }
     }
 
+    /**
+    * compile all classes
+    * @classes classes to be compiled
+    * @return return compiled classes
+    **/
     override def compileAll(classes: JList[ApplicationClass]) = {
         val (sources, hash) = scanSources
         lastHash = hash
@@ -59,6 +71,10 @@ class ScalaPlugin extends PlayPlugin {
         }  
     }
 
+    /**
+    * inject ScalaTestRunner into play's test framework
+    * @testClass a class under testing 
+    */
     override def runTest(testClass: Class[BaseTest]) = {
         testClass match {
             case suite if classOf[Suite] isAssignableFrom testClass => ScalaTestRunner run suite.asInstanceOf[Class[Suite]]
@@ -66,6 +82,10 @@ class ScalaPlugin extends PlayPlugin {
         }
     }
 
+    /**
+    * compile a class if a change was made.
+    * @modified classes that were modified
+    */
     override def onClassesChange(modified: JList[ApplicationClass]) {
         val sources = new java.util.ArrayList[VFile]
         modified foreach { cl: ApplicationClass =>
@@ -78,10 +98,13 @@ class ScalaPlugin extends PlayPlugin {
     }
 
     // Compiler
-
     private var compiler: ScalaCompiler = _
 
-
+    /**
+    * compiles all given source files
+    * @sources files to be compiled
+    * @return List of compiled classes
+    */
     def compile(sources: JList[VFile]) = {
         if(compiler == null) {
             compiler = new ScalaCompiler
@@ -93,7 +116,8 @@ class ScalaPlugin extends PlayPlugin {
         compiler compile sources.toList
     }
 
-    class ScalaCompiler {
+
+private[this] class ScalaCompiler {
 
         private val reporter = new Reporter() {
 

@@ -12,6 +12,10 @@ import play.data.validation.Validation
 import play.classloading.enhancers.LocalvariablesNamesEnhancer.LocalVariablesSupport
 import play.classloading.enhancers.ControllersEnhancer.ControllerSupport
 
+/**
+* represents a Scala based Controller
+* only renderXml and RenderHtml methods are scala specific
+*/
 abstract class ScalaController extends ControllerDelegate with LocalVariablesSupport with ControllerSupport {
     def request = Request.current()
     def response = Response.current()
@@ -26,20 +30,25 @@ abstract class ScalaController extends ControllerDelegate with LocalVariablesSup
 
 }
 
+/**
+* utility class to provider an easier way to render argumetns
+*/
 class RichRenderArgs(val renderArgs: RenderArgs) {
-
     def +=(variable: Tuple2[String, Any]) {
         renderArgs.put(variable._1, variable._2)
     }
-
 }
 
+/**
+* utility class to provide some extra syntatic sugar while dealing with a session
+*/
 class RichSession(val session: Session) {
-
     def apply(key: String) = session.get(key)
-
 }
 
+/**
+* utility class to provide some extra syntatic sugar while dealing with Response objects
+*/
 class RichResponse(val response: Response) {
 
     val ContentTypeRE = """[-a-zA-Z]+/[-a-zA-Z]+""".r
@@ -66,7 +75,6 @@ class RichResponse(val response: Response) {
     def <<<(xml: scala.xml.NodeSeq) {
         response.print(xml)
     }
-
 }
 
 private[play] object ActionProxy {

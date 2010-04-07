@@ -1,6 +1,10 @@
 import play.mvc.Scope._
 import play.mvc.Http._
 
+/**
+* stuffing a few scala specific helpers into play.mvc namespace
+* 
+*/
 package play {
 
     package object mvc {

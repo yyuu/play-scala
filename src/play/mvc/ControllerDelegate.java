@@ -4,7 +4,12 @@ import java.io.InputStream;
 import play.mvc.Controller;
 import java.util.concurrent.Future;
 import java.io.File;
-
+/**
+ * creates a delegate which can be used to take over play.mvc.Controller namespace with a type
+ * alias. Extending from this class means that we can avoid circular references which would
+ * occur if ScalaController was inhereted directly from @see play.mvc.Controller and we used a type alias
+ * to map ScalaController to play.mvc.Controller
+ */
 abstract class ControllerDelegate {
     
     public void render(Object... args) {
