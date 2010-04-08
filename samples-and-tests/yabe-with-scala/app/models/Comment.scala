@@ -30,3 +30,4 @@ class Comment(
     }
  
 }
+object Comment extends QueryOn[Comment]

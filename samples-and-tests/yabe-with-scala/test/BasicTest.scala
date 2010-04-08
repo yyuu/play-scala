@@ -1,17 +1,20 @@
-import org.junit._
 import java.util._
 import play.test._
 import models._
- 
-class BasicTest extends UnitTest {
+
+import scala.collection.JavaConversions._
+
+import org.scalatest.FlatSpec
+import org.scalatest.matchers.ShouldMatchers
+import scala.collection.mutable.Stack
+
+class BasicTest extends FlatSpec with ShouldMatchers {
     
-    @Before
-    def setup() {
+    def beforeEach() {
         Fixtures.deleteAll()
     }
  
-    @Test
-    def createAndRetrieveUser() {
+    it should "create and retrieve a user" in {
         // Create a new user and save it
         new User("bob@gmail.com", "secret", "Bob").save()
 	
@@ -19,23 +22,22 @@ class BasicTest extends UnitTest {
         var bob = User.find("byEmail", "bob@gmail.com").first
 
         // Test 
-        assertNotNull(bob)
-        assertEquals("Bob", bob.fullname)
+        bob should not be (null)
+        "Bob" should equal ( bob.fullname)
     }
     
-    @Test
-    def tryConnectAsUser() {
+    
+    it should "call connect on User" in {
         // Create a new user and save it
         new User("bob@gmail.com", "secret", "Bob").save()
 
         // Test 
-        assertNotNull(User.connect("bob@gmail.com", "secret"))
-        assertNull(User.connect("bob@gmail.com", "badpassword"))
-        assertNull(User.connect("tom@gmail.com", "secret"))
+        User.connect("bob@gmail.com", "secret") should not be (null)
+        User.connect("bob@gmail.com", "badpassword") should not be (null)
+        User.connect("tom@gmail.com", "secret") should not be (null)
     }
     
-    @Test
-    def createPost() {
+    it should "create Post" in {
         // Create a new user and save it
         var bob = new User("bob@gmail.com", "secret", "Bob").save()
 
@@ -43,23 +45,22 @@ class BasicTest extends UnitTest {
         new Post(bob, "My first post", "Hello world").save()
 
         // Test that the post has been created
-        assertEquals(1, Post.count())
+        1 should equal ( Post.count())
 
         // Retrieve all post created by bob
         var bobPosts = Post.find("byAuthor", bob).fetch
 
         // Tests
-        assertEquals(1, bobPosts.size())
-        var firstPost = bobPosts.get(0)
-        assertNotNull(firstPost)
-        assertEquals(bob, firstPost.author)
-        assertEquals("My first post", firstPost.title)
-        assertEquals("Hello world", firstPost.content)
-        assertNotNull(firstPost.postedAt)
+        1 should equal ( bobPosts.size)
+        var firstPost = bobPosts(0)
+        firstPost should not be (null)
+        bob should equal (firstPost.author)
+        "My first post" should equal ( firstPost.title)
+        "Hello world" should equal ( firstPost.content)
+        firstPost.postedAt should not be (null)
     }
     
-    @Test
-    def postComments() {
+    it should "post Comments" in {
         // Create a new user and save it
         var bob = new User("bob@gmail.com", "secret", "Bob").save()
 
@@ -74,23 +75,22 @@ class BasicTest extends UnitTest {
         var bobPostComments = Comment.find("byPost", bobPost).fetch()
 
         // Tests
-        assertEquals(2, bobPostComments.size())
+        2 should equal ( bobPostComments.size)
 
-        var firstComment = bobPostComments.get(0)
-        assertNotNull(firstComment)
-        assertEquals("Jeff", firstComment.author)
-        assertEquals("Nice post", firstComment.content)
-        assertNotNull(firstComment.postedAt)
+        var firstComment = bobPostComments(0)
+        firstComment should not be (null)
+        "Jeff" should equal ( firstComment.author)
+        "Nice post" should equal ( firstComment.content)
+        firstComment.postedAt should not be (null)
 
-        var secondComment = bobPostComments.get(1)
-        assertNotNull(secondComment)
-        assertEquals("Tom", secondComment.author)
-        assertEquals("I knew that !", secondComment.content)
-        assertNotNull(secondComment.postedAt)
+        var secondComment = bobPostComments(1)
+        secondComment should not be (null)
+        "Tom" should equal ( secondComment.author)
+        "I knew that !" should equal ( secondComment.content)
+        secondComment.postedAt should not be (null)
     }
     
-    @Test
-    def useTheCommentsRelation() {
+    it should "use the comments relation" in {
         // Create a new user and save it
         var bob = new User("bob@gmail.com", "secret", "Bob").save()
 
@@ -102,66 +102,65 @@ class BasicTest extends UnitTest {
         bobPost.addComment("Tom", "I knew that !")
 
         // Count things
-        assertEquals(1, User.count())
-        assertEquals(1, Post.count())
-        assertEquals(2, Comment.count())
+        1 should equal (User.count())
+        1 should equal (Post.count())
+        2 should equal (Comment.count())
 
         // Retrieve the bob post
         bobPost = Post.find("byAuthor", bob).first
-        assertNotNull(bobPost)
+        bobPost should not be (null)
 
         // Navigate to comments
-        assertEquals(2, bobPost.comments.size())
-        assertEquals("Jeff", bobPost.comments.get(0).author)
+        2  should equal (bobPost.comments.size)
+        "Jeff" should equal (bobPost.comments(0).author)
 
         // Delete the post
         bobPost.delete()
 
         // Chech the all comments have been deleted
-        assertEquals(1, User.count())
-        assertEquals(0, Post.count())
-        assertEquals(0, Comment.count())
+        1 should equal (User.count())
+        0 should equal (Post.count())
+        0 should equal (Comment.count())
     }
     
-    @Test
-    def fullTest() {
+    it should "work if things combined together" in {
         Fixtures.load("data.yml")
 
         // Count things
-        assertEquals(2, User.count())
-        assertEquals(3, Post.count())
-        assertEquals(3, Comment.count())
+        2 should equal (User.count())
+        3 should equal (Post.count())
+        3 should equal (Comment.count())
 
         // Try to connect as users
-        assertNotNull(User.connect("bob@gmail.com", "secret"))
-        assertNotNull(User.connect("jeff@gmail.com", "secret"))
-        assertNull(User.connect("jeff@gmail.com", "badpassword"))
-        assertNull(User.connect("tom@gmail.com", "secret"))
+        User.connect("bob@gmail.com", "secret") should not be (null)
+        User.connect("jeff@gmail.com", "secret") should not be (null)
+        User.connect("jeff@gmail.com", "badpassword") should not be (null)
+        User.connect("tom@gmail.com", "secret") should not be (null)
 
         // Find all bob posts
         var bobPosts = Post.find("author.email", "bob@gmail.com").fetch
-        assertEquals(2, bobPosts.size())
+        2 should equal (bobPosts.size)
 
         // Find all comments related to bob posts
         var bobComments = Comment.find("post.author.email", "bob@gmail.com").fetch
-        assertEquals(3, bobComments.size())
+        3 should equal (bobComments.size)
 
         // Find the most recent post
         var frontPost = Post.find("order by postedAt desc").first
-        assertNotNull(frontPost)
-        assertEquals("About the model layer", frontPost.title)
+
+        frontPost should not be (null)
+        "About the model layer" should equal (frontPost.title)
 
         // Check that this post has two comments
-        assertEquals(2, frontPost.comments.size())
+        2 should equal (frontPost.comments.size)
 
         // Post a new comment
         frontPost.addComment("Jim", "Hello guys")
-        assertEquals(3, frontPost.comments.size())
-        assertEquals(4, Comment.count())
+        3 should equal (frontPost.comments.size)
+        4 should equal (Comment.count())
     }
     
-    @Test
-    def testTags() {
+    it should "be able to handle Tags" in {
         // Create a new user and save it
         var bob = new User("bob@gmail.com", "secret", "Bob").save()
 
@@ -170,24 +169,24 @@ class BasicTest extends UnitTest {
         var anotherBobPost = new Post(bob, "My second post post", "Hello world").save()
         
         // Well
-        assertEquals(0, Post.findTaggedWith("Red").size())
+        0 should equal (Post.findTaggedWith("Red").size)
         
         // Tag it now
         bobPost.tagItWith("Red").tagItWith("Blue").save()
         anotherBobPost.tagItWith("Red").tagItWith("Green").save()
         
         // Check
-        assertEquals(2, Post.findTaggedWith("Red").size())        
-        assertEquals(1, Post.findTaggedWith("Blue").size())
-        assertEquals(1, Post.findTaggedWith("Green").size())
+        2 should equal (Post.findTaggedWith("Red").size)        
+        1 should equal (Post.findTaggedWith("Blue").size)
+        1 should equal (Post.findTaggedWith("Green").size)
         
-        assertEquals(1, Post.findTaggedWith("Red", "Blue").size())   
-        assertEquals(1, Post.findTaggedWith("Red", "Green").size())   
-        assertEquals(0, Post.findTaggedWith("Red", "Green", "Blue").size())  
-        assertEquals(0, Post.findTaggedWith("Green", "Blue").size())    
+        1 should equal (Post.findTaggedWith("Red", "Blue").size)   
+        1 should equal (Post.findTaggedWith("Red", "Green").size)   
+        0 should equal (Post.findTaggedWith("Red", "Green", "Blue").size)  
+        0 should equal (Post.findTaggedWith("Green", "Blue").size)    
         
-        var cloud = Tag.getCloud()
-        assertEquals("[{tag=Red, pound=2}, {tag=Blue, pound=1}, {tag=Green, pound=1}]", cloud.toString())
+        var cloud = Tag.cloud
+        "[{tag=Red, pound=2}, {tag=Blue, pound=1}, {tag=Green, pound=1}]" should equal (cloud.toString())
         
     }
  
