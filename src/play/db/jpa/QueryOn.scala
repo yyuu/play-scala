@@ -53,7 +53,7 @@ trait QueryOn[T] {
   def find(q: String, ps: AnyRef*)(implicit m: M[T]) = new ScalaQuery[T](i.find(m, q, ps.toArray))
   
   /**
-  * generic finder method that can be used with bindings
+  * generic finder method that can be used with parameter bindings
   * @q query
   * @params parameters for bindings
   * @return ScalaQuery
