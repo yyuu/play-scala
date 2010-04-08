@@ -118,9 +118,10 @@ private[jpa] class QueryHolder[T] extends QueryOn[T]
 
 private[jpa] class ScalaQuery[T](val query: JPASupport.JPAQuery) {
 
-    def first = query.first().asInstanceOf[T]
+    //() needed only for java API compatibility
+    def first() = query.first().asInstanceOf[T]
     def fetch() = asList[T](query.fetch())
-    def all = fetch()
+    def all() = fetch()
     def fetch(size: Int) = asList[T](query.fetch(size))
     def from(offset: Int) = {
         query.from(offset)
