@@ -175,6 +175,8 @@ class BasicTest extends UnitTest with FlatSpec with ShouldMatchers with BeforeAn
         bobPost.tagItWith("Red").tagItWith("Blue").save()
         anotherBobPost.tagItWith("Red").tagItWith("Green").save()
         
+        Tag.findAll.size should equal (3)
+
         // Check
         2 should equal (Post.findTaggedWith("Red").size)        
         1 should equal (Post.findTaggedWith("Blue").size)
