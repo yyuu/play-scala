@@ -4,13 +4,13 @@ import models._
 
 import scala.collection.JavaConversions._
 
-import org.scalatest.FlatSpec
+import org.scalatest.{FlatSpec,BeforeAndAfterEach}
 import org.scalatest.matchers.ShouldMatchers
 import scala.collection.mutable.Stack
 
-class BasicTest extends FlatSpec with ShouldMatchers {
+class BasicTest extends UnitTest with FlatSpec with ShouldMatchers with BeforeAndAfterEach {
     
-    def beforeEach() {
+    override def beforeEach() {
         Fixtures.deleteAll()
     }
  
@@ -33,8 +33,8 @@ class BasicTest extends FlatSpec with ShouldMatchers {
 
         // Test 
         User.connect("bob@gmail.com", "secret") should not be (null)
-        User.connect("bob@gmail.com", "badpassword") should not be (null)
-        User.connect("tom@gmail.com", "secret") should not be (null)
+        User.connect("bob@gmail.com", "badpassword") should be (null)
+        User.connect("tom@gmail.com", "secret") should be (null)
     }
     
     it should "create Post" in {
@@ -134,8 +134,8 @@ class BasicTest extends FlatSpec with ShouldMatchers {
         // Try to connect as users
         User.connect("bob@gmail.com", "secret") should not be (null)
         User.connect("jeff@gmail.com", "secret") should not be (null)
-        User.connect("jeff@gmail.com", "badpassword") should not be (null)
-        User.connect("tom@gmail.com", "secret") should not be (null)
+        User.connect("jeff@gmail.com", "badpassword") should be (null)
+        User.connect("tom@gmail.com", "secret") should be (null)
 
         // Find all bob posts
         var bobPosts = Post.find("author.email", "bob@gmail.com").fetch
@@ -163,7 +163,7 @@ class BasicTest extends FlatSpec with ShouldMatchers {
     it should "be able to handle Tags" in {
         // Create a new user and save it
         var bob = new User("bob@gmail.com", "secret", "Bob").save()
-
+        
         // Create a new post
         var bobPost = new Post(bob, "My first post", "Hello world").save()
         var anotherBobPost = new Post(bob, "My second post post", "Hello world").save()
@@ -178,15 +178,19 @@ class BasicTest extends FlatSpec with ShouldMatchers {
         // Check
         2 should equal (Post.findTaggedWith("Red").size)        
         1 should equal (Post.findTaggedWith("Blue").size)
+        println ("BOOO")  
         1 should equal (Post.findTaggedWith("Green").size)
+        println ("BOOO+")  
         
         1 should equal (Post.findTaggedWith("Red", "Blue").size)   
+        println ("BOOO++")  
         1 should equal (Post.findTaggedWith("Red", "Green").size)   
+        println ("BOOO+++")  
         0 should equal (Post.findTaggedWith("Red", "Green", "Blue").size)  
         0 should equal (Post.findTaggedWith("Green", "Blue").size)    
         
         var cloud = Tag.cloud
-        "[{tag=Red, pound=2}, {tag=Blue, pound=1}, {tag=Green, pound=1}]" should equal (cloud.toString())
+        "List({tag=Red, pound=2}, {tag=Blue, pound=1}, {tag=Green, pound=1})" should equal (cloud.toString())
         
     }
  

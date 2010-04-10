@@ -26,10 +26,10 @@ class Tag private (
 object Tag extends QueryOn[Tag]{
     def allTags = Tag.findAll
     
-    def findOrCreateByName(name: String) = {
+    def findOrCreateByName(name: String):Tag = {
         var tag = Tag.find("byName", name).first
         if(tag == null) {
-            tag = new Tag(name)
+            tag = new Tag(name).save()
         }
         tag
     }

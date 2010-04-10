@@ -1,6 +1,6 @@
 package models
  
-import java.util._
+import java.util.{Date,TreeSet,Set=>JSet,List=>JList,ArrayList}
 import javax.persistence._
  
 import play.db.jpa._
@@ -26,10 +26,9 @@ class Post(
     var postedAt = new Date()  
     
     @OneToMany(mappedBy="post", cascade=Array(CascadeType.ALL))
-    var comments: List[Comment] = new ArrayList[Comment]
-    
+    var comments: JList[Comment] = new ArrayList[Comment] 
     @ManyToMany(cascade=Array(CascadeType.PERSIST))
-    var tags: Set[Tag] = new TreeSet[Tag]
+    var tags: JSet[Tag] = new TreeSet[Tag]
     
     def addComment(author: String, content: String) = {
         val newComment = new Comment(this, author, content)
@@ -46,7 +45,7 @@ class Post(
         Post.find("postedAt > ? order by postedAt asc", postedAt).first
     }
     
-    def tagItWith(name: String) = {
+    def tagItWith(name: String):this.type = {
         tags add Tag.findOrCreateByName(name)
         this
     }
@@ -64,7 +63,7 @@ object Post extends QueryOn[Post] {
     }
     
     def findTaggedWith(tags: String*) = {
-        Nil
+      Post.find("select distinct p.id from Post p join p.tags as t where t.name in (:tags) group by p.id having count(t.id) = :size", Map("tags" -> tags.toArray, "size" -> tags.size)).fetch
     }
     
 }
