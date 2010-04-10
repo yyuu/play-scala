@@ -178,14 +178,10 @@ class BasicTest extends UnitTest with FlatSpec with ShouldMatchers with BeforeAn
         // Check
         2 should equal (Post.findTaggedWith("Red").size)        
         1 should equal (Post.findTaggedWith("Blue").size)
-        println ("BOOO")  
         1 should equal (Post.findTaggedWith("Green").size)
-        println ("BOOO+")  
         
         1 should equal (Post.findTaggedWith("Red", "Blue").size)   
-        println ("BOOO++")  
         1 should equal (Post.findTaggedWith("Red", "Green").size)   
-        println ("BOOO+++")  
         0 should equal (Post.findTaggedWith("Red", "Green", "Blue").size)  
         0 should equal (Post.findTaggedWith("Green", "Blue").size)    
         

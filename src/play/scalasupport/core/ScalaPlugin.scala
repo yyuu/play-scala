@@ -109,10 +109,6 @@ class ScalaPlugin extends PlayPlugin {
         if(compiler == null) {
             compiler = new ScalaCompiler
         }
-        if (Play.mode == Play.Mode.DEV) {
-          play.Logger.info("Compiling: %s", sources)
-        } else  
-          play.Logger.debug("Compiling: %s", sources)
         compiler compile sources.toList
     }
 
