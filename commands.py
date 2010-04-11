@@ -5,7 +5,7 @@ import os
 import subprocess
 import shutil
 
-from framework.pym.utils import *
+from play.utils import *
 
 MODULE = 'scala'
 
