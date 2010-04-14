@@ -27,7 +27,7 @@ abstract class ScalaController extends ControllerDelegate with LocalVariablesSup
     def renderXml(node: NodeSeq) { renderXml(node.toString) }
     def renderHtml(node: NodeSeq) { throw new results.RenderHtml(node.toString, "application/xhtml+xml") }
     def renderHtml(content: String) { throw new results.RenderHtml(content) }
-
+    def render(args: Any*) { ControllerDelegate.render(args.map(_.asInstanceOf[AnyRef]): _*) }
 }
 
 /**

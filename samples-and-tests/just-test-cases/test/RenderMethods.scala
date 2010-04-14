@@ -1,0 +1,29 @@
+import org.junit._
+import play.test._
+import play.mvc._
+import play.mvc.Http._
+import models._
+import play.test.FunctionalTest._
+
+class RenderMethodsTest extends FunctionalTest {
+
+    @Test
+    def testFirstRenderJSON() {
+        var response = GET("/application/json1")
+        assertIsOk(response)
+        assertContentType("application/json", response)
+        assertCharset("utf-8", response)
+        assertContentEquals("{'name':'guillaume'}", response)
+    }
+    
+    @Test
+    def testSecondRenderJSON() {
+        var response = GET("/application/json2")
+        assertIsOk(response)
+        assertContentType("application/json", response)
+        assertCharset("utf-8", response)
+        assertContentEquals("{\"isAdmin\":false,\"fullname\":\"Guillaume\",\"password\":\"88style\",\"email\":\"guillaume@gmail.com\",\"id\":0}", response)
+    }
+
+
+}

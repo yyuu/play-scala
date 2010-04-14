@@ -17,7 +17,7 @@ class BasicTest extends UnitTest with FlatSpec with ShouldMatchers with BeforeAn
     it should "create and retrieve a user" in {
         // Create a new user and save it
         new User("bob@gmail.com", "secret", "Bob").save()
-	
+
         // Retrieve the user with bob username
         var bob = User.find("byEmail", "bob@gmail.com").first
 

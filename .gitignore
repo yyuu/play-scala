@@ -6,3 +6,4 @@ logs
 eclipse
 *.~*
 dist
+*.pyc

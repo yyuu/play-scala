@@ -4,6 +4,7 @@ import java.io.InputStream;
 import play.mvc.Controller;
 import java.util.concurrent.Future;
 import java.io.File;
+
 /**
  * creates a delegate which can be used to take over play.mvc.Controller namespace with a type
  * alias. Extending from this class means that we can avoid circular references which would
@@ -12,7 +13,7 @@ import java.io.File;
  */
 abstract class ControllerDelegate {
     
-    public void render(Object... args) {
+    public static void render(Object... args) {
         Controller.render(args);
     }
     
@@ -35,6 +36,11 @@ abstract class ControllerDelegate {
     public void renderJSON(String json) {
         Controller.renderJSON(json);
     }
+
+    public void renderJSON(Object anyObject) {
+        Controller.renderJSON(anyObject);
+    }
+
     public void notModified() {
         Controller.notModified();
     }
