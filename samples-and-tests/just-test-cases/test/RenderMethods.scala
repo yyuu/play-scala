@@ -25,5 +25,22 @@ class RenderMethodsTest extends FunctionalTest {
         assertContentEquals("{\"isAdmin\":false,\"fullname\":\"Guillaume\",\"password\":\"88style\",\"email\":\"guillaume@gmail.com\",\"id\":0}", response)
     }
 
+    @Test
+    def testFirstRender() {
+        var response = GET("/application/simpleNameBinding")
+        assertIsOk(response)
+        assertContentType("text/html", response)
+        assertCharset("utf-8", response)
+        assertContentEquals("<h1>Yop</h1>", response)
+    }
+    
+    @Test
+    def testSecondRender() {
+        var response = GET("/application/complexNameBinding")
+        assertIsOk(response)
+        assertContentType("text/html", response)
+        assertCharset("utf-8", response)
+        assertContentEquals("<h1>Yop</h1>", response)
+    }
 
 }

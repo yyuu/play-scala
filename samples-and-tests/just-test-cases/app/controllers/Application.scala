@@ -12,7 +12,6 @@ object Application extends Controller {
     
     @Before
     private def check {
-        println("Check ... " + configuration("yop", "nf") )
         renderArgs += ("kiki" -> 9)
     }
     
@@ -24,6 +23,19 @@ object Application extends Controller {
     def json2 {
         val user = new User("guillaume@gmail.com", "88style", "Guillaume")
         renderJSON(user)
+    }
+    
+    def simpleNameBinding {
+        val name = "Yop"
+        render("Application/displayName.html", name)
+    }
+    
+    def complexNameBinding {
+        val name = "Yop"
+        for (i <- 1 to 10) {
+            name
+        }
+        render("Application/displayName.html", name)
     }
     
     def test {        
