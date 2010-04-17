@@ -240,6 +240,10 @@ bc. object Companies extends Controller with CRUDFor[Company] with Secured
 h2. <a>Yabe with Scala</a>
 
 A scala version of the blog application is bundled with play-scala and can be found "here":http://github.com/guillaumebort/play-scala/tree/master/samples-and-tests/ 
- 
+
+
+h2. Tutorial
+
+a tutorial can be found "here":http://sites.google.com/site/scalatohoku/dai74kaibenkyoukai/starting-up-the-project-scala-version--memo
 
 
