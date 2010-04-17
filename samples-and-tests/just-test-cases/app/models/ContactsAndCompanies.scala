@@ -21,5 +21,7 @@ import javax.persistence._
     @Required var name: String,
     @Lob @MaxSize(1000) var address: String
 ) extends Model {    
-    override def toString = name    
+    override def toString = name  
+    
+    def asUser = new User("xx", "xx", "xx")  
 }

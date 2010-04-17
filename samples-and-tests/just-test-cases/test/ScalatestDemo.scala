@@ -5,6 +5,8 @@ import org.scalatest.junit._
 import org.scalatest._
 import org.scalatest.matchers._
 
+import models._
+
 class JUnitStyle extends UnitTest with AssertionsForJUnit {
     
     @Before def setUp = Fixtures.deleteAll()
@@ -49,7 +51,7 @@ class FunctionsSuiteStyle extends UnitTest with FunSuite with ShouldMatchers {
     }
     
     test("1 + 1 again") {        
-        (1 + 1) should be (2)       
+        (1 + 1) should be (2)   
     }
     
 }
@@ -68,7 +70,7 @@ class SpecStyle extends UnitTest with FlatSpec with ShouldMatchers {
     
 }
 
-class FeatureStyle extends UnitTest with FeatureSpec {
+class FeatureStyle extends UnitTest with FeatureSpec { 
  
     feature("The user can pop an element off the top of the stack") { 
         scenario("pop is invoked on a non-empty stack") (pending) 

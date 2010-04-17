@@ -18,11 +18,11 @@ class RenderMethodsTest extends FunctionalTest {
     
     @Test
     def testSecondRenderJSON() {
-        var response = GET("/application/json2")
+        var response = GET("/application/json2") 
         assertIsOk(response)
         assertContentType("application/json", response)
         assertCharset("utf-8", response)
-        assertContentEquals("{\"isAdmin\":false,\"fullname\":\"Guillaume\",\"password\":\"88style\",\"email\":\"guillaume@gmail.com\",\"id\":0}", response)
+        assertContentEquals("{\"isAdmin\":false,\"fullname\":\"Guillaume\",\"password\":\"12e\",\"email\":\"guillaume@gmail.com\",\"id\":0}", response)
     }
 
     @Test
