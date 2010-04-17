@@ -2,9 +2,11 @@
 * overriding Model with Scala version
 */
 package play { 
-  package db { 
+  package db {
+    import jpa.ScalaModel
+
     package object jpa {
-      type Model = ScalaModel
-    } 
-  } 
+        type Model = ScalaModel
+      }
+    }
 }

@@ -1,14 +1,14 @@
 package play.db.jpa
 import scala.collection.mutable
+import JPQL.{instance => i}
 
 /**
 *  provides a mini DSL for Model objects
 **/
 trait QueryOn[T] {
-  import JPQL.{instance => i}
   type M[T] = Manifest[T]
   implicit private def manifest2entity[T](m: M[T]): String = m.erasure.getName()
-  
+
   /**
   * @return number of records
   **/
