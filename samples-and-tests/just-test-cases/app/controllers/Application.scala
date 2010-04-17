@@ -14,7 +14,8 @@ object Application extends Controller with Secure {
     def check {
         renderArgs += ("kiki" -> 9)
     }
-    
+    def reload = "My Name is " + Apple1.name
+
     def index() = <h1>"Yep! ; " {Apple.name}</h1>  
     
     def json1 {

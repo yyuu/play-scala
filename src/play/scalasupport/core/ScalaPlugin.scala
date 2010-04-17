@@ -102,7 +102,13 @@ class ScalaPlugin extends PlayPlugin {
                 sources add source
             }
         }
-        compile(sources)
+        forceObjectReloading(compile(sources))
+    }
+
+    private[this] def forceObjectReloading(classes:JList[ApplicationClass]) {
+      classes.find{_.name.endsWith("$")}.foreach{ _ => 
+        throw new RuntimeException("force Object reloading") 
+      }
     }
 
     // Compiler
