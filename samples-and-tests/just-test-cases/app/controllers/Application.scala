@@ -8,12 +8,14 @@ import play.libs._
 
 import models._
 
-object Application extends Controller {
+object Application extends Controller with Secure {
     
     @Before
-    private def check {
+    def check {
         renderArgs += ("kiki" -> 9)
     }
+    
+    def index() = <h1>"Yep! ; " {Apple.name}</h1>  
     
     def json1 {
         val someJson = "{'name':'guillaume'}"
@@ -21,7 +23,7 @@ object Application extends Controller {
     }
     
     def json2 {
-        val user = new User("guillaume@gmail.com", "88style", "Guillaume")
+        val user = new User("guillaume@gmail.com", "12e", "Guillaume")
         renderJSON(user)
     }
     
@@ -53,7 +55,7 @@ object Application extends Controller {
         response <<< <h1>Not found, sorry</h1>        
     }
     
-    def index(@Min(10) nimp: Int = 5, @Required name: String = "Guillaume") {
+    def anotherIndex(@Min(10) nimp: Int = 5, @Required name: String = "Guillaume") {
         println(nimp)
         println(request.path)
         val age = 59 
@@ -66,7 +68,7 @@ object Application extends Controller {
         val users = QueryOn[User].find("byPassword", "88style").fetch
         
         response <<< OK
-        response <<< "YOUHOU" 
+        response <<< "YOUHOUxxx" 
         response <<< "X-Yop" -> "hope"
         
         render(name, age, yop, users)
@@ -79,7 +81,7 @@ object Application extends Controller {
     }
     
     def goJojo() {
-        index(name="Jojo") 
+        anotherIndex(name="Jojo") 
     }
     
     def api = renderXml(<items><item id="3">Yop</item></items>) 

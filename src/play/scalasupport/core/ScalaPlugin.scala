@@ -23,7 +23,6 @@ import org.scalatest.tools.ScalaTestRunner
 /**
 * this play plugin is responsible for compiling both scala and java files.
 * It is using the same compilation technique as fsc
-* 
 */
 class ScalaPlugin extends PlayPlugin {
     
@@ -61,14 +60,23 @@ class ScalaPlugin extends PlayPlugin {
     * @return return compiled classes
     **/
     override def compileAll(classes: JList[ApplicationClass]) = {
-        val (sources, hash) = scanSources
-        lastHash = hash
-        play.Logger.trace("SCALA compileAll")
+        
+        // Precompiled
         if(Play.usePrecompiled) {
             new java.util.ArrayList[ApplicationClass]()            
+        }
+        
+        val (sources, hash) = scanSources
+        if(lastHash == hash) {
+            classes.addAll(compile(ListBuffer[VFile]()))
         } else {
+            if(compiler != null) {
+                compiler.clean()
+            }
+            lastHash = hash
+            play.Logger.info("New compilation")
             classes.addAll(compile(sources))
-        }  
+        } 
     }
 
     /**
@@ -112,14 +120,14 @@ class ScalaPlugin extends PlayPlugin {
         compiler compile sources.toList
     }
 
+    private[this] class ScalaCompiler {
 
-private[this] class ScalaCompiler {
-
+        // Errors reporter
         private val reporter = new Reporter() {
 
             override def info0(position: Position, msg: String, severity: Severity, force: Boolean) = {
                 severity match {
-                    case ERROR if position.isDefined => throw new CompilationException(realFiles.get(position.source.file.toString()).get, msg, position.line)
+                    case ERROR if position.isDefined => throw new CompilationException(realFiles.get(position.source.file.name).get, msg, position.line)
                     case ERROR => throw new CompilationException(msg);
                     case WARNING if position.isDefined => Logger.warn(msg + ", at line " + position.line + " of "+position.source)
                     case WARNING => Logger.warn(msg)
@@ -130,35 +138,121 @@ private[this] class ScalaCompiler {
             
         }
 
-        // New compiler
+        // VFS
         private val realFiles = HashMap[String,VFile]()
-        private val virtualDirectory = new VirtualDirectory("(memory)", None)
+        private val virtualDirectory = new SDirectory("(out)", None)
+        
+        // Compiler
         private val settings = new Settings()
         settings.debuginfo.level = 3
-        settings.outputDirs setSingleOutput virtualDirectory   
+        settings.outputDirs.setSingleOutput(virtualDirectory)
         settings.deprecation.value = true
 		settings.classpath.value = System.getProperty("java.class.path")
+		settings.make.value = "transitive"
+		settings.debug.value = false
+		settings.dependenciesFile.value = "none"		
         private val compiler = new Global(settings, reporter)
-
-        def compile(sources: List[VFile]) = {
-            val c = compiler
-            val run = new c.Run()            
-
-            // BatchSources
+        
+        // Dependencies
+        private val dependencies = new java.util.HashMap[String, java.util.Set[String]]
+        private val targets = new java.util.HashMap[String, java.util.Set[String]]
+        private val currentClasses = new java.util.HashSet[String]
+        
+        // Clean the compiler
+        def clean() {
+            virtualDirectory.clear()
+            dependencies.clear()
+            targets.clear()
+            currentClasses.clear()
             realFiles.clear()
-            var sourceFiles = sources map { vfile =>
+        }
+        
+        // Retrieve the source file for a scala compiled class
+        def sourceFileFor(clazzFile: String):VFile = {
+            for(sf <- targets.keySet) {
+                for(cf <- targets.get(sf)) {
+                    if(cf.equals(clazzFile)) {
+                        return realFiles.get(sf).get.asInstanceOf[VFile]
+                    }
+                }
+            }
+            return null
+        }
+
+        // Compile a set of Play source files
+        def compile(sources: List[VFile]) = {
+            val run = new compiler.Run()  
+            
+            // Compute the transitive closure of dependent sources
+            def transitiveClosure(recompile: JList[VFile], tFile: VFile) {
+                if(!recompile.contains(tFile)) {
+                    recompile.add(tFile)
+                    val name = tFile.relativePath
+                    for(sf <- dependencies.keySet) {
+                        for(df <- dependencies.get(sf)) {
+                            val dvf = VFile.open(new java.io.File(df))
+                            if(tFile.equals(dvf)) {
+                                val trcf = realFiles.get(sf).get.asInstanceOf[VFile]
+                                transitiveClosure(recompile, trcf)
+                            }
+                        }
+                    }
+                }                
+            }
+            
+            // Adding dependent sources
+            val toRecompile = new java.util.ArrayList[VFile]
+            sources map { vfile => 
+                transitiveClosure(toRecompile, vfile) 
+            }  
+            
+            // BatchSources
+            var sourceFiles = toRecompile.toList map { vfile =>
                 val name = vfile.relativePath
                 realFiles.put(name, vfile)
-                new BatchSourceFile(name, vfile.contentAsString)
+                new BatchSourceFile(new SFile(name, vfile.getRealFile()), vfile.contentAsString)
             }
 
             // Clear compilation results
-            virtualDirectory.clear
-
+            compiler.dependencyAnalysis.dependencies = compiler.dependencyAnalysis.newDeps
+            toRecompile.toList map { vfile =>
+                val name = vfile.relativePath
+                val toDiscard = targets.get(name)
+                if(toDiscard != null) {
+                    for(d <- toDiscard) {
+                        currentClasses.remove(d)
+                    }
+                }
+            }
+            
             // Compile
-            play.Logger.trace("SCALA Start compiling")
-            run compileSources sourceFiles
-            play.Logger.trace("SCALA Done ...")
+            if(!toRecompile.isEmpty()) {
+                
+                play.Logger.info("Compiling %s", toRecompile)
+            
+                run.compileSources(sourceFiles)
+            
+                // Build dependencies
+                val deps = compiler.dependencyAnalysis.dependencies
+            
+                for( (target, depends) <- deps.targets ) {
+                    var s = new java.util.HashSet[String]
+                    for( c <- depends) {
+                        s.add(c.path)
+                        currentClasses.add(c.path)
+                    }
+                    targets.put(target.name, s)
+                }
+            
+                for( (target, depends) <- deps.dependencies ) {
+                    var s = new java.util.HashSet[String]
+                    for( c <- depends) {
+                        s.add(c.path)
+                    }
+                    dependencies.put(target.name, s)
+                }
+            
+            }
 
             // Retrieve result
             val classes = new java.util.ArrayList[ApplicationClass]()
@@ -166,10 +260,14 @@ private[this] class ScalaCompiler {
             def scan(path: AbstractFile): Unit = {
                 path match {
                     case d: VirtualDirectory => path.iterator foreach scan
-                    case f: VirtualFile =>
+                    case d: SDirectory => path.iterator foreach scan
+                    case f: VirtualFile if currentClasses.contains(path.toString) =>
+                    
                                 val byteCode = play.libs.IO.readContent(path.input)
-                                val infos = play.utils.Java.extractInfosFromByteCode(byteCode)
-                                var applicationClass = Play.classes.getApplicationClass(infos(0))
+                                val sourceFile = sourceFileFor(path.toString)
+                                val className = path.toString.replace("(out)/", "").replace("/", ".").replace(".class", "")
+                                
+                                var applicationClass = Play.classes.getApplicationClass(className)
                                 if(applicationClass == null) {
                                     applicationClass = new ApplicationClass() {
 
@@ -178,18 +276,40 @@ private[this] class ScalaCompiler {
                                         }
 
                                     }
-                                    applicationClass.name = infos(0)
-                                    applicationClass.javaFile = realFiles.get(infos(1)).get
+                                    applicationClass.name = className
+                                    applicationClass.javaFile = sourceFile
                                     applicationClass.javaSource = applicationClass.javaFile.contentAsString
                                     play.Play.classes.add(applicationClass)
                                 }
                                 applicationClass.compiled(byteCode)
                                 classes.add(applicationClass)
+                                
+                    case _ => //println("DISCARDED -> " + path)
                 }
             }
             virtualDirectory.iterator foreach scan
+            
+            // Remove classes that don't exist anymore
+            val toRemove = new java.util.ArrayList[String]
+            for(ac <- play.Play.classes.all()) {
+                if(ac.javaFile.getName().endsWith(".scala")) {
+                    var isDiscarded = true
+                    for(cc <- currentClasses) {
+                        val className = cc.replace("(out)/", "").replace("/", ".").replace(".class", "")
+                        if(className.equals(ac.name)) {
+                            isDiscarded = false
+                        }
+                    }
+                    if(isDiscarded) {
+                        toRemove.add(ac.name)
+                    }
+                }                
+            }
+            for(tr <- toRemove) {
+                play.Play.classes.remove(tr)
+            }
 
-            //
+            // Computed scala classes
             classes
         }
 
