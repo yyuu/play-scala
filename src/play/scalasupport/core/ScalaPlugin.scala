@@ -21,9 +21,18 @@ import org.scalatest.Suite
 import org.scalatest.tools.ScalaTestRunner
 
 /**
-* this play plugin is responsible for compiling both scala and java files.
-* It is using the same compilation technique as fsc
-*/
+ * The ScalaPlugin in mainly responsible for compiling .scala files
+ *
+ * As scala compilation is pretty slow, we try to optimize things a lot:
+ * The plugin will keep an in memory instance of the scala compiler. After each change to a scala file,
+ * it will check for dependent files and recompile only needed sources. 
+ *
+ * When a compilation error occurs we will try to recompile all sources to avoid problems.
+ *
+ * We discard the in-memory compiler in some cases:
+ * - After a change in the .scala files set (adding or removing a scala file to the application)
+ * - When a modification to a scala file destroy some types (however if the type was anonymous we try to keep the compiler anyway)
+ */
 class ScalaPlugin extends PlayPlugin {
     
     var lastHash = 0
@@ -50,8 +59,14 @@ class ScalaPlugin extends PlayPlugin {
     **/
     override def detectChange = {
         if(lastHash != scanSources._2) {
-            throw new Exception("Path change")
+            reset()
+            throw new PathChangeException
         }
+    }
+    
+    def reset() {
+        lastHash = 0 
+        compiler = new ScalaCompiler
     }
 
     /**
@@ -70,12 +85,16 @@ class ScalaPlugin extends PlayPlugin {
         if(lastHash == hash) {
             classes.addAll(compile(ListBuffer[VFile]()))
         } else {
-            if(compiler != null) {
-                compiler.clean()
+            if(compiler == null) {
+                compiler = new ScalaCompiler
             }
             lastHash = hash
-            play.Logger.info("New compilation")
-            classes.addAll(compile(sources))
+            try{
+                classes.addAll(compile(sources))
+            } catch {
+                case ex: PathChangeException => // Don't bother with path changes here
+                case ex: Throwable => throw ex
+            }
         } 
     }
 
@@ -108,6 +127,8 @@ class ScalaPlugin extends PlayPlugin {
 
     // Compiler
     private var compiler: ScalaCompiler = _
+    
+    class PathChangeException extends Exception
 
     /**
     * compiles all given source files
@@ -115,10 +136,10 @@ class ScalaPlugin extends PlayPlugin {
     * @return List of compiled classes
     */
     def compile(sources: JList[VFile]) = {
-        if(compiler == null) {
-            compiler = new ScalaCompiler
-        }
-        compiler compile sources.toList
+        detectChange()
+        val classes = compiler.compile(sources.toList)
+        detectChange()
+        classes
     }
 
     private[this] class ScalaCompiler {
@@ -128,7 +149,7 @@ class ScalaPlugin extends PlayPlugin {
 
             override def info0(position: Position, msg: String, severity: Severity, force: Boolean) = {
                 severity match {
-                    case ERROR if position.isDefined => throw new CompilationException(realFiles.get(position.source.file.name).get, msg, position.line)
+                    case ERROR if position.isDefined => lastHash = 0; throw new CompilationException(realFiles.get(position.source.file.name).get, msg, position.line)
                     case ERROR => throw new CompilationException(msg);
                     case WARNING if position.isDefined => Logger.warn(msg + ", at line " + position.line + " of "+position.source)
                     case WARNING => Logger.warn(msg)
@@ -225,6 +246,7 @@ class ScalaPlugin extends PlayPlugin {
                     }
                 }
             }
+            //compiler.reloadSources(sourceFiles)
             
             // Compile
             if(!toRecompile.isEmpty()) {
@@ -308,6 +330,7 @@ class ScalaPlugin extends PlayPlugin {
             }
             for(tr <- toRemove) {
                 play.Play.classes.remove(tr)
+                if(!tr.contains("$anonfun$")) reset() // force full reload since we have destroyed some types
             }
 
             // Computed scala classes

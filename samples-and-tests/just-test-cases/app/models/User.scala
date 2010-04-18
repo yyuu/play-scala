@@ -16,7 +16,7 @@ class User(
     @Required
     var password: String,
     
-    var fullname: String   
+    var fullname: String
 
 ) extends Model {
     var isAdmin = false
