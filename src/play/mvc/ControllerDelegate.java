@@ -57,7 +57,6 @@ abstract class ControllerDelegate {
         Controller.redirect(url);
     }
 
-
     public void redirect(String url, boolean permanent) {
         Controller.redirect(url, permanent);
     }

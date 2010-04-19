@@ -1,6 +1,7 @@
 package play.scalasupport.crud
 
 import play.mvc._
+import play.scalasupport._
 import play.classloading.enhancers.ControllersEnhancer.ByPass
 
 /**
