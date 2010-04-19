@@ -48,5 +48,46 @@
 
         <delete dir="tmp" />
     </target>
+    
+    <target name="test" depends="build">
+        <echo message="Using ${play.path}/play" />
+
+        <antcall target="play-test">
+            <param name="testAppPath" value="${basedir}/samples-and-tests/just-test-cases"/>
+        </antcall>
+        
+        <antcall target="play-test">
+            <param name="testAppPath" value="${basedir}/samples-and-tests/yabe-with-scala"/>
+        </antcall>
+        
+        <antcall target="play-test">
+            <param name="testAppPath" value="${basedir}/samples-and-tests/zencontact-with-scala"/>
+        </antcall>
+        
+        <echo message="*****************" />
+        <echo message="All test passed !" />
+        <echo message="*****************" />
+        
+    </target>
+    
+    <target name="play-test">
+        <echo message="${play.path}/play auto-test ${testAppPath} (wait)" />
+        <exec executable="${play.path}/play" failonerror="true">
+            <arg value="clean"/>
+            <arg value="${testAppPath}"/>
+        </exec>
+        <exec executable="${play.path}/play" failonerror="true">
+            <arg value="auto-test"/>
+            <arg value="${testAppPath}"/>
+        </exec>
+        <available file="${testAppPath}/test-result/result.passed" property="${testAppPath}testPassed" />
+        <fail message="Last test has failed ! (Check results in file://${testAppPath}/test-result)">
+            <condition>
+                <not>
+                    <isset property="${testAppPath}testPassed"/>
+                </not>
+            </condition>
+        </fail>
+    </target>
 
 </project>
