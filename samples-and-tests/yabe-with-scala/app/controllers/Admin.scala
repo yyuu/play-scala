@@ -9,7 +9,7 @@ import models._
 object Admin extends Controller with Defaults with Secured {
     
     @Before
-    def setConnectedUser{
+    def setConnectedUser {
         if(Secure.Security.isConnected()) {
             val user = User.find("byEmail", Secure.Security.connected()).first
             renderArgs += "user" -> user.fullname

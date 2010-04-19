@@ -93,8 +93,9 @@ class ScalaPlugin extends PlayPlugin {
                 classes.addAll(compile(sources))
             } catch {
                 case ex: PathChangeException => // Don't bother with path changes here
-                case ex: Throwable => throw ex
+                case ex: Throwable => lastHash = 0; throw ex
             }
+            
         } 
     }
 
@@ -149,7 +150,7 @@ class ScalaPlugin extends PlayPlugin {
 
             override def info0(position: Position, msg: String, severity: Severity, force: Boolean) = {
                 severity match {
-                    case ERROR if position.isDefined => lastHash = 0; throw new CompilationException(realFiles.get(position.source.file.name).get, msg, position.line)
+                    case ERROR if position.isDefined => throw new CompilationException(realFiles.get(position.source.file.name).get, msg, position.line)
                     case ERROR => throw new CompilationException(msg);
                     case WARNING if position.isDefined => Logger.warn(msg + ", at line " + position.line + " of "+position.source)
                     case WARNING => Logger.warn(msg)
