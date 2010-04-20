@@ -14,7 +14,7 @@ object ScalaCache extends CacheDeleguate {
         }
     }
     
-    def get[T](key: String, expiration: String)(implicit getter: => T): T = {
+    def get[T](key: String, expiration: String)(getter: => T): T = {
         get(key) match {
             case Some(x) => x
             case None => val r = getter
