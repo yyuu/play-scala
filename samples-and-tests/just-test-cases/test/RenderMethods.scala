@@ -8,7 +8,7 @@ import play.test.FunctionalTest._
 class RenderMethodsTest extends FunctionalTest {
 
     @Test
-    def testFirstRenderJSON() {
+    def testFirstRenderJSON {
         var response = GET("/application/json1")
         assertIsOk(response)
         assertContentType("application/json", response)
@@ -17,7 +17,7 @@ class RenderMethodsTest extends FunctionalTest {
     }
     
     @Test
-    def testSecondRenderJSON() {
+    def testSecondRenderJSON {
         var response = GET("/application/json2") 
         assertIsOk(response)
         assertContentType("application/json", response)
@@ -26,7 +26,7 @@ class RenderMethodsTest extends FunctionalTest {
     }
 
     @Test
-    def testFirstRender() {
+    def testFirstRender {
         var response = GET("/application/simpleNameBinding")
         assertIsOk(response)
         assertContentType("text/html", response)
@@ -35,12 +35,19 @@ class RenderMethodsTest extends FunctionalTest {
     }
     
     @Test
-    def testSecondRender() {
+    def testSecondRender {
         var response = GET("/application/complexNameBinding")
         assertIsOk(response)
         assertContentType("text/html", response)
         assertCharset("utf-8", response)
         assertContentEquals("<h1>Yop</h1>", response)
     }
+    
+    @Test
+    def bugWithSomePrivateMethods {
+        var response = GET("/test/tst")
+        assertIsOk(response)
+    }
+    
 
 }
