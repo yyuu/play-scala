@@ -17,7 +17,7 @@ import scala.tools.nsc.io._
 
 import java.util.{List => JList}
 
-import org.scalatest.Suite
+import org.scalatest.{Suite, Assertions}
 import org.scalatest.tools.ScalaTestRunner
 
 /**
@@ -105,7 +105,8 @@ class ScalaPlugin extends PlayPlugin {
     */
     override def runTest(testClass: Class[BaseTest]) = {
         testClass match {
-            case suite if classOf[Suite] isAssignableFrom testClass => ScalaTestRunner run suite.asInstanceOf[Class[Suite]]
+            case suite if classOf[Suite] isAssignableFrom testClass => ScalaTestRunner runSuiteClass suite.asInstanceOf[Class[Suite]]
+            case junit if classOf[Assertions] isAssignableFrom testClass => ScalaTestRunner runJunitClass junit
             case _ => null
         }
     }

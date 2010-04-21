@@ -13,13 +13,11 @@ import com.novocode.squery.combinator.basic.BasicDriver.Implicit._
 import com.novocode.squery.session.Database.threadLocalSession
 import com.novocode.squery.simple.StaticQueryBase._
 
-class TryingScalaQueryTests extends UnitTest with ShouldMatchersForJUnit {
+class TryingScalaQueryTests extends UnitTest with FlatSpec with ShouldMatchers {
     
-    @Before def setUp {
-        DB.execute("DROP TABLE IF EXISTS users")
-    } 
+    DB.execute("DROP TABLE IF EXISTS users") 
     
-    @Test def useThePlayDatasource {    
+    "ScalaQuery" should "run with play" in {    
         
         Database.forDataSource(DB.datasource) withSession {
             
