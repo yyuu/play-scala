@@ -20,7 +20,7 @@ class SFile(val name: String, val jfile: JFile) extends AbstractFile {
   def input : InputStream = throw new UnsupportedOperationException
   override def output: OutputStream = throw new UnsupportedOperationException
   def container : AbstractFile = throw new UnsupportedOperationException
-  def lastModified: Long = Math.MIN_LONG
+  def lastModified: Long = scala.Long.MinValue
   def iterator: Iterator[AbstractFile] = Iterator.empty
   def create { throw new UnsupportedOperationException }
   def delete { throw new UnsupportedOperationException }

@@ -10,7 +10,8 @@
             <include name="*.jar"/>
         </fileset> 
         <fileset dir="lib">
-            <include name="*.jar"/>
+		<include name="*.jar"/>
+		<exclude name="play-scala*.jar"/>
         </fileset>
         <pathelement path="tmp/classes"/>
     </path>
@@ -20,13 +21,15 @@
             <classpath refid="project.classpath" />
         </taskdef>
 
-        <mkdir dir="tmp/classes" />
+        <delete dir="tmp" />
+	
+	<mkdir dir="tmp/classes" />
 
         <javac srcdir="src" destdir="tmp/classes" debug="true">
             <classpath refid="project.classpath" />
         </javac>
 
-        <scalac srcdir="src" destdir="tmp/classes" force="changed">
+        <scalac srcdir="src" destdir="tmp/classes" unchecked="on" deprecation="on" force="changed">
             <classpath refid="project.classpath" />
         </scalac>
 
@@ -46,7 +49,6 @@
             </manifest>
         </jar>
 
-        <delete dir="tmp" />
     </target>
     
     <target name="test" depends="build">
