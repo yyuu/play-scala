@@ -1,7 +1,15 @@
 package play.cache
 
-object ScalaCache extends CacheDeleguate {
-    
+/**
+ * extends the Cache API with two scala specific methods 
+ */
+object ScalaCache extends CacheDelegate {
+
+    /**
+     *  retrieves value from Cache based on the type parameter
+     *  @key the name of the cache key
+     * @return either the value or None
+     */
     def get[T](key: String)(implicit m: ClassManifest[T]): Option[T] = {
         _impl.get(key).asInstanceOf[T] match {
             case v: T => if(m.erasure.isAssignableFrom(v.asInstanceOf[AnyRef].getClass)) {
@@ -13,7 +21,13 @@ object ScalaCache extends CacheDeleguate {
             case _ => None
         }
     }
-    
+  
+     /**
+     *  retrieves value from Cache based on the type parameter
+     *  @key the name of the cache key
+     *  @return either the value or None
+     *  @expiration expiration period
+     */
     def get[T](key: String, expiration: String)(getter: => T): T = {
         get(key) match {
             case Some(x) => x

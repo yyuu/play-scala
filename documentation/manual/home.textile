@@ -176,6 +176,13 @@ def edit(name: String, params: java.util.Map[String,Array[String]]): this.type
 def validateAndSave(): Boolean 
 
 
+h2. <a>Cache API</a>
+
+using the scala version of the "cache api":http://www.playframework.org/documentation/1.0.2.1/cache one can do stuff like this
+
+bc. Cache.get[People]("person-key-25") match {case Some(p) => println (p.name); case None => println("boo")}
+
+
 h2. <a>Unit Testing</a>
 
 ScalaTest support is integrated into Play, so one can easily write unit tests using ScalaTest, for example: 
@@ -236,6 +243,10 @@ bc. object Companies extends Controller with CRUDFor[Company]
 And you can make it secured by mixing the **Secured** trait as well:
 
 bc. object Companies extends Controller with CRUDFor[Company] with Secured
+
+
+
+
 
 h2. <a>Yabe with Scala</a>
 
