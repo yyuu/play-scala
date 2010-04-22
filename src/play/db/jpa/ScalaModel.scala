@@ -5,8 +5,6 @@ import javax.persistence.Id
 import javax.persistence.MappedSuperclass
 import java.lang.annotation.Annotation
 import play.data.validation.Validation
-import play.mvc.Scope.Params
-
 /**
 * this class wraps around the the basic JPA model implementation.
 * it was really needed due to the differences on how java and scala are handling fluid APIs
@@ -58,8 +56,8 @@ class ScalaModel extends JPABase {
 
   /**
   * edit current instance, this is mainly used by CRUD. Apps are usually using save.
-  * @name name
-  * @params parameters
+  * @param name name
+  * @param params parameters
   * @return current type
   */
   def edit(name: String, params: java.util.Map[String,Array[String]]): this.type = {

@@ -6,8 +6,9 @@ import play.mvc.Http._
 * 
 */
 package play {
+import mvc.{ScalaController, RichSession, RichResponse, RichRenderArgs}
 
-    package object mvc {
+package object mvc {
 
         // -- IMPLICITS
 

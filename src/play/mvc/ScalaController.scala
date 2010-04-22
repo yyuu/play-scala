@@ -13,18 +13,67 @@ import play.classloading.enhancers.LocalvariablesNamesEnhancer.LocalVariablesSup
 import play.classloading.enhancers.ControllersEnhancer.ControllerSupport
 
 /**
-* Represents a Scala based Controller
-*/
+ *
+ * Represents a Scala based Controller
+ */
 abstract class ScalaController extends ControllerDelegate with LocalVariablesSupport with ControllerSupport {
-    def request = Request.current()
-    def response = Response.current()
-    def session = Session.current()
-    def flash = Flash.current()
-    def params = Params.current()
-    def renderArgs = RenderArgs.current()
-    def validation = Validation.current()
-    def renderXml(node: NodeSeq) { renderXml(node.toString) }
-    def renderHtml(node: NodeSeq) { throw new results.RenderHtml(node.toString, "application/xhtml+xml") }
-    def renderHtml(content: String) { throw new results.RenderHtml(content) }
-    def render(args: Any*) { ControllerDelegate.render(args.map(_.asInstanceOf[AnyRef]): _*) }
+
+  /**
+   * @returns a play request object
+   */
+  def request = Request.current()
+
+  /**
+   * @returns a play response object
+   */
+  def response = Response.current()
+
+  /**
+   * @returns a session object
+   */
+  def session = Session.current()
+
+  /**
+   * @returns a flash object
+   */
+  def flash = Flash.current()
+
+  /**
+   * @returns parameters
+   */
+  def params = Params.current()
+
+  /**
+   * @returns render argument object
+   */
+  def renderArgs = RenderArgs.current()
+
+  /**
+   * @returns Validation
+   */
+  def validation = Validation.current()
+
+  /**
+   * renders an xml node as xml
+   * @param node xml node to be rendered
+   */
+  def renderXml(node: NodeSeq) {renderXml(node.toString)}
+
+  /**
+   * renders an xml node as XHTML
+   * @param xml node to be rendered
+   */
+  def renderHtml(node: NodeSeq) {throw new results.RenderHtml(node.toString, "application/xhtml+xml")}
+
+  /**
+   * renders content in html
+   * @param content Html to be rendered
+   */
+  def renderHtml(content: String) {throw new results.RenderHtml(content)}
+
+  /**
+   * renders content using the underlying templating language
+   * @param args
+   */
+  def render(args: Any*) {ControllerDelegate.render(args.map(_.asInstanceOf[AnyRef]): _*)}
 }

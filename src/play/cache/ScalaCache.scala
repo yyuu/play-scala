@@ -7,8 +7,8 @@ object ScalaCache extends CacheDelegate {
 
     /**
      *  retrieves value from Cache based on the type parameter
-     *  @key the name of the cache key
-     * @return either the value or None
+     *  @param key the name of the cache key
+     * @param return either the value or None
      */
     def get[T](key: String)(implicit m: ClassManifest[T]): Option[T] = {
         val v = _impl.get(key).asInstanceOf[T] 
@@ -21,11 +21,11 @@ object ScalaCache extends CacheDelegate {
         }
     }
   
-     /**
+    /**
      *  retrieves value from Cache based on the type parameter
-     *  @key the name of the cache key
-     *  @return either the value or None
-     *  @expiration expiration period
+     *  @param key the name of the cache key
+     *  @param return either the value or None
+     *  @param expiration expiration period
      */
     def get[T](key: String, expiration: String)(getter: => T): T = {
         get(key) match {

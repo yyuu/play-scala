@@ -5,7 +5,10 @@ import scala.tools.nsc.io._
 import scala.collection.mutable
 import PartialFunction._
 
-class SFile(val name: String, val jfile: JFile) extends AbstractFile {
+/**
+ * defines a scala source file
+ */
+private[core] class SFile(val name: String, val jfile: JFile) extends AbstractFile {
   
   override def hashCode = name.hashCode
   override def equals(that: Any) = cond(that) { case x: SFile => x.name == name }
@@ -29,7 +32,10 @@ class SFile(val name: String, val jfile: JFile) extends AbstractFile {
 
 }
 
-class SDirectory(val name: String, maybeContainer: Option[SDirectory])
+/**
+ * defines a scala source directory
+ */
+private[core] class SDirectory(val name: String, maybeContainer: Option[SDirectory])
 extends AbstractFile {
   def path: String =
     maybeContainer match {

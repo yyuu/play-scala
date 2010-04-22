@@ -16,6 +16,21 @@
         <pathelement path="tmp/classes"/>
     </path>
 
+    <target name="apidoc">
+
+	 <delete dir="documentation/api" />
+
+	 <mkdir dir="documentation/api" />
+	
+	<taskdef resource="scala/tools/ant/antlib.xml">
+            <classpath refid="project.classpath" />
+        </taskdef>
+	<scaladoc destdir="documentation/api" srcdir="src" doctitle="play scala API documentation">
+	    <include name="**/*.scala"   />
+            <classpath refid="project.classpath" />
+	</scaladoc>	
+    </target>
+
     <target name="build">
         <taskdef resource="scala/tools/ant/antlib.xml">
             <classpath refid="project.classpath" />
