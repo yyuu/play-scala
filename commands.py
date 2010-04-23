@@ -43,5 +43,5 @@ def after(**kargs):
     # ~~~~~~~~~~~~~~~~~~~~~~ Eclipsify
     if command == 'ec' or command == 'eclipsify':
         dotProject = os.path.join(app.path, '.project')
-        replaceAll(dotProject, r'org\.eclipse\.jdt\.core\.javabuilder', "ch.epfl.lamp.sdt.core.scalabuilder")
+        replaceAll(dotProject, r'org.eclipse.jdt.core.javabuilder', "ch.epfl.lamp.sdt.core.scalabuilder")
         replaceAll(dotProject, r'<natures>', "<natures>\n\t\t<nature>ch.epfl.lamp.sdt.core.scalanature</nature>")
