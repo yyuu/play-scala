@@ -7,6 +7,7 @@ import play.db.jpa._
 import play.data.validation._
  
 @Entity
+@Table(uniqueConstraints=Array(new UniqueConstraint(columnNames=Array("email"))))
 class User(
 
     @Email
@@ -28,7 +29,7 @@ class User(
 object User extends QueryOn[User] {
     
     def connect(email: String, password: String) = {
-        User.find("byEmailAndPassword", email, password).first
+        find("byEmailAndPassword", email, password).first
     }
     
 }
