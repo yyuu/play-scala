@@ -1,9 +1,13 @@
 package play.mvc;
 
-import java.io.InputStream;
 import play.mvc.Controller;
-import java.util.concurrent.Future;
+
+import java.io.InputStream;
 import java.io.File;
+
+import java.util.Map;
+import java.util.concurrent.Future;
+
 
 /**
  * creates a delegate which can be used to take over play.mvc.Controller namespace with a type
@@ -11,18 +15,26 @@ import java.io.File;
  * occur if ScalaController was inhereted directly from @see play.mvc.Controller and we used a type alias
  * to map ScalaController to play.mvc.Controller
  */
-abstract class ControllerDelegate {
-    
-    public static void render(Object... args) {
-        Controller.render(args);
-    }
+public abstract class ControllerDelegate {
     
     public void renderTemplate(String template, Object... args) {
-        Controller.renderTemplate(template,args);
+        Controller.renderTemplate(template, args);
+    }
+    
+    public void renderTemplate(String template, Map<String,Object> args) {
+        Controller.renderTemplate(template, args);
+    }
+    
+    public void renderTemplate(Map<String,Object> args) {
+        Controller.renderTemplate(args);
     }
 
     public void renderText(Object text) {
         Controller.renderText(text);
+    }
+    
+    public void renderHtml(Object text) {
+        Controller.renderHtml(text);
     }
 
     public void renderText(CharSequence pattern, Object... args) {
@@ -126,6 +138,12 @@ abstract class ControllerDelegate {
 
     public void waitFor(Future task) {
         Controller.waitFor(task);
+    }
+    
+    // ~~~~ 
+    
+    public static void _renderTemplate(String template, Map<String,Object> args) {
+        Controller.renderTemplate(template, args);
     }
 
 }

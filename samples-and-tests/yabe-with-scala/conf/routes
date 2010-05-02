@@ -17,8 +17,8 @@ GET     /admin/new                              Admin.form
 POST    /admin/new                              Admin.save
 *       /admin                                  module:crud
 
-# Import Secure routes
-*       /                                       module:secure
+GET     /login                                  Authentication.login
+POST    /login                                  Authentication.authenticate
 
 # Map static resources from the /app/public folder to the /public path
 GET     /public/                                staticDir:public

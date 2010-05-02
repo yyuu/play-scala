@@ -22,48 +22,43 @@ class Post(
     var content: String
 
 ) extends Model {
+    
     @Required
     var postedAt = new Date()  
     
     @OneToMany(mappedBy="post", cascade=Array(CascadeType.ALL))
-    var comments: JList[Comment] = new ArrayList[Comment] 
+    var comments: JList[Comment] = new ArrayList[Comment]
+     
     @ManyToMany(cascade=Array(CascadeType.PERSIST))
     var tags: JSet[Tag] = new TreeSet[Tag]
     
     def addComment(author: String, content: String) = {
         val newComment = new Comment(this, author, content)
-        newComment.save  
+        newComment.save()  
         comments.add(newComment)
         this
     }
     
-    def previous = {
-        Post.find("postedAt < ? order by postedAt desc", postedAt).first
-    }
-
-    def next = {
-        Post.find("postedAt > ? order by postedAt asc", postedAt).first
-    }
+    def previous = Posts.find("postedAt < ? order by postedAt desc", postedAt).first.orNull
+    def next = Posts.find("postedAt > ? order by postedAt asc", postedAt).first.orNull
     
     def tagItWith(name: String):this.type = {
-        tags add Tag.findOrCreateByName(name)
+        tags add Tags.findOrCreateByName(name)
         this
     }
     
-    override def toString() = {
-        title
-    }
+    override def toString() = title
  
 }
 
-object Post extends QueryOn[Post] {
+object Posts extends QueryOn[Post] {
 	
     def findTaggedWith(tag: String) = {
-        Post.find("select distinct p from Post p join p.tags as t where t.name = ?", tag).fetch
+        find("select distinct p from Post p join p.tags as t where t.name = ?", tag).fetch
     }
     
     def findTaggedWith(tags: String*) = {
-      Post.find("select distinct p.id from Post p join p.tags as t where t.name in (:tags) group by p.id having count(t.id) = :size", Map("tags" -> tags.toArray, "size" -> tags.size)).fetch
+        find("select distinct p.id from Post p join p.tags as t where t.name in (:tags) group by p.id having count(t.id) = :size", Map("tags" -> tags.toArray, "size" -> tags.size)).fetch
     }
     
 }

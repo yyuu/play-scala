@@ -10,26 +10,26 @@ import models._
 
 object Application extends Controller {
     
-    def index {
-        val now = new Date
-        render(now)
+    def index { 
+        render("now" -> new Date)
     }
     
     def list {
-        val contacts = Contact.find("order by name, firstname").fetch()
-        render(contacts)
+        render("contacts" -> Contacts.find("order by name, firstname").fetch)
     }
     
     def form(id: Long) {
-        val contact = Contact.findById(id)
-        render(contact)
+        Contacts.findById(id) match {
+            case Some(x) => render("contact" -> x)
+            case None => render()
+        }
     }
     
     def save(@Valid contact: Contact) {
-        Validation.hasErrors match {
-            case true  => if (request isAjax) error("Invalid Value") else render("@form", contact)
-            case false => contact.save(); list
+        if (contact.validateAndSave()) {
+            list
         }
+        if (request.isAjax) error("Invalid Value") else "@form".render(contact)
     }
 
 }

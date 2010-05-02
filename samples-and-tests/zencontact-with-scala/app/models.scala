@@ -15,6 +15,6 @@ import javax.persistence._
     @Required @Email var email: String
 ) extends Model 
 
-object Contact extends QueryOn[Contact] 
+object Contacts extends QueryOn[Contact] 
 
 

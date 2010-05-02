@@ -15,6 +15,8 @@ package object mvc {
         implicit def richRenderArgs(x: RenderArgs) = new RichRenderArgs(x)
         implicit def richResponse(x: Response) = new RichResponse(x)
         implicit def richSession(x: Session) = new RichSession(x)
+        implicit def stringAsTemplate(x: String) = new StringAsTemplate(x)
+        implicit def optionToResults[T](x: Option[T]) = new OptionWithResults[T](x)
 
         // -- HELPERS
 

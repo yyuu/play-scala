@@ -35,7 +35,7 @@ object Application extends Controller with Secure {
     
     def simpleNameBinding {
         val name = "Yop"
-        render("Application/displayName.html", name)
+        "Application/displayName.html".render(name)
     }
     
     def complexNameBinding {
@@ -43,7 +43,7 @@ object Application extends Controller with Secure {
         for (i <- 1 to 10) {
             name
         }
-        render("Application/displayName.html", name)
+        "Application/displayName.html".render(name)
     }
     
     def test {        
@@ -92,7 +92,7 @@ object Application extends Controller with Secure {
     
     def api = renderXml(<items><item id="3">Yop</item></items>) 
     
-    def yop = render("@index") 
+    def yop = "@index".render() 
     
     def helloWorld = <h1>Hello world!</h1>
     

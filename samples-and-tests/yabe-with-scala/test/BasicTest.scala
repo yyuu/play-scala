@@ -19,11 +19,11 @@ class BasicTest extends UnitTest with FlatSpec with ShouldMatchers with BeforeAn
         new User("bob@gmail.com", "secret", "Bob").save()
 
         // Retrieve the user with bob username
-        var bob = User.find("byEmail", "bob@gmail.com").first
+        var bob = Users.find("byEmail", "bob@gmail.com").first
 
         // Test 
-        bob should not be (null)
-        "Bob" should equal ( bob.fullname)
+        bob should not be (None)
+        "Bob" should equal (bob.get.fullname)
     }
     
     
@@ -32,9 +32,9 @@ class BasicTest extends UnitTest with FlatSpec with ShouldMatchers with BeforeAn
         new User("bob@gmail.com", "secret", "Bob").save()
 
         // Test 
-        User.connect("bob@gmail.com", "secret") should not be (null)
-        User.connect("bob@gmail.com", "badpassword") should be (null)
-        User.connect("tom@gmail.com", "secret") should be (null)
+        Users.connect("bob@gmail.com", "secret") should not be (None)
+        Users.connect("bob@gmail.com", "badpassword") should be (None)
+        Users.connect("tom@gmail.com", "secret") should be (None)
     }
     
     it should "create Post" in {
@@ -45,13 +45,13 @@ class BasicTest extends UnitTest with FlatSpec with ShouldMatchers with BeforeAn
         new Post(bob, "My first post", "Hello world").save()
 
         // Test that the post has been created
-        1 should equal ( Post.count())
+        1 should equal (Posts.count())
 
         // Retrieve all post created by bob
-        var bobPosts = Post.find("byAuthor", bob).fetch
+        var bobPosts = Posts.find("byAuthor", bob).fetch
 
         // Tests
-        1 should equal ( bobPosts.size)
+        1 should equal (bobPosts.size)
         var firstPost = bobPosts(0)
         firstPost should not be (null)
         bob should equal (firstPost.author)
@@ -72,10 +72,10 @@ class BasicTest extends UnitTest with FlatSpec with ShouldMatchers with BeforeAn
         new Comment(bobPost, "Tom", "I knew that !").save()
 
         // Retrieve all comments
-        var bobPostComments = Comment.find("byPost", bobPost).fetch()
+        var bobPostComments = Comments.find("byPost", bobPost).fetch
 
         // Tests
-        2 should equal ( bobPostComments.size)
+        2 should equal (bobPostComments.size)
 
         var firstComment = bobPostComments(0)
         firstComment should not be (null)
@@ -102,62 +102,62 @@ class BasicTest extends UnitTest with FlatSpec with ShouldMatchers with BeforeAn
         bobPost.addComment("Tom", "I knew that !")
 
         // Count things
-        1 should equal (User.count())
-        1 should equal (Post.count())
-        2 should equal (Comment.count())
+        1 should equal (Users.count())
+        1 should equal (Posts.count())
+        2 should equal (Comments.count())
 
         // Retrieve the bob post
-        bobPost = Post.find("byAuthor", bob).first
-        bobPost should not be (null)
+        val getBobPost = Posts.find("byAuthor", bob).first
+        getBobPost should not be (None)
 
         // Navigate to comments
-        2  should equal (bobPost.comments.size)
-        "Jeff" should equal (bobPost.comments(0).author)
+        2  should equal (getBobPost.get.comments.size)
+        "Jeff" should equal (getBobPost.get.comments(0).author)
 
         // Delete the post
-        bobPost.delete()
+        getBobPost.get.delete()
 
         // Chech the all comments have been deleted
-        1 should equal (User.count())
-        0 should equal (Post.count())
-        0 should equal (Comment.count())
+        1 should equal (Users.count())
+        0 should equal (Posts.count())
+        0 should equal (Comments.count())
     }
     
     it should "work if things combined together" in {
         Fixtures.load("data.yml")
 
         // Count things
-        2 should equal (User.count())
-        3 should equal (Post.count())
-        3 should equal (Comment.count())
+        2 should equal (Users.count())
+        3 should equal (Posts.count())
+        3 should equal (Comments.count())
 
         // Try to connect as users
-        User.connect("bob@gmail.com", "secret") should not be (null)
-        User.connect("jeff@gmail.com", "secret") should not be (null)
-        User.connect("jeff@gmail.com", "badpassword") should be (null)
-        User.connect("tom@gmail.com", "secret") should be (null)
+        Users.connect("bob@gmail.com", "secret") should not be (None)
+        Users.connect("jeff@gmail.com", "secret") should not be (None)
+        Users.connect("jeff@gmail.com", "badpassword") should be (None)
+        Users.connect("tom@gmail.com", "secret") should be (None)
 
         // Find all bob posts
-        var bobPosts = Post.find("author.email", "bob@gmail.com").fetch
+        var bobPosts = Posts.find("author.email", "bob@gmail.com").fetch
         2 should equal (bobPosts.size)
 
         // Find all comments related to bob posts
-        var bobComments = Comment.find("post.author.email", "bob@gmail.com").fetch
+        var bobComments = Comments.find("post.author.email", "bob@gmail.com").fetch
         3 should equal (bobComments.size)
 
         // Find the most recent post
-        var frontPost = Post.find("order by postedAt desc").first
+        var frontPost = Posts.find("order by postedAt desc").first
 
-        frontPost should not be (null)
-        "About the model layer" should equal (frontPost.title)
+        frontPost should not be (None)
+        "About the model layer" should equal (frontPost.get.title)
 
         // Check that this post has two comments
-        2 should equal (frontPost.comments.size)
+        2 should equal (frontPost.get.comments.size)
 
         // Post a new comment
-        frontPost.addComment("Jim", "Hello guys")
-        3 should equal (frontPost.comments.size)
-        4 should equal (Comment.count())
+        frontPost.get.addComment("Jim", "Hello guys")
+        3 should equal (frontPost.get.comments.size)
+        4 should equal (Comments.count())
     }
     
     it should "be able to handle Tags" in {
@@ -169,26 +169,26 @@ class BasicTest extends UnitTest with FlatSpec with ShouldMatchers with BeforeAn
         var anotherBobPost = new Post(bob, "My second post post", "Hello world").save()
         
         // Well
-        0 should equal (Post.findTaggedWith("Red").size)
+        0 should equal (Posts.findTaggedWith("Red").size)
         
         // Tag it now
         bobPost.tagItWith("Red").tagItWith("Blue").save()
         anotherBobPost.tagItWith("Red").tagItWith("Green").save()
         
-        Tag.findAll.size should equal (3)
+        Tags.findAll.size should equal (3)
 
         // Check
-        2 should equal (Post.findTaggedWith("Red").size)        
-        1 should equal (Post.findTaggedWith("Blue").size)
-        1 should equal (Post.findTaggedWith("Green").size)
+        2 should equal (Posts.findTaggedWith("Red").size)        
+        1 should equal (Posts.findTaggedWith("Blue").size)
+        1 should equal (Posts.findTaggedWith("Green").size)
         
-        1 should equal (Post.findTaggedWith("Red", "Blue").size)   
-        1 should equal (Post.findTaggedWith("Red", "Green").size)   
-        0 should equal (Post.findTaggedWith("Red", "Green", "Blue").size)  
-        0 should equal (Post.findTaggedWith("Green", "Blue").size)    
+        1 should equal (Posts.findTaggedWith("Red", "Blue").size)   
+        1 should equal (Posts.findTaggedWith("Red", "Green").size)   
+        0 should equal (Posts.findTaggedWith("Red", "Green", "Blue").size)  
+        0 should equal (Posts.findTaggedWith("Green", "Blue").size)    
         
-        var cloud = Tag.cloud
-        "List({tag=Red, pound=2}, {tag=Blue, pound=1}, {tag=Green, pound=1})" should equal (cloud.toString())
+        var cloud = Tags.cloud
+        "List({tag=Red, pound=2}, {tag=Blue, pound=1}, {tag=Green, pound=1})" should equal (cloud.toString)
         
     }
  

@@ -24,7 +24,6 @@ trait QueryOn[T] {
    **/
   def count(q: String, ps: AnyRef*)(implicit m: M[T]) = i.count(m, q, ps.toArray)
 
-
   /**
    * return all records
    */
@@ -35,7 +34,12 @@ trait QueryOn[T] {
    * @param id id
    * @param return instance for the given id
    */
-  def findById(id: Any)(implicit m: M[T]) = i.findById(m, id).asInstanceOf[T]
+  def findById(id: Any)(implicit m: M[T]) = {
+      i.findById(m, id) match {
+          case x: AnyRef => Some(x.asInstanceOf[T])
+          case _ => None
+      }
+  }
 
   /**
    * find a record based on a query
@@ -84,14 +88,6 @@ trait QueryOn[T] {
   def deleteAll(implicit m: M[T]) = i.deleteAll(m)
 
   /**
-   * find a specific record based on a certain criteria
-   * @param q query
-   * @param ps array of params
-   * @param return T where T is the type of model
-   */
-  def findOneBy(q: String, ps: AnyRef*)(implicit m: M[T]): T = i.findOneBy(m, q, ps.toArray).asInstanceOf[T]
-
-  /**
    * creates record for the given type T
    * @param name name
    * @param ps play scoped parameters
@@ -122,8 +118,12 @@ private[jpa] class QueryHolder[T] extends QueryOn[T]
 
 private[jpa] class ScalaQuery[T](val query: JPASupport.JPAQuery) {
 
-  //() needed only for java API compatibility
-  def first() = query.first().asInstanceOf[T]
+  def first(): Option[T] = {
+      query.first().asInstanceOf[T] match {
+          case x: AnyRef => Some(x.asInstanceOf[T])
+          case _ => None
+      }
+  }
 
   def fetch() = asList[T](query.fetch())
 

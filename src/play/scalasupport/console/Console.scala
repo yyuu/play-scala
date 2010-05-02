@@ -1,4 +1,5 @@
 package play.console
+
 import scala.tools.nsc._
 import java.io.File
 import play.Play

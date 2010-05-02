@@ -18,7 +18,7 @@
             </div>
             <ul id="tools">
                 <li>
-                    <a href="@{Secure.logout()}">Log out</a>
+                    <a href="@{Authentication.logout()}">Log out</a>
                 </li>
             </ul>
         </div>
@@ -29,20 +29,20 @@
                 <li class="${request.controller == 'Admin' ? 'selected' : ''}">
                     <a href="@{Admin.index()}">My posts</a>
                 </li>
-                #{secure.check 'admin'}
-                    <li class="${request.controller == 'Posts' ? 'selected' : ''}">
-                        <a href="@{Posts.list()}">Posts</a>
+                #{if user.isAdmin}
+                    <li class="${request.controller == 'admin.Posts' ? 'selected' : ''}">
+                        <a href="@{admin.Posts.list()}">Posts</a>
                     </li>
-                    <li class="${request.controller == 'Tags' ? 'selected' : ''}">
-                        <a href="@{Tags.list()}">Tags</a>
+                    <li class="${request.controller == 'admin.Tags' ? 'selected' : ''}">
+                        <a href="@{admin.Tags.list()}">Tags</a>
                     </li>
-                    <li class="${request.controller == 'Comments' ? 'selected' : ''}">
-                        <a href="@{Comments.list()}">Comments</a>
+                    <li class="${request.controller == 'admin.Comments' ? 'selected' : ''}">
+                        <a href="@{admin.Comments.list()}">Comments</a>
                     </li>
-                    <li class="${request.controller == 'Users' ? 'selected' : ''}">
-                        <a href="@{Users.list()}">Users</a>
+                    <li class="${request.controller == 'admin.Users' ? 'selected' : ''}">
+                        <a href="@{admin.Users.list()}">Users</a>
                     </li>
-                #{/secure.check}
+                #{/if}
             </ul>
             
             #{doLayout /} 

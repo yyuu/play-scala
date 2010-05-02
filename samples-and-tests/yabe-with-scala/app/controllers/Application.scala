@@ -8,6 +8,9 @@ import play.data.validation._
 
 import models._
 
+/**
+ * Add default values to all request
+ */
 trait Defaults extends Controller {
     
     @Before
@@ -20,14 +23,14 @@ trait Defaults extends Controller {
 
 object Application extends Controller with Defaults {
  
-    def index() { 
-        val frontPost = Post.find("order by postedAt desc").first 
-        val olderPosts = Post.find("from Post order by postedAt desc").from(1).fetch
+    def index { 
+        val frontPost = Posts.find("order by postedAt desc").first.orNull
+        val olderPosts = Posts.find("from Post order by postedAt desc").from(1).fetch
         render(frontPost, olderPosts)
     }
     
     def show(id: Long) { 
-        val post = Post.findById(id)
+        val post = Posts.findById(id).getOrNotFound
         val randomID = Codec.UUID
         render(post, randomID)
     }
@@ -39,32 +42,32 @@ object Application extends Controller with Defaults {
         @Required(message="Please type the code") code: String, 
         randomID: String
     ) {
-        val post = Post.findById(postId)
+        val post = Posts.findById(postId).getOrNotFound
         
         Play.id match {            
             case "test" => // skip validation
-            case _ => validation.equals(code, Cache get randomID) message "Invalid code. Please type it again"
-        }
+            case _ => validation.equals(code, Cache.get(randomID).orNull) message "Invalid code. Please type it again"
+        }  
         
         if(Validation.hasErrors) {
-            render("@show", post, randomID)
+            "@show".render(post, randomID)
         }
         
         post.addComment(author, content)        
-        flash.success("Thanks for posting %s", author)
-        
+        flash.success("Thanks for posting %s", author)        
         show(postId)
     }
+    
     def captcha(id: String) {
         val captchaInstance = Images.captcha
         val code = captchaInstance.getText("#E4EAFD")
-        Cache.set(id, code, "30mn")
+        Cache.set(id, code, "30min")
         renderBinary(captchaInstance)
     }
     
     def listTagged(tag: String) {
-        val posts = Post findTaggedWith tag
-        render(tag, posts);
+        val posts = Posts.findTaggedWith(tag)
+        render(tag, posts)
     }
  
 }

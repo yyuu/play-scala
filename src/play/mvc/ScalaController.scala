@@ -2,6 +2,7 @@ package play.mvc
 
 import scala.xml.NodeSeq
 import scala.io.Source
+import scala.collection.JavaConversions._
 
 import java.io.InputStream
 import java.util.concurrent.Future
@@ -9,7 +10,7 @@ import java.util.concurrent.Future
 import play.mvc.Http._
 import play.mvc.Scope._
 import play.data.validation.Validation
-import play.classloading.enhancers.LocalvariablesNamesEnhancer.LocalVariablesSupport
+import play.classloading.enhancers.LocalvariablesNamesEnhancer.{LocalVariablesSupport, LocalVariablesNamesTracer}
 import play.classloading.enhancers.ControllersEnhancer.ControllerSupport
 
 /**
@@ -57,23 +58,34 @@ abstract class ScalaController extends ControllerDelegate with LocalVariablesSup
    * renders an xml node as xml
    * @param node xml node to be rendered
    */
-  def renderXml(node: NodeSeq) {renderXml(node.toString)}
-
-  /**
-   * renders an xml node as XHTML
-   * @param xml node to be rendered
-   */
-  def renderHtml(node: NodeSeq) {throw new results.RenderHtml(node.toString, "application/xhtml+xml")}
-
-  /**
-   * renders content in html
-   * @param content Html to be rendered
-   */
-  def renderHtml(content: String) {throw new results.RenderHtml(content)}
+  def renderXml(node: NodeSeq) {
+      renderXml(node.toString)
+  }
 
   /**
    * renders content using the underlying templating language
    * @param args
    */
-  def render(args: Any*) {ControllerDelegate.render(args.map(_.asInstanceOf[AnyRef]): _*)}
+  def render(args: Any*) {
+      renderTemplate(ScalaController.argsToParams(args: _*))
+  }
+  
+}
+
+object ScalaController {
+    
+    def argsToParams(args: Any*) = {
+        val params = new java.util.HashMap[String,AnyRef]
+        for(o <- args) {
+            o match {
+                  case (name: String, value: Any) => params.put(name, value.asInstanceOf[AnyRef])
+                  case _ => val names = LocalVariablesNamesTracer.getAllLocalVariableNames(o)
+                            for (name <- names) {
+                                params.put(name, o.asInstanceOf[AnyRef])
+                            }
+              }
+        }
+        params
+    }
+    
 }

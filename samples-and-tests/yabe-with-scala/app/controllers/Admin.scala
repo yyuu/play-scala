@@ -6,85 +6,97 @@ import play.data.validation._
  
 import models._
 
-object Admin extends Controller with Defaults with Secured {
-    
-    @Before
-    def setConnectedUser {
-        if(Secure.Security.isConnected()) {
-            val user = User.find("byEmail", Secure.Security.connected()).first
-            renderArgs += "user" -> user.fullname
-        }
-    }
+object Admin extends Controller with Defaults with Secure {
  
     def index {
-        val posts = Post.find("author.email", Secure.Security.connected()).fetch
-        render(posts)
+        render("posts" -> Posts.find("author", connectedUser).fetch)
     }
     
     def form(id: Long) {
-        if(id != 0) {
-            val post = Post.findById(id)
-            render(post)
+        Posts.findById(id) match {
+            case Some(x) => render("post" -> x)
+            case None => render()
         }
-        render()
     }
     
     def save(id: Long, title: String, content: String, tags: String) {
-        var post: Post = null
-        if(id == 0) {
-            // Create post
-            val author = User.find("byEmail", Secure.Security.connected()).first;
-            post = new Post(author, title, content)
-        } else {
-            // Retrieve post
-            post = Post.findById(id)
-            post.title = title
-            post.content = content
-            post.tags.clear()
-        }
-        // Set tags list
-        tags.split("""\s+""") foreach { tag: String =>
+        val post = if(id == 0) new Post(connectedUser, title, content) else Posts.findById(id).getOrNotFound
+        
+        post.title = title
+        post.content = content
+        
+        post.tags.clear()
+        tags.split("""\s+""") foreach { tag =>
             if(tag.trim().length > 0) {
-                post.tags add Tag.findOrCreateByName(tag)
+                post.tags.add(Tags.findOrCreateByName(tag))
             }
         }
-        // Validate
-        validation.valid(post)
-        if(Validation.hasErrors()) {
-            render("@form", post)
+        
+        if(post.validateAndSave()) {
+            index
         }
-        // Save
-        post.save()
-        index
+        
+        "@form".render(post)
     }
     
 }
 
 // Security
 
-object Security extends Secure.Security {
-
-    private def authentify(username: String, password: String) = {
-        User.connect(username, password) != null
-    }
+trait Secure extends Controller {
     
-    private def check(profile: String) = {
-        profile match {
-            case "admin" => User.find("byEmail", Secure.Security.connected).first.isAdmin
-            case _ => false
+    @Before def check {
+        session("user") match {
+            case Some(email) => renderArgs += "user" -> Users.find("byEmail", email).first.getOrNotFound
+            case None => Authentication.login
         }
     }
     
-    private def onDisconnected = Application.index
+    @Util def connectedUser = renderArgs.get("user").asInstanceOf[User]
     
-    private def onAuthenticated = Admin.index
+}
+
+trait AdminOnly extends Secure {
+    
+    @Before def checkAdmin {
+        if(!connectedUser.isAdmin) forbidden
+    }
+    
+}
+
+object Authentication extends Controller {
+    
+    def login {
+        render()
+    }
+    
+    def authenticate(username: String, password: String) {
+        Users.connect(username, password) match {
+            case Some(u) => session.put("user", u.email)
+                            Admin.index
+                            
+            case None => flash.error("Oops, bad email or password")
+                         flash.put("username", username)
+                         login
+        }
+    }
+    
+    def logout {
+        session.clear()
+        flash.success("You have been disconnected")
+        login
+    }
     
 }
 
 // CRUD
 
-@Check(Array("admin")) object Comments extends Controller with CRUDFor[Comment] with Secured
-@Check(Array("admin")) object Posts extends Controller with CRUDFor[Post] with Secured
-@Check(Array("admin")) object Tags extends Controller with CRUDFor[Tag] with Secured
-@Check(Array("admin")) object Users extends Controller with CRUDFor[User] with Secured
+package admin {
+    
+    object Comments extends Controller with CRUDFor[Comment] with AdminOnly
+    object Posts extends Controller with CRUDFor[Post] with AdminOnly
+    object Tags extends Controller with CRUDFor[Tag] with AdminOnly
+    object Users extends Controller with CRUDFor[User] with AdminOnly
+    
+}
 

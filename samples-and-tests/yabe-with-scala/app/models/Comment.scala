@@ -21,7 +21,8 @@ class Comment(
        @MaxSize(10000)
        var content: String
 
-) extends Model{
+) extends Model {
+    
     @Required
     var postedAt = new Date()
     
@@ -30,4 +31,5 @@ class Comment(
     }
  
 }
-object Comment extends QueryOn[Comment]
+
+object Comments extends QueryOn[Comment]

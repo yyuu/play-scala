@@ -25,7 +25,28 @@ class RichRenderArgs(val renderArgs: RenderArgs) {
 * utility class to provide some extra syntatic sugar while dealing with a session
 */
 class RichSession(val session: Session) {
-    def apply(key: String) = session.get(key)
+    def apply(key: String) = {
+        session.contains(key) match {
+            case true => Some(session.get(key))
+            case false => None
+        }
+    }
+}
+
+/**
+* Wrap a String as template name
+*/
+class StringAsTemplate(val name: String) {
+    def render(args: Any*) = play.mvc.ControllerDelegate._renderTemplate(name, play.mvc.ScalaController.argsToParams(args: _*))
+}
+
+class OptionWithResults[T](val o: Option[T]) {
+    def getOrNotFound: T = {
+        o match {
+            case Some(x) => o.get.asInstanceOf[T]
+            case None => throw new results.NotFound("Not found")
+        }
+    }
 }
 
 /**

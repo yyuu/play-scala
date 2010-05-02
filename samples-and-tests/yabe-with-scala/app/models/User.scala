@@ -19,16 +19,17 @@ class User(
     var fullname: String
 
 ) extends Model {
+    
     var isAdmin = false
     
     override def toString() = email
  
 }
 
-object User extends QueryOn[User] {
+object Users extends QueryOn[User] {
     
     def connect(email: String, password: String) = {
-        User.find("byEmailAndPassword", email, password).first
+        find("byEmailAndPassword", email, password).first
     }
     
 }
