@@ -13,7 +13,7 @@ import com.novocode.squery.combinator.basic.BasicDriver.Implicit._
 import com.novocode.squery.session.Database.threadLocalSession
 import com.novocode.squery.simple.StaticQueryBase._
 
-class TryingScalaQueryTests extends UnitTest with FlatSpec with ShouldMatchers {
+class TryingScalaQueryTests extends UnitFlatSpec with ShouldMatchers {
     
     DB.execute("DROP TABLE IF EXISTS users") 
     

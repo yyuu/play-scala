@@ -3,11 +3,13 @@ package play.cache;
 import java.util.*;
 
 /**
+ *
  * this delegate class is necessary because you can not inherit static methods, so the only
  * option you have when it comes to extend static java classes is to create a delegate around them,
  * then use type either a type alias or a val
  */
-public abstract class CacheDelegate {
+@Deprecated
+abstract class CacheDelegate {
 
     public void add(String key, Object value, String expiration) {
         Cache.add(key, value, expiration);

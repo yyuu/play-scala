@@ -8,7 +8,7 @@ import org.scalatest.{FlatSpec,BeforeAndAfterEach}
 import org.scalatest.matchers.ShouldMatchers
 import scala.collection.mutable.Stack
 
-class BasicTest extends UnitTest with FlatSpec with ShouldMatchers with BeforeAndAfterEach {
+class BasicTest extends UnitFlatSpec with ShouldMatchers with BeforeAndAfterEach {
     
     override def beforeEach() {
         Fixtures.deleteAll()

@@ -3,9 +3,8 @@ import play.test._
 import play.mvc._
 import play.mvc.Http._
 import models._
-import play.test.FunctionalTest._
 
-class ApplicationTest extends FunctionalTest {
+class ApplicationTest extends FunctionalTestCase {
 
     @Test
     def testThatIndexPageWorks() {

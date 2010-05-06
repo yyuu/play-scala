@@ -7,7 +7,7 @@ import org.scalatest.matchers._
 
 import models._
 
-class JUnitStyle extends UnitTest with AssertionsForJUnit {
+class JUnitStyle extends UnitTestCase with AssertionsForJUnit {
     
     @Before def setUp = Fixtures.deleteAll()
     
@@ -20,7 +20,7 @@ class JUnitStyle extends UnitTest with AssertionsForJUnit {
     
 }
 
-class JUnitStyleWithShould extends UnitTest with ShouldMatchersForJUnit {
+class JUnitStyleWithShould extends UnitTestCase with ShouldMatchersForJUnit {
     
     @Before def setUp = Fixtures.deleteAll()
     
@@ -36,7 +36,7 @@ class JUnitStyleWithShould extends UnitTest with ShouldMatchersForJUnit {
     
 }
 
-class FunctionsSuiteStyle extends UnitTest with FunSuite with ShouldMatchers {
+class FunctionsSuiteStyle extends UnitFunSuite with ShouldMatchers {
     
     Fixtures.deleteAll()
     
@@ -56,7 +56,7 @@ class FunctionsSuiteStyle extends UnitTest with FunSuite with ShouldMatchers {
     
 }
 
-class SpecStyle extends UnitTest with FlatSpec with ShouldMatchers {
+class SpecStyle extends UnitFlatSpec with ShouldMatchers {
 
     val name = "Hello World"
 
@@ -70,7 +70,7 @@ class SpecStyle extends UnitTest with FlatSpec with ShouldMatchers {
     
 }
 
-class FeatureStyle extends UnitTest with FeatureSpec { 
+class FeatureStyle extends UnitFeatureSpec { 
  
     feature("The user can pop an element off the top of the stack") { 
         scenario("pop is invoked on a non-empty stack") (pending)

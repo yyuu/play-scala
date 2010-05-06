@@ -7,7 +7,7 @@ import org.scalatest.matchers._
 
 import play.cache._
 
-class CacheTests extends UnitTest with ShouldMatchersForJUnit {
+class CacheTests extends UnitTestCase with ShouldMatchersForJUnit {
     
     @Before def setUp = Cache.clear()
     

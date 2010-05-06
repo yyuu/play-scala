@@ -7,7 +7,7 @@ import org.scalatest.matchers._
 
 import models._
 
-class JPATests extends UnitTest with FlatSpec with ShouldMatchers {
+class JPATests extends UnitFlatSpec with ShouldMatchers {
     
     Fixtures.deleteAll()
     
