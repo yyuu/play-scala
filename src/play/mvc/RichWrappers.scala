@@ -15,7 +15,7 @@ import play.classloading.enhancers.ControllersEnhancer.ControllerSupport
 /**
 * utility class to provider an easier way to render argumetns
 */
-class RichRenderArgs(val renderArgs: RenderArgs) {
+private[mvc] class RichRenderArgs(val renderArgs: RenderArgs) {
     def +=(variable: Tuple2[String, Any]) {
         renderArgs.put(variable._1, variable._2)
     }
@@ -24,7 +24,7 @@ class RichRenderArgs(val renderArgs: RenderArgs) {
 /**
 * utility class to provide some extra syntatic sugar while dealing with a session
 */
-class RichSession(val session: Session) {
+private[mvc] class RichSession(val session: Session) {
     def apply(key: String) = {
         session.contains(key) match {
             case true => Some(session.get(key))
@@ -36,11 +36,11 @@ class RichSession(val session: Session) {
 /**
 * Wrap a String as template name
 */
-class StringAsTemplate(val name: String) {
+private[mvc] class StringAsTemplate(val name: String) {
     def render(args: Any*) = play.mvc.ControllerDelegate._renderTemplate(name, play.mvc.ScalaController.argsToParams(args: _*))
 }
 
-class OptionWithResults[T](val o: Option[T]) {
+private[mvc] class OptionWithResults[T](val o: Option[T]) {
     def getOrNotFound: T = {
         o match {
             case Some(x) => o.get.asInstanceOf[T]
@@ -52,7 +52,7 @@ class OptionWithResults[T](val o: Option[T]) {
 /**
 * utility class to provide some extra syntatic sugar while dealing with Response objects
 */
-class RichResponse(val response: Response) {
+private[mvc] class RichResponse(val response: Response) {
 
     val ContentTypeRE = """[-a-zA-Z]+/[-a-zA-Z]+""".r
 

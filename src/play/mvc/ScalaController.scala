@@ -18,6 +18,31 @@ import play.classloading.enhancers.ControllersEnhancer.ControllerSupport
  * Represents a Scala based Controller
  */
 abstract class ScalaController extends ControllerDelegate with LocalVariablesSupport with ControllerSupport {
+  
+  /**
+   * implicit def to provider an easier way to render arguments 
+   */
+  implicit def richRenderArgs(x: RenderArgs) = new RichRenderArgs(x)
+
+  /**
+   * implicit def to provide some extra syntatic sugar while dealing with Response objects 
+   */
+  implicit def richResponse(x: Response) = new RichResponse(x)
+
+  /**
+   * implicit def to to provide some extra syntatic sugar while dealing with a sessions 
+   */
+  implicit def richSession(x: Session) = new RichSession(x)
+
+  /**
+   * implicit def to wrap a String as template name 
+   */
+  implicit def stringAsTemplate(x: String) = new StringAsTemplate(x)
+
+  /**
+   * implicit def to wrap response into an Option
+   */
+  implicit def optionToResults[T](x: Option[T]) = new OptionWithResults[T](x)
 
   /**
    * @returns a play request object
