@@ -47,6 +47,11 @@ class RenderMethodsTest extends FunctionalTestCase{
         var response = GET("/test/tst")
         assertIsOk(response)
     }
-    
+   
+    @Test
+    def testActionChainging{ 
+      val response = GET("/Application/goJojo")
+      assertStatus(302, response)
+    }
 
 }
