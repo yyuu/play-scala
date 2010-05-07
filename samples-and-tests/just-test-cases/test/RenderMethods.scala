@@ -4,15 +4,15 @@ import play.mvc._
 import play.mvc.Http._
 import models._
 
-class RenderMethodsTest extends FunctionalTestCase{
+class RenderMethodsTest extends FunctionalTestCase with Matchers{
 
     @Test
     def testFirstRenderJSON {
         var response = GET("/application/json1")
-        assertIsOk(response)
-        assertContentType("application/json", response)
-        assertCharset("utf-8", response)
-        assertContentEquals("{'name':'guillaume'}", response)
+        response shouldBeOk()
+        response contentTypeShouldBe("application/json")
+        response charsetShouldBe("utf-8")
+        response contentShouldBe("{'name':'guillaume'}")
     }
     
     @Test

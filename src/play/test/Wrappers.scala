@@ -54,8 +54,22 @@ trait Assertions {
 object Assertions extends Assertions
 
 trait Matchers  {
-//TODO: add custom matchers 
+  implicit def addTestMethods(response: Response) = new RichTestResponse(response)
+  private[test] class  RichTestResponse(response: Response) {
+    def shouldBeOk() = Assertions.assertIsOk(response)
+    def shouldNotBeFound() = Assertions.assertIsNotFound(response)
+    def statusShouldBe(status: Int) = Assertions.assertStatus(status,response)
+    def contentShouldBe(content: String) = Assertions.assertContentEquals(content,response)
+    def contentShouldMatch(pattern: String) = Assertions.assertContentMatch(pattern, response)
+    def charsetShouldBe(charset: String) =  Assertions.assertCharset(charset, response)
+    def contentTypeShouldBe (contentType: String) = Assertions.assertContentType(contentType, response)
+    def headerShouldBe (header: Tuple2[String,String]) =Assertions.assertHeaderEquals(header._1,header._2, response)
+  } 
 }
+
+
+
+object Matchers extends Matchers
 
 trait FunctionalTestCase extends FunctionalTest with Browser with Assertions
 trait FunctionalSpec extends FunctionalTest with Spec with Browser with Matchers 
