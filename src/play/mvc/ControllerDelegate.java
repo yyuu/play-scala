@@ -149,5 +149,11 @@ abstract class ControllerDelegate {
     public static void _renderTemplate(String template, Map<String,Object> args) {
         Controller.renderTemplate(template, args);
     }
+    public void suspend(int millis) {
+    Controller.suspend(millis);
+}
 
+    public void suspend(String timeout) {
+        Controller.suspend(timeout);
+    }
 }
