@@ -1,5 +1,6 @@
 package play.mvc
 
+import results.RenderHtml
 import scala.xml.NodeSeq
 import scala.io.Source
 import scala.collection.JavaConversions._
@@ -12,6 +13,7 @@ import play.mvc.Scope._
 import play.data.validation.Validation
 import play.classloading.enhancers.LocalvariablesNamesEnhancer.{LocalVariablesSupport, LocalVariablesNamesTracer}
 import play.classloading.enhancers.ControllersEnhancer.ControllerSupport
+import play.WithEscape
 
 /**
  *
@@ -85,6 +87,21 @@ abstract class ScalaController extends ControllerDelegate with LocalVariablesSup
    */
   def renderXml(node: NodeSeq) {
       renderXml(node.toString)
+  }
+  /**
+   * renders an xml node as html
+   * @param node xml node to be rendered
+   */
+  def renderHtml(node: NodeSeq) {
+      renderHtml(node.toString)
+  }
+
+  /**
+   * renders a String as html
+   * @param node xml node to be rendered
+   */
+  def renderHtml(content: String) {
+      throw new RenderHtml(content)
   }
 
   /**

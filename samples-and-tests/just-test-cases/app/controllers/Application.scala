@@ -5,6 +5,7 @@ import play.mvc._
 import play.db.jpa._
 import play.data.validation._
 import play.libs._
+import org.joda.time._
 
 import models._
 
@@ -22,7 +23,14 @@ object Application extends Controller with Secure {
         numbers foreach { println _ }
         <h1>"Yep! ; " {Apple.name}</h1>  
     }
-    
+  
+    def suspender() = {
+     val before = new DateTime()
+     suspend("1s")
+     val after = new DateTime()
+     before.compareTo(after).toString
+    }
+
     def json1 {
         val someJson = "{'name':'guillaume'}"
         renderJSON(someJson)
@@ -94,7 +102,7 @@ object Application extends Controller with Secure {
     
     def yop = "@index".render() 
     
-    def helloWorld = <h1>Hello world!</h1>
+    def helloWorld = renderHtml(<h1>Hello world</h1>)
     
     def hello(name: String) = <h1>Hello { if(name != null) name else "Guest" }!</h1>
     

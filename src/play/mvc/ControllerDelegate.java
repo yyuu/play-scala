@@ -150,7 +150,7 @@ abstract class ControllerDelegate {
         Controller.renderTemplate(template, args);
     }
     public void suspend(int millis) {
-    Controller.suspend(millis);
+        Controller.suspend(millis);
 }
 
     public void suspend(String timeout) {
