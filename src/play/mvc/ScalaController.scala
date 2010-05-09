@@ -96,13 +96,6 @@ abstract class ScalaController extends ControllerDelegate with LocalVariablesSup
       renderHtml(node.toString)
   }
 
-  /**
-   * renders a String as html
-   * @param node xml node to be rendered
-   */
-  def renderHtml(content: String) {
-      throw new RenderHtml(content)
-  }
 
   /**
    * renders content using the underlying templating language
