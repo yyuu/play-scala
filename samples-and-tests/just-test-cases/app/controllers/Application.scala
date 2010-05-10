@@ -11,6 +11,9 @@ import models._
 
 object Application extends Controller with Secure {
     
+    val before = new DateTime()
+    var counter = 0
+
     @Before
     def check {
         renderArgs += ("kiki" -> 9)
@@ -25,10 +28,12 @@ object Application extends Controller with Secure {
     }
   
     def suspender() = {
-     val before = new DateTime()
-     suspend("1s")
+     if (counter == 0) {
+      counter = counter + 1
+      suspend("2s")
+     }
      val after = new DateTime()
-     before.compareTo(after).toString
+     Seconds.secondsBetween(before,after).toStandardDuration.getStandardSeconds.toString
     }
 
     def json1 {
