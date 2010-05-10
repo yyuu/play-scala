@@ -55,11 +55,18 @@ class RenderMethodsTest extends FunctionalTestCase with Matchers{
     }
 
     @Test
-    def testDirectHtmlRendering{
+    def testRenderHtml{
       val response = GET("/Application/helloWorld") 
       response contentTypeShouldBe ("text/html")
       response shouldBeOk()
       response contentShouldBe ("<h1>Hello world</h1>")
+    }
+    @Test 
+    def testDirectRendering {
+      val response = GET("/Application/hello?name=peter")
+      response contentTypeShouldBe ("text/html")
+      response shouldBeOk()
+      response contentShouldBe ("<h1>Hello peter!</h1>")
     }
 
 }
