@@ -3,7 +3,7 @@ package play.utils
 /**
  * Scala utils
  */
-object Scala {
+trait Scala {
   
  /**
   * adding timeout handling and fixing resource closing for scala.io.Source.fromURL
@@ -73,4 +73,4 @@ object Scala {
 
 }
 
-
+object Scala extends Scala
