@@ -1,10 +1,16 @@
 package play.utils
 
 /**
- * adding timeout handling and fixing resource closing for scala.io.Source.fromURL
+ * Scala utils
  */
-
-object Source {
+object Scala {
+  
+ /**
+  * adding timeout handling and fixing resource closing for scala.io.Source.fromURL
+  * @param String the url to read from
+  * @param readTimeout
+  * @param connectionTimeOut
+  */
   def fromURLPath(url: String, readTimeout: Int = 5000, connectionTimeOut: Int = 3000):io.Source = {
     import io.Source.{fromInputStream,DefaultBufSize}
     val conn = new java.net.URL(url).openConnection()
@@ -13,7 +19,6 @@ object Source {
     val inputStream = conn.getInputStream
     fromInputStream(inputStream,DefaultBufSize, null,() => inputStream.close())
    }
-}
 
 
 /**
@@ -32,9 +37,8 @@ object Source {
  * }
  * </pre>
  */
-trait ARM {
   /**
-   * @resource the reasource that needs to be wrapped around
+   * @param reasource that needs to be wrapped around
    */
   case class using[T <: {def close()}](resource: T) {
     /**
@@ -47,8 +51,7 @@ trait ARM {
         resource.close()
       }
   }
-}
-object ARM extends ARM
+
 
 /**
  * based on <a href="http://stackoverflow.com/questions/1163393/best-scala-imitation-of-groovys-safe-dereference-operator">this article</a>
@@ -58,11 +61,8 @@ object ARM extends ARM
  * <pre>
  * val whatsthis = ?(method.a.b.c) match   { case Some(s) =>s;case None=>"boooo" }
  * </pre>
+ * @param block
  */
-object Elvis {
-  /**
-   * @block code block that's being executed and wrapped around
-   */
   def ?[T](block: => T): Option[T] =
     try {
       val memo = block
@@ -70,6 +70,7 @@ object Elvis {
       else Some(memo)
     }
     catch {case e: NullPointerException => None}
+
 }
 
 
