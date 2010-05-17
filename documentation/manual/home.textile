@@ -224,7 +224,7 @@ Play comes with 2 default modules (secure and crud) and the scala module provide
 
 bc. object Companies extends Controller with CRUDFor[Company]
 
-And you can turn secure it by mixing in the **Secured** trait as well:
+And by mixing in the **Secured** trait, you can turn on authentication:
 
 bc. object Companies extends Controller with CRUDFor[Company] with Secured
 
