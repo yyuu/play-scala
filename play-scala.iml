@@ -43,6 +43,16 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="file:///opt/play/framework/lib" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+        <jarDirectory url="file:///opt/play/framework/lib" recursive="false" />
+      </library>
+    </orderEntry>
   </component>
 </module>
 

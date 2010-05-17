@@ -6,7 +6,7 @@ import play.mvc.Http._
 * 
 */
 package play {
-import mvc.{ScalaController, RichSession, RichResponse, RichRenderArgs}
+import mvc.{ScalaController, ScalaMailer, RichSession, RichResponse, RichRenderArgs}
 
 package object mvc {
 
@@ -29,6 +29,7 @@ package object mvc {
         // -- TYPES REDEFINITION
 
         type Controller = ScalaController
+        type Mailer = ScalaMailer
 
     }
 

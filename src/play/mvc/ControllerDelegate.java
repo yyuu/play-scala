@@ -15,7 +15,7 @@ import java.util.concurrent.Future;
  * alias. Extending from this class means that we can avoid circular references which would
  * occur if ScalaController was inhereted directly from @see play.mvc.Controller and we used a type alias
  * to map ScalaController to play.mvc.Controller
- * This class will be removed at some point
+ * This class will be removed before 1.1
  *
  */
 @Deprecated
