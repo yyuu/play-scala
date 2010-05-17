@@ -6,13 +6,15 @@ import play.db.jpa._
 import play.data.validation._
 import play.libs._
 import org.joda.time._
-
+import play.utils.Scala._
 import models._
 
 object Application extends Controller with Secure {
     
     val before = new DateTime()
     var counter = 0
+    
+    private def nuller:String = null
 
     @Before
     def check {
@@ -20,6 +22,31 @@ object Application extends Controller with Secure {
     }
     
     def reload = "My Name is, " + Apple1.name 
+
+    
+    def elvis() = {
+      ?(nuller.length) match  { case Some(s) =>s;case None=>"boo" }
+    }
+    
+
+    def urlcall() = {
+      val res = fromURLPath("http://www.playframework.org/@api/play/Play.html").mkString
+      if (res.contains("javadoc")) "yes" else "no"
+    }
+
+
+    private class Resource() {
+      var wasCalled:Boolean = false
+      def close() { wasCalled = true}
+    }
+
+    def arm() = {
+      val resource = new Resource
+      for (r <- using (resource)) {
+        println(r)
+      }
+      resource.wasCalled.toString
+    }
 
     def index() = {
         val numbers = List(1,2,3)
