@@ -22,7 +22,7 @@ trait QueryOn[T] {
    * @param query query
    * @param return number of records
    **/
-  def count(q: String, ps: AnyRef*)(implicit m: M[T]) = i.count(m, q, ps.toArray)
+  def count(q: String, ps: Any*)(implicit m: M[T]) = i.count(m, q, ps.asInstanceOf[Seq[AnyRef]].toArray)
 
   /**
    * return all records
@@ -47,7 +47,7 @@ trait QueryOn[T] {
    * @param ps Array of params
    * @param return a record based on the query and parameters
    */
-  def findBy(q: String, ps: AnyRef*)(implicit m: M[T]) = i.findBy(m, q, ps.toArray)
+  def findBy(q: String, ps: Any*)(implicit m: M[T]) = i.findBy(m, q, ps.asInstanceOf[Seq[AnyRef]].toArray)
 
   /**
    * this is the most generic finder which is also chainable (ie fetch, all, first etc. can be called on
@@ -56,7 +56,7 @@ trait QueryOn[T] {
    * @param ps parameters
    * @param return @see ScalaQuery
    */
-  def find(q: String, ps: AnyRef*)(implicit m: M[T]) = new ScalaQuery[T](i.find(m, q, ps.toArray))
+  def find(q: String, ps: Any*)(implicit m: M[T]) = new ScalaQuery[T](i.find(m, q, ps.asInstanceOf[Seq[AnyRef]].toArray))
 
   /**
    * generic finder method that can be used with parameter bindings
@@ -80,7 +80,7 @@ trait QueryOn[T] {
    * @param q query
    * @param ps array of parameters
    */
-  def delete(q: String, ps: AnyRef*)(implicit m: M[T]) = i.delete(m, q, ps.toArray)
+  def delete(q: String, ps: Any*)(implicit m: M[T]) = i.delete(m, q, ps.asInstanceOf[Seq[AnyRef]].toArray)
 
   /**
    * deletes all records
