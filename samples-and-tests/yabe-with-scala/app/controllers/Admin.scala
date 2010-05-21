@@ -45,7 +45,7 @@ object Admin extends Controller with Defaults with Secure {
 
 trait Secure extends Controller {
     
-    @Before def check {
+    @Before def check {        
         session("user") match {
             case Some(email) => renderArgs += "user" -> Users.find("byEmail", email).first.getOrNotFound
             case None => Authentication.login
