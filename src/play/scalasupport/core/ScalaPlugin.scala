@@ -7,6 +7,7 @@ import play.exceptions._
 import play.classloading.ApplicationClasses.ApplicationClass
 
 import scala.tools.nsc._
+import scala.tools.nsc.settings._
 import scala.tools.nsc.reporters._
 import scala.tools.nsc.util._
 import scala.collection.JavaConversions._
@@ -167,12 +168,16 @@ class ScalaPlugin extends PlayPlugin {
     private val virtualDirectory = new SDirectory("(out)", None)
 
     // Compiler
-    private val settings = new Settings()
-    settings.debuginfo.level = 3
+    private trait MyStandardScalaSettings extends StandardScalaSettings {
+      self: AbsScalaSettings =>
+      override def make = ChoiceSetting ("-make", "Specify recompilation detection strategy", List("all", "changed", "immediate", "transitive", "transitivenocp"), "transitive").asInstanceOf[AbsSettings.this.Setting]
+    }
+    private val settings = new Settings with MyStandardScalaSettings
+    settings.make.value = "transitive"
     settings.outputDirs.setSingleOutput(virtualDirectory)
     settings.deprecation.value = true
     settings.classpath.value = System.getProperty("java.class.path")
-    settings.make.value = "transitive"
+    settings.debuginfo.value = "line"
     settings.debug.value = false
     settings.dependenciesFile.value = "none"
     private val compiler = new Global(settings, reporter)
