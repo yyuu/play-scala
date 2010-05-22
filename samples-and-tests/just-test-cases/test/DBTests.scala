@@ -12,7 +12,7 @@ import com.novocode.squery.combinator.TypeMapper._
 import com.novocode.squery.combinator.basic.BasicDriver.Implicit._
 import com.novocode.squery.session.Database.threadLocalSession
 import com.novocode.squery.simple.StaticQueryBase._
-
+/* THIS IS TEMP DISABLED UNTIL SCALAQUERY 2.8RC2 is OUT
 class TryingScalaQueryTests extends UnitFlatSpec with ShouldMatchers {
     
     DB.execute("DROP TABLE IF EXISTS users") 
@@ -63,4 +63,4 @@ object Users extends Table[(Int, String, Option[String])]("users") {
     def * = id ~ first ~ last
    
 }
-
+*/
