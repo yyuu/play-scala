@@ -21,7 +21,7 @@ class RenderMethodsTest extends FunctionalTestCase with Matchers{
         assertIsOk(response)
         assertContentType("application/json", response)
         assertCharset("utf-8", response)
-        assertContentEquals("{\"isAdmin\":false,\"fullname\":\"Guillaume\",\"password\":\"12e\",\"email\":\"guillaume@gmail.com\",\"id\":0}", response)
+        assertContentEquals("{\"email\":\"guillaume@gmail.com\",\"password\":\"12e\",\"fullname\":\"Guillaume\",\"isAdmin\":false,\"id\":0}", response)
     }
 
     @Test
