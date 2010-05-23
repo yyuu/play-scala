@@ -24,6 +24,7 @@ def execute(**kargs):
         java_cmd = app.java_cmd(args, cp_args)
         java_cmd[len(java_cmd)-2] = "play.console.Console"
         java_cmd.insert(2, '-Xmx512M')
+        print str(java_cmd)
         subprocess.call(java_cmd, env=os.environ)
         print
 
