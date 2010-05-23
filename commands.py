@@ -22,7 +22,7 @@ def execute(**kargs):
         cp_args = app.cp_args() + ":" + os.path.normpath(os.path.join(app.path,'tmp', 'classes'))
         # replace last element with the console app
         java_cmd = app.java_cmd(args, cp_args)
-        java_cmd[len(java_cmd)-1] = "play.console.Console"
+        java_cmd[len(java_cmd)-2] = "play.console.Console"
         java_cmd.insert(2, '-Xmx512M')
         subprocess.call(java_cmd, env=os.environ)
         print
