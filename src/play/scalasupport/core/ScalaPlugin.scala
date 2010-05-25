@@ -174,7 +174,7 @@ class ScalaPlugin extends PlayPlugin {
     settings.outputDirs.setSingleOutput(virtualDirectory)
     settings.deprecation.value = true
     settings.classpath.value = System.getProperty("java.class.path")
-    settings.debuginfo.value = "line"
+    settings.debuginfo.value = "vars"
     settings.debug.value = false
     settings.dependenciesFile.value = "none"
     private val compiler = new Global(settings, reporter)
