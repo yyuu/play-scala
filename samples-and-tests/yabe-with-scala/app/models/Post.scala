@@ -5,7 +5,7 @@ import java.util.{Date,TreeSet,Set=>JSet,List=>JList,ArrayList}
 //jpa annotations 
 import play.db.jpa._
 //validations
-import play.data.Validation._
+import play.data.Validators._
 
 @Entity
 class Post(

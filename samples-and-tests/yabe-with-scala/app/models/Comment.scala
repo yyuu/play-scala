@@ -3,10 +3,10 @@ package models
 import java.util._
  
 import play.db.jpa._
-import play.data.Validation._
+import play.data.Validators._
 
 @Entity
-class Comment(
+class Comment (
        
        @ManyToOne
        @Required

@@ -1,7 +1,7 @@
 package models
 
 import play.db.jpa._
-import play.data.Validation._
+import play.data.Validators._
 
 import java.util._
 
@@ -12,7 +12,7 @@ import java.util._
     @Required var name: String,
     @Required var birthdate: Date,
     @Required @Email var email: String
-) extends Model 
+) extends Model
 
 object Contacts extends QueryOn[Contact] 
 
