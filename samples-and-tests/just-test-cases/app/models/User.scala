@@ -1,11 +1,10 @@
 package models
  
 import java.util._
-import javax.persistence._
  
 import play.db.jpa._
-import play.data.validation._
- 
+import play.data.Validation._
+
 @Entity
 @Table(uniqueConstraints=Array(new UniqueConstraint(columnNames=Array("email"))))
 class User(

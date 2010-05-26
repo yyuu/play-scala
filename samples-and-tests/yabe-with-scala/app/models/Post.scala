@@ -1,11 +1,12 @@
 package models
  
 import java.util.{Date,TreeSet,Set=>JSet,List=>JList,ArrayList}
-import javax.persistence._
  
+//jpa annotations 
 import play.db.jpa._
-import play.data.validation._
- 
+//validations
+import play.data.Validation._
+
 @Entity
 class Post(
 

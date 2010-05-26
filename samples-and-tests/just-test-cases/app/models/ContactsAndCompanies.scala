@@ -4,7 +4,6 @@ import play.db.jpa._
 import play.data.validation._
 
 import java.util._
-import javax.persistence._
 
 
 @Entity class Contact(	

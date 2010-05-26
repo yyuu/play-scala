@@ -1,10 +1,9 @@
 package models
 
 import play.db.jpa._
-import play.data.validation._
+import play.data.Validation._
 
 import java.util._
-import javax.persistence._
 
 // ~~~ Contact
 

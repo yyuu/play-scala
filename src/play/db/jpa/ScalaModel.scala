@@ -1,7 +1,5 @@
 package play.db.jpa
 
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id
 import javax.persistence.MappedSuperclass
 import java.lang.annotation.Annotation
 import play.data.validation.Validation
