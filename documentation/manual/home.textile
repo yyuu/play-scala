@@ -111,7 +111,10 @@ h3.  Scala Models have the following characteristics:
 
 here is an example:
 
-bc.. @Entity
+bc.. import play.db.jpa._
+import play.data.Validators._
+
+@Entity
 class User(
   //fields
 
@@ -130,8 +133,10 @@ class User(
     override def toString = email
 }
 object User extends QueryOn[User] {
-//extra finder methods (if any) come here
+//placeholder extra finder methods (if any) 
 }
+
+p(note). Notice the two import statements. Due to changes in scala 2.8 rc2, the previous versions (ie *import play.data.validations._* and *import javax.persistence._*) are no longer working
 
 h3. <a>Running queries against Models</a>
 

@@ -20,7 +20,7 @@ package play {
 
       //javax.persistence field
       type  Basic = persistence.Basic  @field
-      type  Column = persistence.Column  @field
+      type  Column = persistence.Column @field
       type  ColumnResult = persistence.ColumnResult  @field
       type  Embedded = persistence.Embedded  @field
       type  EmbeddedId = persistence.EmbeddedId  @field
