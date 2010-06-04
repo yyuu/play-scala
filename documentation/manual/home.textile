@@ -41,7 +41,7 @@ As always, if you make a mistake, play will just show you the error in a perfect
 
 !images/scala-error!
 
-h2. <a>Direct return types</a>
+h2. <a>Return type inference</a>
 
 As shown above, you can directly use the inferred return type to send the action result. For example using a String:
 
@@ -67,7 +67,7 @@ bc. def index(name: String = "Guest") = <h1>Hello {name}</h1>
 
 This way if the **name** HTTP parameter is missing, play will use the default argument value.
 
-h2. <a>Controllers composition using traits</a>
+h2. <a>Controller composition using traits</a>
 
 A controller can use several traits to combine several interceptor.
 
@@ -133,7 +133,7 @@ class User(
     override def toString = email
 }
 object User extends QueryOn[User] {
-//placeholder extra finder methods (if any) 
+//placeholder for extra finder methods (if any) 
 }
 
 p(note). Notice the two import statements. Due to changes in scala 2.8 rc2, the previous versions (ie *import play.data.validations._* and *import javax.persistence._*) are no longer working
