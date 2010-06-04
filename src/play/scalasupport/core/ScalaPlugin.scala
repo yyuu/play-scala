@@ -16,6 +16,7 @@ import scala.collection.mutable.HashMap
 import scala.tools.nsc.io._
 
 import java.util.{List => JList}
+import java.net.URLClassLoader
 
 import org.scalatest.{Suite, Assertions}
 import org.scalatest.tools.ScalaTestRunner
@@ -174,6 +175,11 @@ class ScalaPlugin extends PlayPlugin {
     settings.outputDirs.setSingleOutput(virtualDirectory)
     settings.deprecation.value = true
     settings.classpath.value = System.getProperty("java.class.path")
+    
+    //adding anything in WEB-INF to the classpath.  this is for running in a servlet container
+    for(path <- this.getClass().getClassLoader().asInstanceOf[URLClassLoader].getURLs){
+        if(path.toString.matches(".*WEB-INF.*")) settings.classpath.value += System.getProperty("path.separator") + path.toString
+    }
     settings.debuginfo.value = "vars"
     settings.debug.value = false
     settings.dependenciesFile.value = "none"
