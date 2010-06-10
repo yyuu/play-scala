@@ -19,7 +19,7 @@ import play.WithEscape
  *
  * Represents a Scala based Controller
  */
-abstract class ScalaController extends ControllerDelegate with LocalVariablesSupport with ControllerSupport {
+private[mvc] abstract class ScalaController extends ControllerDelegate with LocalVariablesSupport with ControllerSupport {
   
   /**
    * implicit def to provider an easier way to render arguments 

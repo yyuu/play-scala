@@ -25,6 +25,7 @@ class CacheTests extends UnitTestCase with ShouldMatchersForJUnit {
             for(i <- 0 to 5) yield i
         } should be (Seq(0,1,2,3,4,5))
         Cache.get[String]("coco") should be (None)
+        Cache.get[String](null) should be (None)
         Cache.get[Seq[Int]]("coco") should be (Some(Seq(0,1,2,3,4,5)))
         
         // Wait a moment
