@@ -13,12 +13,14 @@ package play {
       //enums
       val CascadeType = CascadeTypeWrapper
       val LockModeType = LockModeTypeWrapper
+      val FetchType = FetchTypeWrapper
       //classes
       type Table = persistence.Table
       type Entity = persistence.Entity
       type Inheritance = persistence.Inheritance
 
       //javax.persistence field
+      type  AttributeOverrides = persistence.AttributeOverrides @field
       type  Basic = persistence.Basic  @field
       type  Column = persistence.Column @field
       type  ColumnResult = persistence.ColumnResult  @field

@@ -23,3 +23,9 @@ private [jpa] object LockModeTypeWrapper {
   final val PESSIMISTIC_FORCE_INCREMENT = persistence.LockModeType.PESSIMISTIC_FORCE_INCREMENT
   final val NONE = persistence.LockModeType.NONE
 }
+
+private[jpa] object FetchTypeWrapper {
+  final val EAGER = persistence.FetchType.EAGER
+  final val LAZY = persistence.FetchType.LAZY
+}
+
