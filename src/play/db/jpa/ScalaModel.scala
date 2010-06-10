@@ -6,9 +6,10 @@ import play.data.validation.Validation
 /**
 * this class wraps around the the basic JPA model implementation.
 * it was really needed due to the differences on how java and scala are handling fluid APIs
+* this is made available via type alias
 */
 @MappedSuperclass
-class ScalaModel extends JPABase {
+private[jpa] class ScalaModel extends JPABase {
  
   /**
   * holds entity managers
