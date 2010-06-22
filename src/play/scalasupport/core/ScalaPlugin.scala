@@ -69,10 +69,8 @@ class ScalaPlugin extends PlayPlugin {
     lastHash = 0
     compiler = new ScalaCompiler
   }
-  def eval(input: String, filename: String) {
-    compiler = new ScalaCompiler
-    compiler eval(input, filename)
-  }
+  
+  def eval(code: String): Any = compiler.eval(code)
 
   /**
    * compile all classes
@@ -132,8 +130,6 @@ class ScalaPlugin extends PlayPlugin {
     compile(sources)
   }
 
-
-
   // Compiler
   private var compiler: ScalaCompiler = _
 
@@ -151,14 +147,15 @@ class ScalaPlugin extends PlayPlugin {
     classes
   }
 
-
   private class ScalaCompiler {
+      
+    private def realOne(name: String) = if(name.equals("/eval")) null else realFiles.get(name).get
 
     // Errors reporter
     private val reporter = new Reporter() {
       override def info0(position: Position, msg: String, severity: Severity, force: Boolean) = {
         severity match {
-          case ERROR if position.isDefined => throw new CompilationException(realFiles.get(position.source.file.name).get, msg, position.line)
+          case ERROR if position.isDefined => throw new CompilationException(realOne(position.source.file.name), msg, position.line)
           case ERROR => throw new CompilationException(msg);
           case WARNING if position.isDefined => Logger.warn(msg + ", at line " + position.line + " of " + position.source)
           case WARNING => Logger.warn(msg)
@@ -206,10 +203,49 @@ class ScalaPlugin extends PlayPlugin {
     }
   
     //eval snippet on the fly
-    def eval(input: String, filename: String) {
-      val file =  new BatchSourceFile(new SFile(filename, new java.io.File(filename)), input)
+    def eval(code: String): Any = {
+        
+      // Compile code snippet
+      val script = "package interpreted { object Script { def execute = {\n" + code + "\n} } }"
+      println(script)
+      val file =  new BatchSourceFile("/eval", script)
       val run = new compiler.Run()
       run.compileSources(List(file))
+      
+      // Retrieve byte code
+      val compiledCode = new java.util.HashMap[String, Array[Byte]]
+      def scan(path: AbstractFile): Unit = {
+        path match {
+          case d: VirtualDirectory => path.iterator foreach scan
+          case d: SDirectory => path.iterator foreach scan
+          case f: VirtualFile =>
+            val byteCode = play.libs.IO.readContent(path.input)
+            val sourceFile = sourceFileFor(path.toString)
+            val className = path.toString.replace("(out)/", "").replace("/", ".").replace(".class", "")
+            if(className.startsWith("interpreted.")) {
+               compiledCode.put(className, byteCode) 
+            }
+          case _ => 
+        }
+      }
+      virtualDirectory.iterator foreach scan
+      
+      // Build a fake classloader
+      val fakeLoader = new ClassLoader(Play.classloader) {
+         override def loadClass(name: String, resolve: Boolean) = {
+             if(name.startsWith("interpreted.")) {
+                 val bytecode = compiledCode.get(name)
+                 super.defineClass(name, bytecode, 0, bytecode.length)
+             }
+             super.loadClass(name, resolve)
+         }
+      }
+      
+      // Run the script
+      val scriptClass = fakeLoader.loadClass("interpreted.Script")
+      val result = scriptClass.getDeclaredMethod("execute").invoke(null)
+      
+      return result
     }
 
     // Retrieve the source file for a scala compiled class
@@ -367,11 +403,9 @@ class ScalaPlugin extends PlayPlugin {
 }
 
 object OnTheFly {
-
-  val plugin = new ScalaPlugin
   
-  def eval(input: String, filename: String = "Scrapbook.scala") {
-    plugin.eval(input, filename)
+  def eval(code: String): Any = {
+    play.Play.plugin(classOf[ScalaPlugin]).eval(code)
   }
 
 }
