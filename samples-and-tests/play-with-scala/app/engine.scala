@@ -1,4 +1,5 @@
 import scala.collection.mutable._
+import play.scalasupport.core.OnTheFly
 
 package object play_with_scala {
     
@@ -22,17 +23,26 @@ package env {
 
 package controllers {
     
+
     import play.mvc._
     import play_with_scala._
 
     object Application extends Controller {
+    
+      val input = """package play_with_scala
+                     class Scrapbook {
+                       println("hello world")
+                     }"""
 
         def index {
             env.Env.out set ListBuffer[String]()
-            new Scrapbook()
+            //OnTheFly.eval(input) 
+            val c = Class.forName("play_with_scala.Scrapbook")
+            c.newInstance()
             "results.html".render("results" -> env.Env.out.get)
         } 
 
     }
     
 }
+

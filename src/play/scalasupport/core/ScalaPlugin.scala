@@ -69,6 +69,10 @@ class ScalaPlugin extends PlayPlugin {
     lastHash = 0
     compiler = new ScalaCompiler
   }
+  def eval(input: String, filename: String) {
+    compiler = new ScalaCompiler
+    compiler eval(input, filename)
+  }
 
   /**
    * compile all classes
@@ -129,6 +133,7 @@ class ScalaPlugin extends PlayPlugin {
   }
 
 
+
   // Compiler
   private var compiler: ScalaCompiler = _
 
@@ -145,6 +150,7 @@ class ScalaPlugin extends PlayPlugin {
     detectChange()
     classes
   }
+
 
   private class ScalaCompiler {
 
@@ -197,6 +203,13 @@ class ScalaPlugin extends PlayPlugin {
       targets.clear()
       currentClasses.clear()
       realFiles.clear()
+    }
+  
+    //eval snippet on the fly
+    def eval(input: String, filename: String) {
+      val file =  new BatchSourceFile(new SFile(filename, new java.io.File(filename)), input)
+      val run = new compiler.Run()
+      run.compileSources(List(file))
     }
 
     // Retrieve the source file for a scala compiled class
@@ -349,6 +362,16 @@ class ScalaPlugin extends PlayPlugin {
       classes
     }
 
+  }
+
+}
+
+object OnTheFly {
+
+  val plugin = new ScalaPlugin
+  
+  def eval(input: String, filename: String = "Scrapbook.scala") {
+    plugin.eval(input, filename)
   }
 
 }
