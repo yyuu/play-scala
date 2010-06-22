@@ -92,8 +92,14 @@ class RenderMethodsTest extends FunctionalTestCase with Matchers{
       response contentTypeShouldBe ("text/html")
       response shouldBeOk()
       response contentShouldBe ("true")
+    }
     
-      
+    @Test
+    def testCatchAnnotation {
+      val response = GET("/CatchAnnotation/index")
+      response contentTypeShouldBe ("text/html")
+      response shouldBeOk()
+      response contentShouldBe ("Oops, got / by zero")
     }
 
 }
