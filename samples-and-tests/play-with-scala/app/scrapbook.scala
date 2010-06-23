@@ -1,7 +1,6 @@
-package play_with_scala
+package play_with_scala {
 
 class Scrapbook {
-        
     print( new User("Guillaume").sayYourName(10) )
     
     val r = 1 to 10
@@ -17,4 +16,6 @@ class User(val name:String) {
     
     def sayYourName(times: Int) = "I'm " + (for(i <- 0 until times) yield name).reduceLeft( _ + ", " + _ )
     
+}
+
 }

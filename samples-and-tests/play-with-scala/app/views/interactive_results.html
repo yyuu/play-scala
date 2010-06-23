@@ -13,10 +13,12 @@
         <h1>Play with scala</h1>
         <h2>— the easiest way to learn scala</h2>
         
-        <p>
-            Life’s too short to not play with scala. You've got the easiest way to learn it. Just edit the <a href="${play.utils.Utils.open('app/scrapbook.scala', 1)}">scrapbook.scala</a> file and refresh this page;
-	    it will execute the Scrapbook class and display all results of print(…) calls here.
-	    You can also <a href="@{Application.interactive}">interact</a> with your app if that is what you fancy.
+	<p>
+	<form action="@{Application.interactive}" method="POST">
+		  <textarea rows="20" cols="90" name="script">${script}</textarea> 
+		  <br>
+		<input type="submit" value="Submit" />	
+	  </form>	  
         </p> 
         
         <div id="results">

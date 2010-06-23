@@ -207,7 +207,7 @@ class ScalaPlugin extends PlayPlugin {
         
       // Compile code snippet
       val script = "package interpreted { object Script { def execute = {\n" + code + "\n} } }"
-      println(script)
+      println("snippet being compiled on the fly:"+script)
       val file =  new BatchSourceFile("/eval", script)
       val run = new compiler.Run()
       run.compileSources(List(file))

@@ -13,6 +13,18 @@ package object play_with_scala {
     
 }
 
+package object interpreted {
+    
+    def println(v: Any) {
+        env.Env.out.get += v.toString
+    }
+    
+    def print(v: Any) {
+        println(v)
+    }
+    
+}
+
 package env {
     
     object Env {        
@@ -29,20 +41,32 @@ package controllers {
 
     object Application extends Controller {
     
-      val input = """package play_with_scala
-                     class Scrapbook {
-                       println("hello world")
-                     }"""
+        def interactive(script: String = "println(\"hello scala!\")") {
+            env.Env.out set ListBuffer[String]()
+            if(request.method == "POST" && script != null) {
+              try {
+                OnTheFly.eval(script) 
+              } catch { case e: Exception => env.Env.out.get += getStackTrace(e) }
+            }
+            "interactive_results.html".render("results" -> env.Env.out.get, "script"->script)
+        } 
 
         def index {
             env.Env.out set ListBuffer[String]()
-            //OnTheFly.eval(input) 
             val c = Class.forName("play_with_scala.Scrapbook")
-            c.newInstance()
+                        c.newInstance()
             "results.html".render("results" -> env.Env.out.get)
         } 
 
+        private def getStackTrace(aThrowable: Throwable ) = {
+          import java.io._
+          val result = new StringWriter
+          val printWriter = new PrintWriter(result)
+          aThrowable.printStackTrace(printWriter)
+          result.toString
+        }
     }
+
     
 }
 
