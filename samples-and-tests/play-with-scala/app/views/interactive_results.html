@@ -29,6 +29,13 @@
             #{/list}
         </div>
         
+        #{if error}
+            <div id="error">
+                <h3>Oops, ${error.message}</h3>
+                <div class="print">${script.split('\n')[error.line-2]}</div>
+            </div>
+        #{/if}
+        
         <h3>Resources,</h3>
         
         <p>

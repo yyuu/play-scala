@@ -46,7 +46,9 @@ package controllers {
             if(request.method == "POST" && script != null) {
               try {
                 OnTheFly.eval(script) 
-              } catch { case e: Exception => env.Env.out.get += getStackTrace(e) }
+              } catch { 
+                case e: Exception => "interactive_results.html".render("error" -> e, "trace" -> getStackTrace(e), "script" -> script) 
+              }
             }
             "interactive_results.html".render("results" -> env.Env.out.get, "script"->script)
         } 
@@ -54,7 +56,7 @@ package controllers {
         def index {
             env.Env.out set ListBuffer[String]()
             val c = Class.forName("play_with_scala.Scrapbook")
-                        c.newInstance()
+            c.newInstance()
             "results.html".render("results" -> env.Env.out.get)
         } 
 
