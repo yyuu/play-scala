@@ -206,7 +206,7 @@ class ScalaPlugin extends PlayPlugin {
     def eval(code: String): Any = {
         
       // Compile code snippet
-      val script = "package interpreted { object Script { \n" + code + "\n def execute=None \n}  }"
+      val script = "package interpreted {\n object Script { \n" + code + "\n def execute=None \n}\n  }"
       println("\n----------------\n"+script)
       val file =  new BatchSourceFile("/eval", script)
       val run = new compiler.Run()
