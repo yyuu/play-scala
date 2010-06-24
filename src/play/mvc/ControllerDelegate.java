@@ -1,6 +1,7 @@
 package play.mvc;
 
 import play.mvc.Controller;
+import play.mvc.Router.ActionDefinition;
 
 import java.io.InputStream;
 import java.io.File;
@@ -142,6 +143,10 @@ abstract class ControllerDelegate {
 
     public void waitFor(Future task) {
         Controller.waitFor(task);
+    }
+    
+    public ActionDefinition reverse() {
+        return Controller.reverse();
     }
     
     // ~~~~ 

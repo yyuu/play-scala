@@ -101,5 +101,13 @@ class RenderMethodsTest extends FunctionalTestCase with Matchers{
       response shouldBeOk()
       response contentShouldBe ("Oops, got / by zero")
     }
+    
+    @Test
+    def testReverseByName {
+      val response = GET("/Application/reverseByName")
+      response contentTypeShouldBe ("text/plain")
+      response shouldBeOk()
+      response contentShouldBe ("GET /application/anotherindex?nimp=19 (/application/anotherindex?nimp=19)")
+    }
 
 }

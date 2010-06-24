@@ -96,13 +96,18 @@ private[mvc] abstract class ScalaController extends ControllerDelegate with Loca
       renderHtml(node.toString)
   }
 
-
   /**
    * renders content using the underlying templating language
    * @param args
    */
   def render(args: Any*) {
       renderTemplate(ScalaController.argsToParams(args: _*))
+  }
+  
+  def reverse(action: => Any): play.mvc.Router.ActionDefinition = {
+      val actionDefinition = reverse()
+      action
+      actionDefinition
   }
   
 }

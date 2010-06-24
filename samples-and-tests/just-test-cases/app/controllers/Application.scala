@@ -140,5 +140,11 @@ object Application extends Controller with Secure {
     
     def captcha = Images.captcha
     
+    def reverseByName {
+        print("Reverse...")
+        val action = reverse(anotherIndex(19))
+        val andUrl = reverse(anotherIndex(19)).url
+        renderText(action.method + " " + action.url + " (" + andUrl + ")")
+    }
     
 }
