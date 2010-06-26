@@ -42,14 +42,16 @@ package controllers {
     object Application extends Controller {
     
         def interactive(script: String = "println(\"hello scala!\")") {
-            env.Env.out set ListBuffer[String]()
-            if(request.method == "POST" && script != null) {
-              try {
-                OnTheFly.eval(script) 
-              } catch { 
-                case e: Exception => "interactive_results.html".render("error" -> e, "trace" -> getStackTrace(e), "script" -> script) 
+              env.Env.out set ListBuffer[String]()
+              if(request.method == "POST" && script != null) {
+                try {
+                synchronized{
+                 OnTheFly.eval(script) 
+                 }
+                } catch { 
+                  case e: Exception => "interactive_results.html".render("error" -> e, "trace" -> getStackTrace(e), "script" -> script) 
+                }
               }
-            }
             "interactive_results.html".render("results" -> env.Env.out.get, "script"->script)
         } 
 
@@ -59,6 +61,7 @@ package controllers {
             c.newInstance()
             "results.html".render("results" -> env.Env.out.get)
         } 
+  
 
         private def getStackTrace(aThrowable: Throwable ) = {
           import java.io._
