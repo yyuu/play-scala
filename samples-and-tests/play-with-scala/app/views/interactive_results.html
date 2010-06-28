@@ -32,8 +32,12 @@
         #{if error}
             <div id="error">
 		<h3>Oops, ${error.message}</h3>
-		%{if (script.split('\n').size()>=2) {    %}	
-                	<div class="print">${script.split('\n')[error.line-3]}</div>
+		%{if (script.split('\n').size()>=2) { 
+			try{    %}	
+                		<div class="print">${script.split('\n')[error.line-3]}</div>
+			%{ } catch (Exception ex) { }%
+                		<div class="print">${trace}</div>
+			%{ } }%
 		%{ } else{   }%
                 	<div class="print">${script}</div>
 		%{ } }%
