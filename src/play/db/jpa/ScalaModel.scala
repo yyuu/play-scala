@@ -11,20 +11,20 @@ import play.data.validation.Validation
 @MappedSuperclass
 private[jpa] class ScalaModel extends JPABase {
  
-  /**
+   /**
   * holds entity managers
   */
   def em() = JPA.em()
 
   /**
-  * refreshes current instance 
+  * refreshes current instance
   * @return current type
   */
   def refresh(): this.type = {
-    em().refresh(this) 
+    em().refresh(this)
     this
   }
-  
+
   /**
   * merges current instance
   * @return current type
@@ -33,13 +33,13 @@ private[jpa] class ScalaModel extends JPABase {
     em().merge(this)
     this
   }
-  
+
   /**
   * saves current instance
   * @return current type
   */
   def save(): this.type = {
-    _save() 
+    _save()
     this
   }
 
@@ -48,10 +48,10 @@ private[jpa] class ScalaModel extends JPABase {
   * @return current type
   */
   def delete(): this.type = {
-    _delete() 
+    _delete()
     this
   }
-  
+
 
   /**
   * edit current instance, this is mainly used by CRUD. Apps are usually using save.
@@ -62,11 +62,11 @@ private[jpa] class ScalaModel extends JPABase {
   def edit(name: String, params: java.util.Map[String,Array[String]]): this.type = {
      JPASupport.edit(this, name, params, Array[Annotation]())
      this
-  } 
+  }
 
   /**
   * valides before saving
-  * @return true if validation and saving were sucessfull, otherwise returns false 
+  * @return true if validation and saving were sucessfull, otherwise returns false
   */
 
   def validateAndSave(): Boolean = {

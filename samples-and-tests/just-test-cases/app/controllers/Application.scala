@@ -111,7 +111,7 @@ object Application extends Controller with Secure {
         
         info("Yop %d", 9)
         
-        val users = QueryOn[User].find("byPassword", "88style").fetch
+        val users = asScala[User].find("byPassword", "88style").fetch
         
         response <<< OK
         response <<< "YOUHOUxxx" 

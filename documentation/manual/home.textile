@@ -146,12 +146,33 @@ bc. User.count
 
 or if you want to run a complex find query with bindings, that would look something like this:
 
-bc. QueryOn[Post].find("select distinct p.id from Post p join p.tags as t where t.name in (:tags) group by p.id having count(t.id) = :size", Map("tags" -> tags.toArray, "size" -> tags.size)).fetch
+bc. Post.find("select distinct p.id from Post p join p.tags as t where t.name in (:tags) group by p.id having count(t.id) = :size", Map("tags" -> tags.toArray, "size" -> tags.size)).fetch
 
-Another approach to access models is to utilize *play.db.jpa.QueryOn* object, so using the previous example: *User.count* becomes *QueryOn[User].count* 
 
-p(note). Usually, it's recommended to use the companinon object form to provide query functionality (ie. User.count). The main advantage of the more generic *QueryOn* approach is that it's working with both *scala and java* models. 
+h2. <a>Interoperability with Java Models</a>
 
+Due to differences in how static methods are handled in Scala and Java, we needed to introduce a few workarounds to make the Scala API look nice. Unfortunately, the workarounds meant that Java models do not work absolutely seamlessly from scala controllers/jobs (ie. calls like *JPost.findAll()* or *jpost.save()* will fail). Not all is lost though, with a little effort you can convert your Java models into Scala ones.   
+
+
+h3. How to query Java Models
+
+bc. import play.db.jpa.asScala
+import models._
+asScala[JUser].findAll
+asScala[JPost].find("select distinct p.id from Post p join p.tags as t where t.name in (:tags) group by p.id having count(t.id) = :size", Map("tags" -> tags.toArray, "size" -> tags.size)).fetch
+
+h3. How to manage an instance
+
+bc. import play.db.jpa.asScala
+import models._
+//this implicit conversion is imported in most packages by default
+import play.db.jpa.asScala.enrichJavaModel 
+val u  = new JUser("peter@gmail.com","secret","my name").asScala[JUser].save()
+
+or
+
+bc. val u = new JUser("peter@gmail.com","secret","my name")
+u.asScala.save()
 
 h2. <a>Cache API</a>
 

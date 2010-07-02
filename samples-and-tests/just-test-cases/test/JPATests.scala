@@ -4,12 +4,22 @@ import org.junit._
 import org.scalatest.junit._
 import org.scalatest._
 import org.scalatest.matchers._
-
+import play.db.jpa.asScala.enrichJavaModel
+import play.db.jpa.asScala
 import models._
 
 class JPATests extends UnitFlatSpec with ShouldMatchers {
     
     Fixtures.deleteAll()
+    
+    "Java model" should "behave semi-normal" in {
+      val u = new JUser("peter@gmail.com","secret","peter").asScala[JUser].save()
+      u.email should be ("peter@gmail.com")
+      u.email = "nopeter@gmail.com"
+      u.asScala.save()
+      u.email should be ("nopeter@gmail.com")
+      asScala[JUser].findAll.size should be (1)
+    }
     
     "Hibernate" should "save the new User" in {    
         
