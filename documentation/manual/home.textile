@@ -140,7 +140,7 @@ p(note). Notice the two import statements. Due to changes in scala 2.8 rc2, the 
 
 h3. <a>Running queries against Models</a>
 
-"The API":http://github.com/guillaumebort/play-scala/blob/master/src/play/db/jpa/QueryOn.scala is really similar to the java so, so for example to count the number of users, you can just call count on the User class (assuming you defined the appropriate companion object):
+"The API":http://github.com/guillaumebort/play-scala/blob/master/src/play/db/jpa/QueryOn.scala is really similar to the java one so, for example to count the number of users, you can just call count on the User class (assuming you defined the appropriate companion object):
 
 bc. User.count
 
