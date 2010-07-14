@@ -5,16 +5,6 @@ package play.utils
  */
 trait Scala {
  
- /**
-  * fixing resource closing for scala.io.Source.fromURL
-  * @param url to read from
-  * @param readTimeout
-  * @param connectionTimeOut
-  */
-  def fromURL(url: java.net.URL)(implicit codec: io.Codec = io.Codec.default): io.Source = {
-    val inputStream = url.openStream()
-    io.Source.fromInputStream(inputStream, close = () => inputStream.close())(codec)
-  }
 
  /**
   * adding timeout handling and fixing resource closing for scala.io.Source.fromURL
@@ -29,7 +19,7 @@ trait Scala {
     conn.setReadTimeout(readTimeout)
     conn.setConnectTimeout(connectionTimeOut)
     val inputStream = conn.getInputStream
-    fromInputStream(inputStream,DefaultBufSize, null,() => inputStream.close())
+    fromInputStream(inputStream)
    }
 
 
