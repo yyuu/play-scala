@@ -151,7 +151,7 @@ class ScalaPlugin extends PlayPlugin {
 
   private class ScalaCompiler {
       
-    private def realOne(name: String) = if(name.equals("/eval")) null else realFiles.get(name).get
+    private def realOne(name: String) = if(name.equals("/eval")) null else realFiles.get(name.stripPrefix(File.separator)).get
 
     // Errors reporter
     private val reporter = new Reporter() {
@@ -255,7 +255,7 @@ class ScalaPlugin extends PlayPlugin {
       for (sf <- targets.keySet) {
         for (cf <- targets.get(sf)) {
           if (cf.equals(clazzFile)) {
-            return realFiles.get(sf).get.asInstanceOf[VFile]
+            return realFiles.get(sf.stripPrefix(File.separator)).get.asInstanceOf[VFile]
           }
         }
       }
@@ -275,7 +275,7 @@ class ScalaPlugin extends PlayPlugin {
             for (df <- dependencies.get(sf)) {
               val dvf = VFile.open(new java.io.File(df))
               if (tFile.equals(dvf)) {
-                val trcf = realFiles.get(sf).get.asInstanceOf[VFile]
+                val trcf = realFiles.get(sf.stripPrefix(File.separator)).get.asInstanceOf[VFile]
                 transitiveClosure(recompile, trcf)
               }
             }
@@ -293,9 +293,9 @@ class ScalaPlugin extends PlayPlugin {
       // BatchSources
       var sourceFiles = toRecompile.toList map {
         vfile =>
-          val name = vfile.relativePath
+          val name = vfile.relativePath.stripPrefix(File.separator)
           realFiles.put(name, vfile)
-          new BatchSourceFile(new SFile(name, vfile.getRealFile()), vfile.contentAsString)
+          new BatchSourceFile(new SFile(name, vfile.getRealFile), vfile.contentAsString)
       }
 
       // Clear compilation results
