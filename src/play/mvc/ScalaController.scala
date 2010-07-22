@@ -90,6 +90,7 @@ private[mvc] abstract class ScalaController extends ControllerDelegate with Loca
   def renderXml(node: NodeSeq) {
       renderXml(node.toString)
   }
+  
   /**
    * renders an xml node as html
    * @param node xml node to be rendered

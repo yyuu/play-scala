@@ -37,6 +37,8 @@ import javax.print.attribute.standard.Severity
  */
 class ScalaPlugin extends PlayPlugin {
   var lastHash = 0
+  
+  override def addTemplateExtensions(): JList[String] = List("play.scalasupport.templates.TemplateExtensions")
 
   /**
    * Scanning both java and scala sources for compilation

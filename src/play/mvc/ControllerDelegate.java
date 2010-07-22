@@ -49,6 +49,10 @@ abstract class ControllerDelegate {
     public void renderXml(String xml) {
         Controller.renderXml(xml);
     }
+    
+    public void renderXml(org.w3c.dom.Document xml) {
+        Controller.renderXml(xml);
+    }
 
     public void renderJSON(String json) {
         Controller.renderJSON(json);
