@@ -60,7 +60,7 @@ private[jpa] class ScalaModel extends JPABase {
   * @return current type
   */
   def edit(name: String, params: java.util.Map[String,Array[String]]): this.type = {
-     JPASupport.edit(this, name, params, Array[Annotation]())
+     GenericModel.edit(this, name, params, Array[Annotation]())
      this
   }
 
