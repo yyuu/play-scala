@@ -8,4 +8,5 @@ eclipse
 dist
 *.pyc
 documentation/api
+samples-and-tests/i-am-a-developer/i-am-working-here
 .scala_dependencies

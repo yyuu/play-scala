@@ -35,11 +35,11 @@ def after(**kargs):
 
     # ~~~~~~~~~~~~~~~~~~~~~~ new
     if command == 'new':
-        os.remove(os.path.join(app.path, 'app/controllers/Application.java'))
+        shutil.rmtree(os.path.join(app.path, 'app/controllers'))
+        shutil.rmtree(os.path.join(app.path, 'app/models'))
         module_dir = inspect.getfile(inspect.currentframe()).replace("commands.py", "")
-        if not os.path.exists(os.path.join(app.path, 'app/controllers/Application.scala')):
-            shutil.copyfile(os.path.join(module_dir, 'resources', 'Application.scala'),
-                            os.path.join(app.path, 'app', 'controllers', 'Application.scala'))
+        shutil.copyfile(os.path.join(module_dir, 'resources', 'controllers.scala'), os.path.join(app.path, 'app', 'controllers.scala'))
+        shutil.copyfile(os.path.join(module_dir, 'resources', 'models.scala'), os.path.join(app.path, 'app', 'models.scala'))
 
     # ~~~~~~~~~~~~~~~~~~~~~~ Eclipsify
     if command == 'ec' or command == 'eclipsify':

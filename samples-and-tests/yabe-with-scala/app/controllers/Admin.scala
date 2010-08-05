@@ -12,11 +12,9 @@ object Admin extends Controller with Defaults with Secure {
         render("posts" -> Posts.find("author", connectedUser).fetch)
     }
     
-    def form(id: Long) {
-        Posts.findById(id) match {
-            case Some(x) => render("post" -> x)
-            case None => render()
-        }
+    def form(id: Long) {        
+        for(p <- Posts.findById(id)) render("post" -> p)
+        render()
     }
     
     def save(id: Long, title: String, content: String, tags: String) {
