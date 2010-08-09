@@ -34,7 +34,6 @@ class IamADeveloper(unittest.TestCase):
         self.assert_(os.path.exists(os.path.join(self.working_directory, 'yop')))
         self.assert_(os.path.exists(os.path.join(self.working_directory, 'yop/app')))
         self.assert_(os.path.exists(os.path.join(self.working_directory, 'yop/app/controllers.scala')))
-        self.assert_(os.path.exists(os.path.join(self.working_directory, 'yop/app/models.scala')))
         self.assert_(os.path.exists(os.path.join(self.working_directory, 'yop/app/views')))
         self.assert_(os.path.exists(os.path.join(self.working_directory, 'yop/app/views/Application')))
         self.assert_(os.path.exists(os.path.join(self.working_directory, 'yop/app/views/Application/index.html')))
@@ -135,6 +134,30 @@ class IamADeveloper(unittest.TestCase):
         response = browser.reload()
         html = response.get_data()  
         self.assert_(html.count('Some(9)'))
+        
+        # Create a models.scala file
+        step('Create a models.scala file')
+        
+        create(app, 'app/models.scala')
+        insert(app, 'app/models.scala', 1, 'package models')   
+        insert(app, 'app/models.scala', 2, 'object A { def name = "COUCOU" }')  
+        response = browser.reload()
+        html = response.get_data()  
+        self.assert_(html.count('Some(9)')) 
+        
+        # Use a model
+        step('Use a model')
+        edit(app, 'app/controllers.scala', 9, '        models.A.name')   
+        response = browser.reload()
+        html = response.get_data()  
+        self.assert_(html.count('COUCOU'))
+        
+        # Change model method return type
+        step('Change model method return type')
+        edit(app, 'app/models.scala', 2, 'object A { def name = 88 }')  
+        response = browser.reload()
+        html = response.get_data()  
+        self.assert_(html.count('88'))
              
         # Stop the application
         step('Kill play')
@@ -234,5 +257,4 @@ def rename(app, fro, to):
 if __name__ == '__main__':
     playScript = sys.argv[1]
     sys.argv = [sys.argv[0]]
-    print playScript
     unittest.main()

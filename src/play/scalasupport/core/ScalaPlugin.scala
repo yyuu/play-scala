@@ -120,7 +120,7 @@ class ScalaPlugin extends PlayPlugin {
    * compile a class if a change was made.
    * @param modified classes that were modified
    */
-  override def onClassesChange(modified: JList[ApplicationClass]) {
+  override def onClassesChange(modified: JList[ApplicationClass]) = {
     val sources = new java.util.ArrayList[VFile]
     modified foreach {
       cl: ApplicationClass =>
