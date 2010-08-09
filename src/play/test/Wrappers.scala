@@ -13,7 +13,6 @@ trait Browser {
   //TODO: remove these wrappers after play-core refactoring
   val APPLICATION_X_WWW_FORM_URLENCODED = F.APPLICATION_X_WWW_FORM_URLENCODED
   val MULTIPART_FORM_DATA = F.MULTIPART_FORM_DATA
-  def redirectInsteadOfCall() = F.redirectInsteadOfCall()
   def GET(url: String) = F.GET(url)
   def DELETE(url: String) = F.DELETE(url)
   def PUT(url: String, contenttype: String, body: String) = F.PUT(url, contenttype, body)

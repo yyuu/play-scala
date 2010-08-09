@@ -68,6 +68,12 @@
     
     <target name="test" depends="build">
         <echo message="Using ${play.path}/play" />
+        
+        <echo message="Testing development lifecycle (wait ...)" />
+
+        <exec executable="${basedir}/samples-and-tests/i-am-a-developer/tests.py" failonerror="true">
+            <arg value="${play.path}/play"/>
+        </exec>
 
         <antcall target="play-test">
             <param name="testAppPath" value="${basedir}/samples-and-tests/just-test-cases"/>
