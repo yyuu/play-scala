@@ -20,7 +20,7 @@ import java.util.concurrent.Future;
  *
  */
 @Deprecated
-abstract class ControllerDelegate {
+public abstract class ControllerDelegate {
     
     public void renderTemplate(String template, Object... args) {
         Controller.renderTemplate(template, args);
