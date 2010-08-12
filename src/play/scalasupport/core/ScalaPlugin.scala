@@ -17,6 +17,7 @@ import scala.tools.nsc.io._
 
 import java.util.{List => JList}
 import java.net.URLClassLoader
+import java.io.{PrintStream, ByteArrayOutputStream}
 
 import org.scalatest.{Suite, Assertions}
 import org.scalatest.tools.ScalaTestRunner
@@ -36,6 +37,7 @@ import javax.print.attribute.standard.Severity
  * - When a modification to a scala file destroy some types (however if the type was anonymous we try to keep the compiler anyway)
  */
 class ScalaPlugin extends PlayPlugin {
+    
   var lastHash = 0
   
   override def addTemplateExtensions(): JList[String] = List("play.scalasupport.templates.TemplateExtensions")
@@ -173,14 +175,10 @@ class ScalaPlugin extends PlayPlugin {
     private val virtualDirectory = new SDirectory("(out)", None)
 
     // Compiler
-    private class SettingsWithMake(val makeSetting: String) extends Settings {
-       make.asInstanceOf[ChoiceSetting].value = makeSetting
-    }
-    private val settings = new SettingsWithMake("transitive")
+    private val settings = new Settings()
     settings.outputDirs.setSingleOutput(virtualDirectory)
     settings.deprecation.value = true
-    settings.classpath.value = System.getProperty("java.class.path")
-    
+    settings.classpath.value = System.getProperty("java.class.path")    
     //adding anything in WEB-INF to the classpath.  this is for running in a servlet container
     for(path <- this.getClass().getClassLoader().asInstanceOf[URLClassLoader].getURLs){
         if(path.toString.matches(".*WEB-INF.*")) settings.classpath.value += System.getProperty("path.separator") + path.toString
@@ -188,6 +186,7 @@ class ScalaPlugin extends PlayPlugin {
     settings.debuginfo.value = "vars"
     settings.debug.value = false
     settings.dependenciesFile.value = "none"
+    settings.make.value = "transitive" // We set it transitive to have the dependencies generated.
     private val compiler = new Global(settings, reporter)
 
     // Dependencies
@@ -209,7 +208,6 @@ class ScalaPlugin extends PlayPlugin {
         
       // Compile code snippet
       val script = "package interpreted {\n object Script { \n" + code + "\n def execute=None \n}\n  }"
-      println("\n----------------\n"+script)
       val file =  new BatchSourceFile("/eval", script)
       val run = new compiler.Run()
       run.compileSources(List(file))
@@ -300,9 +298,9 @@ class ScalaPlugin extends PlayPlugin {
 
       // Clear compilation results
       compiler.dependencyAnalysis.dependencies = compiler.dependencyAnalysis.newDeps
-      toRecompile.toList map {
+      toRecompile.toList foreach {
         vfile =>
-          val name = vfile.relativePath
+          val name = vfile.relativePath.stripPrefix(File.separator)
           val toDiscard = targets.get(name)
           if (toDiscard != null) {
             for (d <- toDiscard) {
@@ -310,14 +308,16 @@ class ScalaPlugin extends PlayPlugin {
             }
           }
       }
-      //compiler.reloadSources(sourceFiles)
 
       // Compile
       if (!toRecompile.isEmpty()) {
 
-        play.Logger.info("Compiling %s", toRecompile)
+        play.Logger.trace("Compiling %s", toRecompile)
 
-        run.compileSources(sourceFiles)
+        // The scala compiler use too much of println!!!
+        Console.withOut(new PrintStream(new ByteArrayOutputStream())) {
+            run.compileSources(sourceFiles)
+        }    
 
         // Build dependencies
         val deps = compiler.dependencyAnalysis.dependencies
@@ -349,7 +349,6 @@ class ScalaPlugin extends PlayPlugin {
           case d: VirtualDirectory => path.iterator foreach scan
           case d: SDirectory => path.iterator foreach scan
           case f: VirtualFile if currentClasses.contains(path.toString) =>
-
             val byteCode = play.libs.IO.readContent(path.input)
             val sourceFile = sourceFileFor(path.toString)
             val className = path.toString.replace("(out)/", "").replace("/", ".").replace(".class", "")
@@ -370,7 +369,7 @@ class ScalaPlugin extends PlayPlugin {
             applicationClass.compiled(byteCode)
             classes.add(applicationClass)
 
-          case _ => //println("DISCARDED -> " + path)
+          case _ => 
         }
       }
       virtualDirectory.iterator foreach scan

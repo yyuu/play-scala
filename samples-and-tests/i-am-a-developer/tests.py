@@ -135,6 +135,8 @@ class IamADeveloper(unittest.TestCase):
         html = response.get_data()  
         self.assert_(html.count('Some(9)'))
         
+        time.sleep(1)
+        
         # Create a models.scala file
         step('Create a models.scala file')
         
@@ -145,16 +147,51 @@ class IamADeveloper(unittest.TestCase):
         html = response.get_data()  
         self.assert_(html.count('Some(9)')) 
         
+        time.sleep(1)
+        
         # Use a model
         step('Use a model')
+        
         edit(app, 'app/controllers.scala', 9, '        models.A.name')   
         response = browser.reload()
         html = response.get_data()  
         self.assert_(html.count('COUCOU'))
         
+        time.sleep(1)
+        
         # Change model method return type
         step('Change model method return type')
+        
         edit(app, 'app/models.scala', 2, 'object A { def name = 88 }')  
+        response = browser.reload()
+        html = response.get_data()  
+        self.assert_(html.count('88'))
+        
+        time.sleep(1)
+        
+        # Change model type name
+        step('Change model type name')
+        
+        edit(app, 'app/models.scala', 2, 'object AAA { def name = 88 }')  
+        try:
+            browser.reload()
+            self.fail()
+        except urllib2.HTTPError, error:
+            self.assert_(browser.viewing_html())
+            self.assert_(browser.title() == 'Application error')
+            html = ''.join(error.readlines())
+            self.assert_(html.count('Compilation error'))
+            self.assert_(html.count('value A is not a member of package models'))
+            self.assert_(html.count('In /app/controllers.scala (around line 9)'))          
+            self.assert_(waitFor(self.play, 'ERROR ~'))
+            self.assert_(waitFor(self.play, 'Compilation error (In /app/controllers.scala around line 9)'))
+            self.assert_(waitFor(self.play, 'value A is not a member of package models'))
+            self.assert_(waitFor(self.play, 'at Invocation.HTTP Request(Play!)'))
+            
+        # Update controller
+        step('Update controller')    
+        
+        edit(app, 'app/controllers.scala', 9, '        models.AAA.name')   
         response = browser.reload()
         html = response.get_data()  
         self.assert_(html.count('88'))
