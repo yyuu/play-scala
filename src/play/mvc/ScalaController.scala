@@ -41,7 +41,7 @@ private[mvc] abstract class ScalaController extends ControllerDelegate with Loca
   /**
    * implicit def to wrap a String as template name 
    */
-  implicit def stringAsTemplate(x: String) = new StringAsTemplate(x)
+  implicit def stringAsTemplateName(x: String) = new StringAsTemplate(x)
 
   /**
    * implicit def to wrap response into an Option
@@ -86,6 +86,7 @@ private[mvc] abstract class ScalaController extends ControllerDelegate with Loca
   /**
    * renders an xml node as xml
    * @param node xml node to be rendered
+   * @deprecated
    */
   def renderXml(node: NodeSeq) {
       renderXml(node.toString)
@@ -94,6 +95,7 @@ private[mvc] abstract class ScalaController extends ControllerDelegate with Loca
   /**
    * renders an xml node as html
    * @param node xml node to be rendered
+   * @deprecated
    */
   def renderHtml(node: NodeSeq) {
       renderHtml(node.toString)
@@ -102,6 +104,7 @@ private[mvc] abstract class ScalaController extends ControllerDelegate with Loca
   /**
    * renders content using the underlying templating language
    * @param args
+   * @deprecated
    */
   def render(args: Any*) {
       renderTemplate(ScalaController.argsToParams(args: _*))

@@ -10,26 +10,20 @@ import models._
 
 object Application extends Controller {
     
-    def index { 
-        render("now" -> new Date)
+    def index = {
+        __("now" -> new Date)    
     }
     
-    def list {
-        render("contacts" -> Contacts.find("order by name, firstname").fetch)
+    def list = {
+        __("contacts" -> Contacts.find("order by name, firstname").fetch) 
+    }
+       
+    def form(id: Long) = {
+        __("contact" -> Contacts.findById(id).orNull)
     }
     
-    def form(id: Long) {
-        Contacts.findById(id) match {
-            case Some(x) => render("contact" -> x)
-            case None => render()
-        }
-    }
-    
-    def save(@Valid contact: Contact) {
-        if (contact.validateAndSave()) {
-            list
-        }
-        if (request.isAjax) error("Invalid Value") else "@form".render(contact)
+    def save(@Valid contact: Contact) = {
+        if (contact.validateAndSave()) @@(list) else if (request.isAjax) BadRequest else "@form".__(contact)
     }
 
 }

@@ -99,7 +99,7 @@ class IamADeveloper(unittest.TestCase):
         # Change index action result
         step('Change index action result')
         
-        edit(app, 'app/controllers.scala', 9, '        renderText("Coucou")')   
+        edit(app, 'app/controllers.scala', 8, '        def index = Text("Coucou")')   
         response = browser.reload()
         html = response.get_data()
         self.assert_(html.count('Coucou'))
@@ -109,8 +109,7 @@ class IamADeveloper(unittest.TestCase):
         # Try return type inference
         step('Try return type inference')
         
-        edit(app, 'app/controllers.scala', 8, '    def index = {')  
-        edit(app, 'app/controllers.scala', 9, '        "Bob"')   
+        edit(app, 'app/controllers.scala', 8, '     def index = "Bob"')    
         response = browser.reload()
         html = response.get_data()
         self.assert_(html.count('Bob'))
@@ -120,7 +119,7 @@ class IamADeveloper(unittest.TestCase):
         # Change return type
         step('Change return type')
         
-        edit(app, 'app/controllers.scala', 9, '        9')   
+        edit(app, 'app/controllers.scala', 8, ' def index = 9')   
         response = browser.reload()
         html = response.get_data()      
         self.assert_(html.count('9'))
@@ -130,7 +129,7 @@ class IamADeveloper(unittest.TestCase):
         # Change return type again
         step('Change return type again')
         
-        edit(app, 'app/controllers.scala', 9, '        Some(9)')   
+        edit(app, 'app/controllers.scala', 8, '  def index = Some(9)')   
         response = browser.reload()
         html = response.get_data()  
         self.assert_(html.count('Some(9)'))
@@ -152,7 +151,7 @@ class IamADeveloper(unittest.TestCase):
         # Use a model
         step('Use a model')
         
-        edit(app, 'app/controllers.scala', 9, '        models.A.name')   
+        edit(app, 'app/controllers.scala', 8, ' def index = models.A.name')   
         response = browser.reload()
         html = response.get_data()  
         self.assert_(html.count('COUCOU'))
@@ -182,16 +181,16 @@ class IamADeveloper(unittest.TestCase):
             html = ''.join(error.readlines())
             self.assert_(html.count('Compilation error'))
             self.assert_(html.count('value A is not a member of package models'))
-            self.assert_(html.count('In /app/controllers.scala (around line 9)'))          
+            self.assert_(html.count('In /app/controllers.scala (around line 8)'))          
             self.assert_(waitFor(self.play, 'ERROR ~'))
-            self.assert_(waitFor(self.play, 'Compilation error (In /app/controllers.scala around line 9)'))
+            self.assert_(waitFor(self.play, 'Compilation error (In /app/controllers.scala around line 8)'))
             self.assert_(waitFor(self.play, 'value A is not a member of package models'))
             self.assert_(waitFor(self.play, 'at Invocation.HTTP Request(Play!)'))
             
         # Update controller
         step('Update controller')    
         
-        edit(app, 'app/controllers.scala', 9, '        models.AAA.name')   
+        edit(app, 'app/controllers.scala', 8, '  def index = models.AAA.name')   
         response = browser.reload()
         html = response.get_data()  
         self.assert_(html.count('88'))

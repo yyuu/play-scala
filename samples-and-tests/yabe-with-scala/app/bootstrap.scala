@@ -3,8 +3,7 @@ import play.test._
 
 import models._
  
-@OnApplicationStart
-class Bootstrap extends Job {
+@OnApplicationStart class Bootstrap extends Job {
  
     override def doJob {
         if(Users.count == 0) {

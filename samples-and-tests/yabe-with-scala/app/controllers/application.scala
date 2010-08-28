@@ -13,8 +13,7 @@ import models._
  */
 trait Defaults extends Controller {
     
-    @Before
-    def setDefaults {
+    @Before def setDefaults {
         renderArgs += "blogTitle" -> configuration("blog.title")
         renderArgs += "blogBaseline" -> configuration("blog.baseline") 
     }
@@ -23,16 +22,16 @@ trait Defaults extends Controller {
 
 object Application extends Controller with Defaults {
  
-    def index { 
+    def index = {
         val frontPost = Posts.find("order by postedAt desc").first.orNull
         val olderPosts = Posts.find("from Post order by postedAt desc").from(1).fetch
-        render(frontPost, olderPosts)
+        __(frontPost, olderPosts)
     }
     
-    def show(id: Long) { 
+    def show(id: Long) = { 
         val post = Posts.findById(id).getOrNotFound
         val randomID = Codec.UUID
-        render(post, randomID)
+        __(post, randomID)
     }
     
     def postComment(
@@ -41,7 +40,7 @@ object Application extends Controller with Defaults {
         @Required(message="A message is required") content: String, 
         @Required(message="Please type the code") code: String, 
         randomID: String
-    ) {
+    ) = {
         val post = Posts.findById(postId).getOrNotFound
         
         Play.id match {            
@@ -50,24 +49,25 @@ object Application extends Controller with Defaults {
         }  
         
         if(Validation.hasErrors) {
-            "@show".render(post, randomID)
+            "@show".__(post, randomID)
+        } else {
+            post.addComment(author, content)        
+            flash.success("Thanks for posting %s", author)        
+            @@(show(postId))
         }
         
-        post.addComment(author, content)        
-        flash.success("Thanks for posting %s", author)        
-        show(postId)
     }
     
-    def captcha(id: String) {
+    def captcha(id: String) = {
         val captchaInstance = Images.captcha
         val code = captchaInstance.getText("#E4EAFD")
         Cache.set(id, code, "30min")
-        renderBinary(captchaInstance)
+        captchaInstance
     }
     
-    def listTagged(tag: String) {
+    def listTagged(tag: String) = {
         val posts = Posts.findTaggedWith(tag)
-        render(tag, posts)
+        __(tag, posts)
     }
  
 }

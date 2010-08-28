@@ -5,8 +5,6 @@ import play.mvc._
 
 object Application extends Controller {
     
-    def index {
-        render()
-    }
+    def index = __
     
 }

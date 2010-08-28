@@ -87,7 +87,7 @@ object Application extends Controller with Secure {
     }
     
     def test {        
-        response <<< OK
+        response <<< 200
         response <<< "text/plain"
         response <<< ("X-Test" -> "Yop")
         response <<< """|Hello World

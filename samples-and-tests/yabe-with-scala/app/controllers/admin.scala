@@ -8,14 +8,9 @@ import models._
 
 object Admin extends Controller with Defaults with Secure {
  
-    def index {
-        render("posts" -> Posts.find("author", connectedUser).fetch)
-    }
+    def index = __("posts" -> Posts.find("author", connectedUser).fetch)
     
-    def form(id: Long) {        
-        for(p <- Posts.findById(id)) render("post" -> p)
-        render()
-    }
+    def form(id: Long) = __("post" -> Posts.findById(id).orNull)        
     
     def save(id: Long, title: String, content: String, tags: String) {
         val post = if(id == 0) new Post(connectedUser, title, content) else Posts.findById(id).getOrNotFound
@@ -31,10 +26,11 @@ object Admin extends Controller with Defaults with Secure {
         }
         
         if(post.validateAndSave()) {
-            index
+            @@(index)
+        } else {
+            "@form".__(post)
         }
         
-        "@form".render(post)
     }
     
 }
@@ -43,10 +39,10 @@ object Admin extends Controller with Defaults with Secure {
 
 trait Secure extends Controller {
     
-    @Before def check {        
+    @Before def check = {        
         session("user") match {
-            case Some(email) => renderArgs += "user" -> Users.find("byEmail", email).first.getOrNotFound
-            case None => Authentication.login
+            case Some(email) => renderArgs += "user" -> Users.find("byEmail", email).first.getOrNotFound; Continue
+            case None => @@(Authentication.login)
         }
     }
     
@@ -56,33 +52,31 @@ trait Secure extends Controller {
 
 trait AdminOnly extends Secure {
     
-    @Before def checkAdmin {
-        if(!connectedUser.isAdmin) forbidden
+    @Before def checkAdmin = {
+        if(!connectedUser.isAdmin) Forbidden else Continue
     }
     
 }
 
 object Authentication extends Controller {
     
-    def login {
-        render()
-    }
+    def login = __
     
-    def authenticate(username: String, password: String) {
+    def authenticate(username: String, password: String) = {
         Users.connect(username, password) match {
             case Some(u) => session.put("user", u.email)
-                            Admin.index
+                            @@(Admin.index)
                             
-            case None => flash.error("Oops, bad email or password")
-                         flash.put("username", username)
-                         login
+            case None    => flash.error("Oops, bad email or password")
+                            flash.put("username", username)
+                            @@(login)
         }
     }
     
-    def logout {
+    def logout = {
         session.clear()
         flash.success("You have been disconnected")
-        login
+        @@(login)
     }
     
 }
