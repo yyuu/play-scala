@@ -86,27 +86,24 @@ private[mvc] abstract class ScalaController extends ControllerDelegate with Loca
   /**
    * renders an xml node as xml
    * @param node xml node to be rendered
-   * @deprecated
    */
-  def renderXml(node: NodeSeq) {
+  @deprecated("Return value Xml() instead") def renderXml(node: NodeSeq) {
       renderXml(node.toString)
   }
   
   /**
    * renders an xml node as html
    * @param node xml node to be rendered
-   * @deprecated
    */
-  def renderHtml(node: NodeSeq) {
+  @deprecated("Return value Html() instead") def renderHtml(node: NodeSeq) {
       renderHtml(node.toString)
   }
 
   /**
    * renders content using the underlying templating language
    * @param args
-   * @deprecated
    */
-  def render(args: Any*) {
+  @deprecated("Return value Template() instead") def render(args: Any*) {
       renderTemplate(ScalaController.argsToParams(args: _*))
   }
   

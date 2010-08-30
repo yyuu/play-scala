@@ -39,6 +39,11 @@ def after(**kargs):
         shutil.rmtree(os.path.join(app.path, 'app/models'))
         module_dir = inspect.getfile(inspect.currentframe()).replace("commands.py", "")
         shutil.copyfile(os.path.join(module_dir, 'resources', 'controllers.scala'), os.path.join(app.path, 'app', 'controllers.scala'))
+        ac = open(os.path.join(app.path, 'conf/application.conf'), 'r')
+        conf = ac.read()
+        conf = conf + '\n# Disable auto-redirect for scala. It will be the default in the 1.0 version of the scala module\nscala.enableAutoRedirect=false\n'
+        ac = open(os.path.join(app.path, 'conf/application.conf'), 'w')
+        ac.write(conf)
 
     # ~~~~~~~~~~~~~~~~~~~~~~ Eclipsify
     if command == 'ec' or command == 'eclipsify':

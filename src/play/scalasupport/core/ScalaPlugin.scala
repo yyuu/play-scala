@@ -133,6 +133,12 @@ class ScalaPlugin extends PlayPlugin {
     }
     compile(sources)
   }
+  
+  override def onConfigurationRead {
+      if(!Play.configuration.getProperty("scala.enableAutoRedirect", "true").equals("false")) {
+          Logger.warn("Automatic action redirect is deprecated for scala controllers. Add 'scala.enableAutoRedirect=false' to your application.conf file to disable it. Note that it will be the default in the final release.")
+      }
+  }
 
   // Compiler
   private var compiler: ScalaCompiler = _
