@@ -43,7 +43,7 @@ private[cache] object ScalaCache extends CacheDelegate {
    private def prefixed(key:String)="__"+key
 
    def get[T](key:String,window:String,expiration:String)(getter: => Option[T]):Option[T]={
-     val cacheIt= (v:T) =>  {println("v is "+v.toString);set(prefixed(key), v,parseDuration(expiration) + parseDuration(window) + "s" )
+     val cacheIt= (v:T) =>  {set(prefixed(key), v,parseDuration(expiration) + parseDuration(window) + "s" )
                              set(key, v,expiration)
                              v}
      get(key).orElse(getter.map(cacheIt)).orElse(get(prefixed(key)))
@@ -52,7 +52,7 @@ private[cache] object ScalaCache extends CacheDelegate {
   import scala.actors.Actor._
   import scala.actors._
   private val cacheActor=
-                actor{link{ loop{ react{case Exit(from: Actor, exc: Exception) => {error(exc.toString); from.restart()}}}}
+                actor{link{ loop{ react{case Exit(from: Actor, exc: Exception) => {play.Logger.warn(exc.toString); from.restart()}}}}
 		      loop{
                         react{
                           case (key:String,window:String,expiration:String,f) => get(key,window,expiration){f.asInstanceOf[Function0[Option[Any]]]()}
