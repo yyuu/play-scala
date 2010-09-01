@@ -21,6 +21,8 @@ private[cache] object ScalaCache extends CacheDelegate {
         None
       }
     }
+
+    
   
     /**
      *  retrieves value from Cache based on the type parameter
@@ -29,6 +31,7 @@ private[cache] object ScalaCache extends CacheDelegate {
      *  @param expiration expiration period
      */
     def get[T](key: String, expiration: String)(getter: => T): T = {
+        import play.libs.Time._
         get(key) match {
             case Some(x) => x
             case None => val r = getter
@@ -36,5 +39,30 @@ private[cache] object ScalaCache extends CacheDelegate {
                          r
         }
     }
-    
+   import play.libs.Time._
+   private def prefixed(key:String)="__"+key
+
+   def get[T](key:String,window:String,expiration:String)(getter: => Option[T]):Option[T]={
+     val cacheIt= (v:T) =>  {println("v is "+v.toString);set(prefixed(key), v,parseDuration(expiration) + parseDuration(window) + "s" )
+                             set(key, v,expiration)
+                             v}
+     get(key).orElse(getter.map(cacheIt)).orElse(get(prefixed(key)))
+   }
+
+  import scala.actors.Actor._
+  import scala.actors._
+  private val cacheActor=
+                actor{link{ loop{ react{case Exit(from: Actor, exc: Exception) => {error(exc.toString); from.restart()}}}}
+		      loop{
+                        react{
+                          case (key:String,window:String,expiration:String,f) => get(key,window,expiration){f.asInstanceOf[Function0[Option[Any]]]()}
+                          case  _ => None}}}
+
+   private def getFromCache[T](key:String)=Option(_impl.get(key).asInstanceOf[T])
+
+   def getAsync[T](key:String,expiration:String,window:String)(getter: => Option[T]):Option[T]={
+    def cacheIt(t: =>Option[T])= get(key,window,expiration)(t)
+     getFromCache[T](key).orElse(getFromCache[T](prefixed(key)).map(v=>{val _=cacheActor! (key,window,expiration,()=>getter);v})
+			 .orElse(cacheIt(getter))) 
+   }
 }
