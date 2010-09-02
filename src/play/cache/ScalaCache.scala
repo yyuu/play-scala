@@ -55,14 +55,27 @@ private[cache] object ScalaCache extends CacheDelegate {
                 actor{link{ loop{ react{case Exit(from: Actor, exc: Exception) => {play.Logger.warn(exc.toString); from.restart()}}}}
 		      loop{
                         react{
-                          case (key:String,window:String,expiration:String,f) => get(key,window,expiration){f.asInstanceOf[Function0[Option[Any]]]()}
+                          case (f:Function0[_]) => reply(f.asInstanceOf[Function0[Option[Any]]]())
                           case  _ => None}}}
 
    private def getFromCache[T](key:String)=Option(_impl.get(key).asInstanceOf[T])
+   private def getFromCache1(key:String):Option[_]=Option(_impl.get(key))
 
    def getAsync[T](key:String,expiration:String,window:String)(getter: => Option[T]):Option[T]={
-    def cacheIt(t: =>Option[T])= get(key,window,expiration)(t)
-     getFromCache[T](key).orElse(getFromCache[T](prefixed(key)).map(v=>{val _=cacheActor! (key,window,expiration,()=>getter);v})
+    
+     def scheduleOrIgnore(key:String,f:Function0[_]){
+       case class Caching() 
+       getFromCache1("___"+key).orElse
+           {val future =(cacheActor.!!( f,{
+              case v:Option[_] =>{cacheIt(v.asInstanceOf[Option[T]]); set("___"+key,None,"10s")}
+              case _ => ()
+            }))
+             None
+          }
+   }
+
+     def cacheIt(t: =>Option[T])= get(key,window,expiration)(t)
+     getFromCache[T](key).orElse(getFromCache[T](prefixed(key)).map(v=>{scheduleOrIgnore(key,()=>getter);v})
 			 .orElse(cacheIt(getter))) 
    }
 }
