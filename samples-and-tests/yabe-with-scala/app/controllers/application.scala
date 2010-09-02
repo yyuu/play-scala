@@ -25,13 +25,13 @@ object Application extends Controller with Defaults {
     def index = {
         val frontPost = Posts.find("order by postedAt desc").first.orNull
         val olderPosts = Posts.find("from Post order by postedAt desc").from(1).fetch
-        __(frontPost, olderPosts)
+        Template(frontPost, olderPosts)
     }
     
     def show(id: Long) = { 
         val post = Posts.findById(id).getOrNotFound
         val randomID = Codec.UUID
-        __(post, randomID)
+        Template(post, randomID)
     }
     
     def postComment(
@@ -49,7 +49,7 @@ object Application extends Controller with Defaults {
         }  
         
         if(Validation.hasErrors) {
-            "@show".__(post, randomID)
+            "@show".Template(post, randomID)
         } else {
             post.addComment(author, content)        
             flash.success("Thanks for posting %s", author)        
@@ -67,7 +67,7 @@ object Application extends Controller with Defaults {
     
     def listTagged(tag: String) = {
         val posts = Posts.findTaggedWith(tag)
-        __(tag, posts)
+        Template(tag, posts)
     }
  
 }

@@ -8,9 +8,9 @@ import models._
 
 object Admin extends Controller with Defaults with Secure {
  
-    def index = __("posts" -> Posts.find("author", connectedUser).fetch)
+    def index = Template("posts" -> Posts.find("author", connectedUser).fetch)
     
-    def form(id: Long) = __("post" -> Posts.findById(id).orNull)        
+    def form(id: Long) = Template("post" -> Posts.findById(id).orNull)        
     
     def save(id: Long, title: String, content: String, tags: String) {
         val post = if(id == 0) new Post(connectedUser, title, content) else Posts.findById(id).getOrNotFound
@@ -28,7 +28,7 @@ object Admin extends Controller with Defaults with Secure {
         if(post.validateAndSave()) {
             @@(index)
         } else {
-            "@form".__(post)
+            "@form".Template(post)
         }
         
     }
@@ -60,7 +60,7 @@ trait AdminOnly extends Secure {
 
 object Authentication extends Controller {
     
-    def login = __
+    def login = Template
     
     def authenticate(username: String, password: String) = {
         Users.connect(username, password) match {
