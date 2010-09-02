@@ -55,14 +55,14 @@ package object mvc {
         def Redirect(url: String)                       = new Redirect(url)
         def Redirect(url: String, permanent: Boolean)   = new Redirect(url, permanent)
         def Template                                    = new ScalaRenderTemplate()
-        def Template(args: Any*)                        = new ScalaRenderTemplate(null, ScalaController.argsToParams(args: _*))
+        def Template(args: Any*)                        = new ScalaRenderTemplate(args =  ScalaController.argsToParams(args: _*))
         def Action(action: => Any)                      = new ScalaAction(action)
         def Continue                                    = new NoResult()
 
         // -- Shortcuts
         def @@(action: => Any)                          = Action(action)
         def ^                                           = new ScalaRenderTemplate()
-        def ^(args: Any*)                               = new ScalaRenderTemplate(null, ScalaController.argsToParams(args: _*))
+        def ^(args: Any*)                               = new ScalaRenderTemplate(args = ScalaController.argsToParams(args: _*))
         
         // -- TYPES REDEFINITION
 
