@@ -5,6 +5,6 @@ import play.mvc._
 
 object Application extends Controller {
     
-    def index = ^
+    def index = Template
     
 }

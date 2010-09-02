@@ -24,18 +24,17 @@ import play._
 import play.mvc._
  
 object Application extends Controller {
-  def index = render()
+  def index = Template
 }
 
-It is very close to the Java version of the default Application controller.
-
-Now just run the application as usual using **play run** and it will display the standard welcome page. Now just edit the **Application.scala** file to replace the **render()** call:
+In the scala version functions always return values (usually wrapped inside a Template or Action method call). 
+Now just run the application as usual using **play run** and it will display the standard welcome page. Now just edit the **Application.scala** file to replace the **Template** call:
 
 bc. def index = "Hello scala!"
 
 Refresh the page, and see the magic. 
 
-p(note). if you prefer a more explicit style you can use **renderHtml** method to directly write to the response object
+p(note). if you prefer a more explicit style you can return **Html("Hello scala")** 
 
 As always, if you make a mistake, play will just show you the error in a perfect way; (it's just more difficult now to forget the trailing semicolon)
 
@@ -51,7 +50,7 @@ And you can even use the built-in XML support to write XHTML in a literal way:
 
 bc. def index = <h1>Hello world</h1>
 
-If the return type looks like a binary stream, play will automatically use **renderBinary()**. So generating a captcha image using the built-in Captcha helper can be written as:
+If the return type looks like a binary stream, play will automatically render the response as binary. So generating a captcha image using the built-in Captcha helper can be written as:
 
 bc. def index = Images.captcha
 
