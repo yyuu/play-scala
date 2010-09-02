@@ -12,7 +12,7 @@ object Admin extends Controller with Defaults with Secure {
     
     def form(id: Long) = Template("post" -> Posts.findById(id).orNull)        
     
-    def save(id: Long, title: String, content: String, tags: String) {
+    def save(id: Long, title: String, content: String, tags: String) =  {
         val post = if(id == 0) new Post(connectedUser, title, content) else Posts.findById(id).getOrNotFound
         
         post.title = title
@@ -26,7 +26,7 @@ object Admin extends Controller with Defaults with Secure {
         }
         
         if(post.validateAndSave()) {
-            @@(index)
+            Action(index)
         } else {
             "@form".Template(post)
         }
@@ -42,7 +42,7 @@ trait Secure extends Controller {
     @Before def check = {        
         session("user") match {
             case Some(email) => renderArgs += "user" -> Users.find("byEmail", email).first.getOrNotFound; Continue
-            case None => @@(Authentication.login)
+            case None => Action(Authentication.login)
         }
     }
     
@@ -65,18 +65,18 @@ object Authentication extends Controller {
     def authenticate(username: String, password: String) = {
         Users.connect(username, password) match {
             case Some(u) => session.put("user", u.email)
-                            @@(Admin.index)
+                            Action(Admin.index)
                             
             case None    => flash.error("Oops, bad email or password")
                             flash.put("username", username)
-                            @@(login)
+                            Action(login)
         }
     }
     
     def logout = {
         session.clear()
         flash.success("You have been disconnected")
-        @@(login)
+        Action(login)
     }
     
 }

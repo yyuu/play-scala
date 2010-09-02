@@ -53,7 +53,7 @@ object Application extends Controller with Defaults {
         } else {
             post.addComment(author, content)        
             flash.success("Thanks for posting %s", author)        
-            @@(show(postId))
+            Action(show(postId))
         }
         
     }

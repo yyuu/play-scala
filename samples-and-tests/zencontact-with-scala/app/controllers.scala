@@ -23,7 +23,7 @@ object Application extends Controller {
     }
     
     def save(@Valid contact: Contact) = {
-        if (contact.validateAndSave()) @@(list) else if (request.isAjax) BadRequest else "@form".Template(contact)
+        if (contact.validateAndSave()) Action(list) else if (request.isAjax) BadRequest else "@form".Template(contact)
     }
 
 }
