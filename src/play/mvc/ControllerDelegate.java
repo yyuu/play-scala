@@ -260,7 +260,10 @@ public abstract class ControllerDelegate {
     }
     
     public static RenderTemplate _renderTemplate(String template, Map<String,Object> args) {
-        try {
+	try{    
+	  if (template == null)
+	    Controller.renderTemplate(args);
+	  else
             Controller.renderTemplate(template, args);
         } catch(Throwable t) {
             if(t instanceof RenderTemplate) {
@@ -274,24 +277,7 @@ public abstract class ControllerDelegate {
         return null;
     }
     
-    public static RenderTemplate _renderTemplate(Map<String,Object> args) {
-        try {
-            Controller.renderTemplate(args);
-        } catch(Throwable t) {
-            if(t instanceof RenderTemplate) {
-                return (RenderTemplate)t;
-            }
-            if(t instanceof RuntimeException) {
-                throw (RuntimeException)t;
-            }
-            throw new UnexpectedException(t);
-        }
-        return null;
-    }
     
-    public static RenderTemplate _renderTemplate() {
-        return _renderTemplate(new HashMap<String,Object>());
-    }
     
     /**
      * @Deprecated

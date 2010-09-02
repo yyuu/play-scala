@@ -37,11 +37,8 @@ private[mvc] class RichSession(val session: Session) {
 * Wrap a String as template name
 */
 private[mvc] class StringAsTemplate(val name: String) {
-    @deprecated("Use Template() or ^() instead") def render(args: Any*) { throw play.mvc.ControllerDelegate._renderTemplate(name, play.mvc.ScalaController.argsToParams(args: _*)) }
-    def Template(args: Any*) = play.mvc.ControllerDelegate._renderTemplate(name, play.mvc.ScalaController.argsToParams(args: _*))
-    def Template = play.mvc.ControllerDelegate._renderTemplate(name, new java.util.HashMap[java.lang.String,java.lang.Object])
-    def ^ = Template
-    def ^(args: Any*) = Template(args: _*)
+    def asTemplate(args: Any*) = new results.ScalaRenderTemplate(name,ScalaController.argsToParams(args: _*))
+    def asTemplate = new results.ScalaRenderTemplate(name)
 }
 
 private[mvc] class OptionWithResults[T](val o: Option[T]) {

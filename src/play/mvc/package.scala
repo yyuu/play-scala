@@ -54,13 +54,15 @@ package object mvc {
         def Text(content: Any)                          = new RenderText(if(content != null) content.toString else "")
         def Redirect(url: String)                       = new Redirect(url)
         def Redirect(url: String, permanent: Boolean)   = new Redirect(url, permanent)
-        def Template                                    = ControllerDelegate._renderTemplate()
-        def Template(args: Any*)                        = ControllerDelegate._renderTemplate(ScalaController.argsToParams(args: _*))
-        def ^                                          = Template
-        def ^(args: Any*)                              = Template(args: _*)
-        def Action(action: => Any)                      = { val actionDefinition = ControllerDelegate._reverse(); action; new Redirect(actionDefinition.url) }
-        def @@(action: => Any)                          = Action(action)
+        def Template                                    = new ScalaRenderTemplate()
+        def Template(args: Any*)                        = new ScalaRenderTemplate(null, ScalaController.argsToParams(args: _*))
+        def Action(action: => Any)                      = new ScalaAction(action)
         def Continue                                    = new NoResult()
+
+        // -- Shortcuts
+        def @@(action: => Any)                          = Action(action)
+        def ^                                           = new ScalaRenderTemplate()
+        def ^(args: Any*)                               = new ScalaRenderTemplate(null, ScalaController.argsToParams(args: _*))
         
         // -- TYPES REDEFINITION
 

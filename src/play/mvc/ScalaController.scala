@@ -116,7 +116,7 @@ private[mvc] abstract class ScalaController extends ControllerDelegate with Loca
 }
 
 object ScalaController {
-    
+
     def argsToParams(args: Any*) = {
         val params = new java.util.HashMap[String,AnyRef]
         for(o <- args) {
