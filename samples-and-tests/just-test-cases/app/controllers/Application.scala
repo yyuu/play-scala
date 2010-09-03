@@ -73,17 +73,17 @@ object Application extends Controller with Secure {
         renderJSON(user)
     }
     
-    def simpleNameBinding {
+    def simpleNameBinding = {
         val name = "Yop"
-        "Application/displayName.html".render(name)
+        "Application/displayName.html".asTemplate(name)
     }
     
-    def complexNameBinding {
+    def complexNameBinding = {
         val name = "Yop"
         for (i <- 1 to 10) {
             name
         }
-        "Application/displayName.html".render(name)
+        "Application/displayName.html".asTemplate(name)
     }
     
     def test {        
@@ -130,11 +130,11 @@ object Application extends Controller with Secure {
         anotherIndex(name="Jojo") 
     }
     
-    def api = renderXml(<items><item id="3">Yop</item></items>) 
+    def api = Xml(<items><item id="3">Yop</item></items>) 
     
     def yop = "@index".render() 
     
-    def helloWorld = renderHtml(<h1>Hello world</h1>)
+    def helloWorld = Html(<h1>Hello world</h1>)
     
     def hello(name: String) = <h1>Hello { if(name != null) name else "Guest" }!</h1>
     
