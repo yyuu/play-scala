@@ -28,7 +28,7 @@ object Admin extends Controller with Defaults with Secure {
         if(post.validateAndSave()) {
             Action(index)
         } else {
-            "@form".Template(post)
+            "@form".asTemplate(post)
         }
         
     }
