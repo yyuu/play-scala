@@ -1,12 +1,11 @@
 package play.mvc.results
 
-import play.mvc.ControllerDelegate
 import play.mvc.Http
 import play.mvc.Http
 
 class ScalaAction(action: => Any) extends Result {
 
-  val actionDefinition = ControllerDelegate._reverse(); 
+  val actionDefinition = ScalaResultHelper._reverse()
   
   action 
   
