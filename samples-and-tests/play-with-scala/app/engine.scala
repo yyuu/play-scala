@@ -41,7 +41,7 @@ package controllers {
 
     object Application extends Controller {
     
-        def interactive(script: String = "println(\"hello scala!\")") {
+        def interactive(script: String = "println(\"hello scala!\")") = {
               env.Env.out set ListBuffer[String]()
               if(request.method == "POST" && script != null) {
                 try {
@@ -52,14 +52,14 @@ package controllers {
                   case e: Exception => "interactive_results.html".render("error" -> e, "trace" -> getStackTrace(e), "script" -> script) 
                 }
               }
-            "interactive_results.html".render("results" -> env.Env.out.get, "script"->script)
+            "interactive_results.html".asTemplate("results" -> env.Env.out.get, "script"->script)
         } 
 
         def index {
             env.Env.out set ListBuffer[String]()
             val c = Class.forName("play_with_scala.Scrapbook")
             c.newInstance()
-            "results.html".render("results" -> env.Env.out.get)
+            "results.html".asTemplate("results" -> env.Env.out.get)
         } 
   
 
