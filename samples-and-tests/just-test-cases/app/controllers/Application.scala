@@ -132,7 +132,7 @@ object Application extends Controller with Secure {
     
     def api = Xml(<items><item id="3">Yop</item></items>) 
     
-    def yop = "@index".render() 
+    def yop = "@index".asTemplate() 
     
     def helloWorld = Html(<h1>Hello world</h1>)
     

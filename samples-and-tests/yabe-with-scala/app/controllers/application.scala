@@ -49,7 +49,7 @@ object Application extends Controller with Defaults {
         }  
         
         if(Validation.hasErrors) {
-            "@show".Template(post, randomID)
+            "@show".asTemplate(post, randomID)
         } else {
             post.addComment(author, content)        
             flash.success("Thanks for posting %s", author)        
