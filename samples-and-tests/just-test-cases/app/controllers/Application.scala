@@ -142,8 +142,8 @@ object Application extends Controller with Secure {
     
     def reverseByName = {
         print("Reverse...")
-        val action = reverse(anotherIndex(19))
-        val andUrl = reverse(anotherIndex(19)).url
+        val action = Action(anotherIndex(19)).reversed
+        val andUrl = Action(anotherIndex(19)).url
         Text(action.method + " " + action.url + " (" + andUrl + ")")
     }
     

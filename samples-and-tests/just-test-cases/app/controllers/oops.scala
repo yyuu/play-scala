@@ -3,10 +3,10 @@ package xcontrollers
 import controllers._
 import play._
 import play.mvc._
-import play.data.validation._
 
 import java.util._
 import models._
+import play.data.validation.{Validation,Required}
 
 trait Defaults extends Controller {
     
@@ -65,7 +65,7 @@ object Urls extends Defaults {
        } else {
          // new code
        }
-       if (request.isAjax()) renderText(code)
+       if (request.isAjax()) Text(code)
        show(code)
    }
  }
