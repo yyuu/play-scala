@@ -63,14 +63,14 @@ object Application extends Controller with Secure {
      Seconds.secondsBetween(before,after).toStandardDuration.getStandardSeconds.toString
     }
 
-    def json1 {
+    def json1 = {
         val someJson = "{'name':'guillaume'}"
-        renderJSON(someJson)
+        JSON(someJson)
     }
     
-    def json2 {
+    def json2 = {
         val user = new User("guillaume@gmail.com", "12e", "Guillaume")
-        renderJSON(user)
+        JSON(user)
     }
     
     def simpleNameBinding = {
@@ -101,7 +101,7 @@ object Application extends Controller with Secure {
         response <<< <h1>Not found, sorry</h1>        
     }
     
-    def anotherIndex(@Min(10) nimp: Int = 5, @Required name: String = "Guillaume") {
+    def anotherIndex(@Min(10) nimp: Int = 5, @Required name: String = "Guillaume") = {
         println(nimp)
         println(request.path)
         val age = 59 
@@ -117,7 +117,7 @@ object Application extends Controller with Secure {
         response <<< "YOUHOUxxx" 
         response <<< "X-Yop" -> "hope"
         
-        render(name, age, yop, users)
+        Template(name, age, yop, users)
     }
     
     def addOne() {
@@ -140,11 +140,11 @@ object Application extends Controller with Secure {
     
     def captcha = Images.captcha
     
-    def reverseByName {
+    def reverseByName = {
         print("Reverse...")
         val action = reverse(anotherIndex(19))
         val andUrl = reverse(anotherIndex(19)).url
-        renderText(action.method + " " + action.url + " (" + andUrl + ")")
+        Text(action.method + " " + action.url + " (" + andUrl + ")")
     }
     
 }

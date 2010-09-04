@@ -45,6 +45,7 @@ package object mvc {
         def Error(status: Int, why: String)             = new Error(status, why)
         def BadRequest                                  = new BadRequest()
         def Unauthorized                                = new Unauthorized("Secure")
+        def Todo                                        = new NotFound("This action has not been implemented Yet")
         def Unauthorized(area: String)                  = new Unauthorized(area)
         def Html(html: Any)                             = new RenderHtml( if(html != null) html.toString else "" )
         def Xml(document: org.w3c.dom.Document)         = new RenderXml(document)

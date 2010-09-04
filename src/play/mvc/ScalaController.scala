@@ -20,7 +20,7 @@ import play.WithEscape
  *
  * Represents a Scala based Controller
  */
-private[mvc] abstract class ScalaController extends ControllerDelegate with LocalVariablesSupport with ControllerSupport {
+private[mvc] abstract class ScalaController extends LocalVariablesSupport with ControllerSupport {
 
   
   /**
@@ -83,35 +83,6 @@ private[mvc] abstract class ScalaController extends ControllerDelegate with Loca
    */
   def validation = Validation.current()
 
-  /**
-   * renders an xml node as xml
-   * @param node xml node to be rendered
-   */
-  @deprecated("Return value Xml() instead") def renderXml(node: NodeSeq) {
-      renderXml(node.toString)
-  }
-  
-  /**
-   * renders an xml node as html
-   * @param node xml node to be rendered
-   */
-  @deprecated("Return value Html() instead") def renderHtml(node: NodeSeq) {
-      renderHtml(node.toString)
-  }
-
-  /**
-   * renders content using the underlying templating language
-   * @param args
-   */
-  @deprecated("Return value Template() instead") def render(args: Any*) {
-      renderTemplate(ScalaController.argsToParams(args: _*))
-  }
-  
-  def reverse(action: => Any): play.mvc.Router.ActionDefinition = {
-      val actionDefinition = reverse()
-      action
-      actionDefinition
-  }
   
 }
 

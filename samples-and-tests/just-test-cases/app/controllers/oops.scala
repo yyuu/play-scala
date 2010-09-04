@@ -27,11 +27,9 @@ trait Defaults extends Controller {
  * Time: 18:53:36
  */
 object Urls extends Defaults {
- def index = {
-   render()
- }
+ def index = Template
 
- def form(id: Long) {
+ def form(id: Long) = {
    //if (!Secure.Security.isConnected()) Secure.login
    val code = "4"
    //checkOwner(page)
@@ -40,26 +38,26 @@ object Urls extends Defaults {
      map.put("url", code)
      renderArgs += "urlsite" -> Router.reverse("Pages.show", map).url
    }
-   render(code)
+   Template(code)
  }
 
- def list {
+ def list = {
    //val pages: Collection[Page] = user.pages
    val pages = "Page.all.fetch"
-   render(pages)
+   Template(pages)
  }
 
- def show(id: String) {
+ def show(id: String) = {
    val code = "Code findByCode id"
-   render(code)
+   Template(code)
  }
 
  /*
   Save an url
  */
- def save(id: Long, @Required url: String) {
+ def save(id: Long, @Required url: String) = {
    Validation.hasErrors match {
-     case true => if (request isAjax) error("Invalid Value") else render("@Application.index", url)
+     case true => if (request isAjax) Error("Invalid Value") else Template("@Application.index", url)
      case false =>
        var code = null
        if (id != 0) {

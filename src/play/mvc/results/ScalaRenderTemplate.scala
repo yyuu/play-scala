@@ -1,6 +1,5 @@
 package play.mvc.results
 
-import play.mvc.ControllerDelegate
 import play.mvc.Http
 import play.mvc.Http
 
