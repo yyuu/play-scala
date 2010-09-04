@@ -22,10 +22,11 @@ class ScalaResultHelper extends Controller{
     
     public static RenderTemplate _renderTemplate(String template, Map<String,Object> args) {
 	try{    
-	  if (template == null)
+	  if (template == null) {
 	    Controller.renderTemplate(args);
-	  else
+	  } else {
             Controller.renderTemplate(template, args);
+	  } 
         } catch(Throwable t) {
             if(t instanceof RenderTemplate) {
                 return (RenderTemplate)t;

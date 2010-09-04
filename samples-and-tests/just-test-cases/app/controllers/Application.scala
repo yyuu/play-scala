@@ -120,7 +120,7 @@ object Application extends Controller with Secure {
         Template(name, age, yop, users)
     }
     
-    def addOne() {
+    def addOne() = {
         val user = new User("guillaume@gmail.com", "88style", "Guillaume")
         user.save()
         index()
@@ -132,7 +132,7 @@ object Application extends Controller with Secure {
     
     def api = Xml(<items><item id="3">Yop</item></items>) 
     
-    def yop = "@index".asTemplate() 
+    def yop = "@index".asTemplate
     
     def helloWorld = Html(<h1>Hello world</h1>)
     
@@ -142,8 +142,8 @@ object Application extends Controller with Secure {
     
     def reverseByName = {
         print("Reverse...")
-        val action = Action(anotherIndex(19)).reversed
-        val andUrl = Action(anotherIndex(19)).url
+        val action = reverse(anotherIndex(19))
+        val andUrl = reverse(anotherIndex(19)).url
         Text(action.method + " " + action.url + " (" + andUrl + ")")
     }
     
