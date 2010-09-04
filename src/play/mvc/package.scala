@@ -53,6 +53,8 @@ package object mvc {
         def Json(json: String)                          = new RenderJson(json)
         def Json(o: Any)                                = new RenderJson(new com.google.gson.Gson().toJson(o))
         def Text(content: Any)                          = new RenderText(if(content != null) content.toString else "")
+        def Suspend(s:String)                           = new ScalaSuspend(s)
+        def Suspend(num:Int)                            = new ScalaSuspend(num)
         def Redirect(url: String)                       = new Redirect(url)
         def Redirect(url: String, permanent: Boolean)   = new Redirect(url, permanent)
         def Template                                    = new ScalaRenderTemplate()

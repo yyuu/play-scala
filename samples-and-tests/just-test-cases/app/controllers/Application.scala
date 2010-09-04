@@ -57,7 +57,7 @@ object Application extends Controller with Secure {
     def suspender() = {
      if (counter == 0) {
       counter = counter + 1
-      suspend("2s")
+      Suspend("2s")
      }
      val after = new DateTime()
      Seconds.secondsBetween(before,after).toStandardDuration.getStandardSeconds.toString
@@ -65,12 +65,12 @@ object Application extends Controller with Secure {
 
     def json1 = {
         val someJson = "{'name':'guillaume'}"
-        JSON(someJson)
+        Json(someJson)
     }
     
     def json2 = {
         val user = new User("guillaume@gmail.com", "12e", "Guillaume")
-        JSON(user)
+        Json(user)
     }
     
     def simpleNameBinding = {
