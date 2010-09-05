@@ -81,6 +81,7 @@ private[mvc] abstract class ScalaController extends ControllerDelegate with Loca
   def Continue                                    = new NoResult()
   def Suspend(s: String)                          = new ScalaSuspend(s)
   def Suspend(t: Int)                             = new ScalaSuspend(t)
+  def WaitFor(tasks: Future[_])                   = new ScalaWaitFor(tasks)
 
   // -- Shortcuts
   def @@(action: => Any)                          = Action(action)
