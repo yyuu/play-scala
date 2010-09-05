@@ -20,7 +20,7 @@ import play.WithEscape
  *
  * Represents a Scala based Controller
  */
-private[mvc] abstract class ScalaController extends Reversed with LocalVariablesSupport with ControllerSupport {
+private[mvc] abstract class ScalaController extends ControllerDelegate with LocalVariablesSupport with ControllerSupport {
 
   // -- Responses
   def Ok                                          = new Ok()
@@ -122,7 +122,12 @@ private[mvc] abstract class ScalaController extends Reversed with LocalVariables
    */
   def validation = Validation.current()
 
-  
+  def reverse(action: => Any): play.mvc.Router.ActionDefinition = {
+    val actionDefinition = reverse()
+    action
+    actionDefinition
+  }
+
 }
 
 object ScalaController {
