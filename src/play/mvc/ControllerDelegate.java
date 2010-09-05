@@ -17,26 +17,24 @@ import java.util.concurrent.Future;
  * 
  * provides java interop
  */
-@Deprecated 
 public abstract class ControllerDelegate {
 
     // ~~~~ 
     
-    public ActionDefinition reverse() {
-        return Controller.reverse();
-    }
-
     public static ActionDefinition reverseForScala() {
         return Controller.reverse();
     }
 
+    public ActionDefinition reverse() {
+        return Controller.reverse();
+    }
+    
     public static RenderTemplate renderTemplateForScala(String template, Map<String,Object> args) {
-        try{
-          if (template == null) {
-            Controller.renderTemplate(args);
-          } else {
+	try{    
+	  if (template == null)
+	    Controller.renderTemplate(args);
+	  else
             Controller.renderTemplate(template, args);
-          }
         } catch(Throwable t) {
             if(t instanceof RenderTemplate) {
                 return (RenderTemplate)t;
@@ -48,11 +46,11 @@ public abstract class ControllerDelegate {
         }
         return null;
     }
-
     
     /**
      * @Deprecated this method exists only for java interop, return a corresponding Result type (Template, Redirect, Suspend etc.) instead
      */
+    @Deprecated
     public void renderTemplate(String template, Object... args) {
         Controller.renderTemplate(template, args);
     }
@@ -60,6 +58,7 @@ public abstract class ControllerDelegate {
     /**
      * @Deprecated this method exists only for java interop, return a corresponding Result type (Template, Redirect, Suspend etc.) instead
      */    
+    @Deprecated
     public void renderTemplate(String template, Map<String,Object> args) {
         Controller.renderTemplate(template, args);
     }
@@ -67,6 +66,7 @@ public abstract class ControllerDelegate {
     /**
      * @Deprecated this method exists only for java interop, return a corresponding Result type (Template, Redirect, Suspend etc.) instead
      */    
+    @Deprecated
     public void renderTemplate(Map<String,Object> args) {
         Controller.renderTemplate(args);
     }
@@ -74,6 +74,7 @@ public abstract class ControllerDelegate {
     /**
      * @Deprecated this method exists only for java interop, return a corresponding Result type (Template, Redirect, Suspend etc.) instead
      */
+    @Deprecated
     public void renderText(Object text) {
         Controller.renderText(text);
     }
@@ -81,6 +82,7 @@ public abstract class ControllerDelegate {
     /**
      * @Deprecated this method exists only for java interop, return a corresponding Result type (Template, Redirect, Suspend etc.) instead
      */    
+    @Deprecated
     public void renderHtml(Object text) {
         Controller.renderHtml(text);
     }
@@ -88,6 +90,7 @@ public abstract class ControllerDelegate {
     /**
      * @Deprecated this method exists only for java interop, return a corresponding Result type (Template, Redirect, Suspend etc.) instead
      */
+    @Deprecated
     public void renderText(CharSequence pattern, Object... args) {
         Controller.renderText(pattern, args);
     }
@@ -95,6 +98,7 @@ public abstract class ControllerDelegate {
     /**
      * @Deprecated this method exists only for java interop, return a corresponding Result type (Template, Redirect, Suspend etc.) instead
      */
+    @Deprecated
     public void renderXml(String xml) {
         Controller.renderXml(xml);
     }
@@ -102,6 +106,7 @@ public abstract class ControllerDelegate {
     /**
      * @Deprecated this method exists only for java interop, return a corresponding Result type (Template, Redirect, Suspend etc.) instead
      */    
+    @Deprecated
     public void renderXml(org.w3c.dom.Document xml) {
         Controller.renderXml(xml);
     }
@@ -109,6 +114,7 @@ public abstract class ControllerDelegate {
     /**
      * @Deprecated this method exists only for java interop, return a corresponding Result type (Template, Redirect, Suspend etc.) instead
      */
+    @Deprecated
     public void renderJSON(String json) {
         Controller.renderJSON(json);
     }
@@ -116,6 +122,7 @@ public abstract class ControllerDelegate {
     /**
      * @Deprecated this method exists only for java interop, return a corresponding Result type (Template, Redirect, Suspend etc.) instead
      */
+    @Deprecated
     public void renderJSON(Object anyObject) {
         Controller.renderJSON(anyObject);
     }
@@ -123,6 +130,7 @@ public abstract class ControllerDelegate {
     /**
      * @Deprecated this method exists only for java interop, return a corresponding Result type (Template, Redirect, Suspend etc.) instead
      */
+    @Deprecated
     public void notModified() {
         Controller.notModified();
     }
@@ -130,6 +138,7 @@ public abstract class ControllerDelegate {
     /**
      * @Deprecated this method exists only for java interop, return a corresponding Result type (Template, Redirect, Suspend etc.) instead
      */
+    @Deprecated
     public void todo() {
         Controller.todo();
     }
@@ -137,6 +146,7 @@ public abstract class ControllerDelegate {
     /**
      * @Deprecated this method exists only for java interop, return a corresponding Result type (Template, Redirect, Suspend etc.) instead
      */
+    @Deprecated
     public void redirectToStatic(String file) {
         Controller.redirectToStatic(file);
     }
@@ -144,6 +154,7 @@ public abstract class ControllerDelegate {
     /**
      * @Deprecated this method exists only for java interop, return a corresponding Result type (Template, Redirect, Suspend etc.) instead
      */
+    @Deprecated
     public void redirect(String url) {
         Controller.redirect(url);
     }
@@ -151,6 +162,7 @@ public abstract class ControllerDelegate {
     /**
      * @Deprecated this method exists only for java interop, return a corresponding Result type (Template, Redirect, Suspend etc.) instead
      */
+    @Deprecated
     public void redirect(String url, boolean permanent) {
         Controller.redirect(url, permanent);
     }
@@ -158,6 +170,7 @@ public abstract class ControllerDelegate {
     /**
      * @Deprecated this method exists only for java interop, return a corresponding Result type (Template, Redirect, Suspend etc.) instead
      */
+    @Deprecated
     public void redirect(String action, Object... args) {
        Controller.redirect(action, args);
     }
@@ -165,6 +178,7 @@ public abstract class ControllerDelegate {
     /**
      * @Deprecated this method exists only for java interop, return a corresponding Result type (Template, Redirect, Suspend etc.) instead
      */
+    @Deprecated
     public void redirect(String action, boolean permanent, Object... args) {
         Controller.redirect(action, permanent, args);
     }
@@ -172,6 +186,7 @@ public abstract class ControllerDelegate {
     /**
      * @Deprecated this method exists only for java interop, return a corresponding Result type (Template, Redirect, Suspend etc.) instead
      */
+    @Deprecated
     public void unauthorized(String realm) {
         Controller.unauthorized(realm);
     }
@@ -179,6 +194,7 @@ public abstract class ControllerDelegate {
     /**
      * @Deprecated this method exists only for java interop, return a corresponding Result type (Template, Redirect, Suspend etc.) instead
      */
+    @Deprecated
     public void unauthorized() {
         Controller.unauthorized("");
     }
@@ -186,6 +202,7 @@ public abstract class ControllerDelegate {
     /**
      * @Deprecated this method exists only for java interop, return a corresponding Result type (Template, Redirect, Suspend etc.) instead
      */
+    @Deprecated
     public void notFound(String what) {
         Controller.notFound(what);
     }
@@ -193,6 +210,7 @@ public abstract class ControllerDelegate {
     /**
      * @Deprecated this method exists only for java interop, return a corresponding Result type (Template, Redirect, Suspend etc.) instead
      */
+    @Deprecated
     public void notFound() {
         Controller.notFound("");
     }
@@ -200,6 +218,7 @@ public abstract class ControllerDelegate {
     /**
      * @Deprecated this method exists only for java interop, return a corresponding Result type (Template, Redirect, Suspend etc.) instead
      */
+    @Deprecated
     public void notFoundIfNull(Object o) {
         Controller.notFoundIfNull(o);
     }
@@ -207,6 +226,7 @@ public abstract class ControllerDelegate {
     /**
      * @Deprecated this method exists only for java interop, return a corresponding Result type (Template, Redirect, Suspend etc.) instead
      */
+    @Deprecated
     public void ok() {
         Controller.ok();
     }
@@ -214,6 +234,7 @@ public abstract class ControllerDelegate {
     /**
      * @Deprecated this method exists only for java interop, return a corresponding Result type (Template, Redirect, Suspend etc.) instead
      */    
+    @Deprecated
     public void error(String reason) {
        Controller.error(reason);	 
     }
@@ -221,6 +242,7 @@ public abstract class ControllerDelegate {
     /**
      * @Deprecated this method exists only for java interop, return a corresponding Result type (Template, Redirect, Suspend etc.) instead
      */
+    @Deprecated
     public void error(Exception reason) {
        Controller.error(reason);	 
     }
@@ -228,6 +250,7 @@ public abstract class ControllerDelegate {
     /**
      * @Deprecated this method exists only for java interop, return a corresponding Result type (Template, Redirect, Suspend etc.) instead
      */
+    @Deprecated
     public void error() {
        Controller.error();	 
     }
@@ -235,6 +258,7 @@ public abstract class ControllerDelegate {
     /**
      * @Deprecated this method exists only for java interop, return a corresponding Result type (Template, Redirect, Suspend etc.) instead
      */
+    @Deprecated
     public void error(int status, String reason) {
        Controller.error(status,reason);	 
     }
@@ -242,6 +266,7 @@ public abstract class ControllerDelegate {
     /**
      * @Deprecated this method exists only for java interop, return a corresponding Result type (Template, Redirect, Suspend etc.) instead
      */
+    @Deprecated
     public void renderBinary(InputStream stream) {
         Controller.renderBinary(stream);
     }
@@ -249,6 +274,7 @@ public abstract class ControllerDelegate {
     /**
      * @Deprecated this method exists only for java interop, return a corresponding Result type (Template, Redirect, Suspend etc.) instead
      */
+    @Deprecated
     public void renderBinary(File file) {
         Controller.renderBinary(file);
     }
@@ -256,6 +282,7 @@ public abstract class ControllerDelegate {
     /**
      * @Deprecated this method exists only for java interop, return a corresponding Result type (Template, Redirect, Suspend etc.) instead
      */    
+    @Deprecated
     public void renderBinary(InputStream stream, String name) {
         Controller.renderBinary(stream, name);
     }
@@ -263,6 +290,7 @@ public abstract class ControllerDelegate {
     /**
      * @Deprecated this method exists only for java interop, return a corresponding Result type (Template, Redirect, Suspend etc.) instead
      */
+    @Deprecated
     public void forbidden() {
         Controller.forbidden();
     }
@@ -270,6 +298,7 @@ public abstract class ControllerDelegate {
     /**
      * @Deprecated this method exists only for java interop, return a corresponding Result type (Template, Redirect, Suspend etc.) instead
      */
+    @Deprecated
     public void waitFor(Future task) {
         Controller.waitFor(task);
     }
@@ -278,6 +307,7 @@ public abstract class ControllerDelegate {
     /**
      * @Deprecated this method exists only for java interop, return a corresponding Result type (Template, Redirect, Suspend etc.) instead
      */
+    @Deprecated
     public void suspend(int millis) {
         Controller.suspend(millis);
     }
@@ -285,8 +315,8 @@ public abstract class ControllerDelegate {
     /**
      * @Deprecated this method exists only for java interop, return a corresponding Result type (Template, Redirect, Suspend etc.) instead
      */
+    @Deprecated
     public void suspend(String timeout) {
         Controller.suspend(timeout);
     }
-
 }

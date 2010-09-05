@@ -1,8 +1,9 @@
 package play.mvc.results
 
-import play.mvc.Http
-import play.mvc.Http
 import play.mvc.ControllerDelegate
+import play.mvc.Http
+import play.mvc.Http
+
 
 class ScalaRenderTemplate(template: String = null, args: java.util.Map[String, Object] = new java.util.HashMap[String,Object]) extends Result {
 

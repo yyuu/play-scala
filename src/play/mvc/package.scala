@@ -7,7 +7,6 @@ import play.mvc.results._
 * 
 */
 package play {
-
 import mvc.{ScalaController, ScalaMailer, RichSession, RichResponse, RichRenderArgs}
 
 package object mvc {
@@ -27,11 +26,12 @@ package object mvc {
   val NOT_FOUND       = 404
   val ERROR           = 500
 
+  
   // -- TYPES REDEFINITION
 
   type Controller = ScalaController
   type Mailer = ScalaMailer
 
-  }
+ }
 
 }
