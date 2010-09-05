@@ -8,7 +8,7 @@ Then you can write all or parts of your play application using scala. You can of
 
 p(note). We are in very very active development on this stuff. You can try it for now as an experimental feature. Don't expect to write a complete play application in Scala right now.
 
-For a quick overview of the scala support, you can watch this "Scala screencast":http://vimeo.com/7731173
+For a quick overview of the scala support, you can watch this (kind of dated) "Scala screencast":http://vimeo.com/7731173
 
 h2. <a>Create a new application, with Scala support</a>
 
@@ -27,7 +27,49 @@ object Application extends Controller {
   def index = Template
 }
 
-In the scala version functions always return values (usually wrapped inside a Template or Action method call). 
+In the scala version functions always return values. Valid Result types include:
+
+* Ok                                          -> return 200
+* Created                                     -> return 201
+* Accepted                                    -> return 202
+* NoContent                                   -> return 204
+* NotModified                                 -> return not modifed
+* NotModified(etag: String)                   -> return not mofified
+* Forbidden                                   -> return forbidden
+* Forbidden(why: String)                      -> return forbidden 
+* NotFound                                    -> return not found
+* NotFound(why: String)                       -> return not found
+* NotFound(method: String, path: String)      -> return not found
+* Error                                       -> return an error
+* Error(why: String)                          -> return an error with description
+* Error(status: Int, why: String)             -> return an error with status and description
+* BadRequest                                  -> return bad request
+* Unauthorized                                -> return unathorized
+* Unauthorized(area: String)                  -> return unathorized with realm
+* Html(html: Any)                             -> return html snippet
+* Xml(document: org.w3c.dom.Document)         -> return xml doc
+* Xml(xml: Any)                               -> retunr xml as string
+* Json(json: String)                          -> return json from string
+* Json(o: Any)                                -> return json from any object
+* Text(content: Any)                          -> return plain text
+* Redirect(url: String)                       -> return and redirect
+* Redirect(url: String, permanent: Boolean)   -> return and redirect (permantently)
+* Template                                    -> return a template
+* Template(args: Any*)                        -> return a template with parameters 
+* Action(action: => Any)                      -> return an action forward
+* Continue                                    -> return and continue
+* Suspend(s: String)                          -> return and suspend
+* Suspend(t: Int)                             -> return and suspend
+
+Besides these the following type inference tricks are added:
+
+* "app/view/myindex.html".asTemplate will return a Template
+* returning a stream or file will return a binary response
+* returning text as String will render text/plain
+* returning inline xml will render the response as application/xml 
+
+p(note). this is a departure from the original java-like renderXXX concept but after careful consideratation we decided that returning values in Scala is both more idiomatic and inline with scala's FP nature (obviously, java controllers in mixed projects still can use renderXXX)
+
 Now just run the application as usual using **play run** and it will display the standard welcome page. Now just edit the **Application.scala** file to replace the **Template** call:
 
 bc. def index = "Hello scala!"
