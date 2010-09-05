@@ -6,7 +6,7 @@ import play.mvc.Http
 
 class ScalaAction(action: => Any) extends Result {
 
-  val actionDefinition = ControllerDelegate.reverseForScala(); 
+  val actionDefinition = ControllerDelegate.reverseForScala 
   
   action 
   
