@@ -41,7 +41,7 @@ private[cache] object ScalaCache extends CacheDelegate {
     }
    import play.libs.Time._
    private def prefixed(key:String)="__"+key
-
+  //can be wrote in terms of get1: Needs to be refactored
    def get[T](key:String,window:String,expiration:String)(getter: => Option[T]):Option[T]={
      val cacheIt= (v:T) =>  {set(prefixed(key), v,parseDuration(expiration) + parseDuration(window) + "s" )
                              set(key, v,expiration)
@@ -61,24 +61,8 @@ private[cache] object ScalaCache extends CacheDelegate {
    private def getFromCache[T](key:String)=Option(_impl.get(key).asInstanceOf[T])
    private def getFromCache1(key:String):Option[_]=Option(_impl.get(key))
 
+   
    def getAsync[T](key:String,expiration:String,window:String,waitForEvaluation:String="10s")(getter: => Option[T]):Option[T]={
-    
-     def scheduleOrIgnore(key:String,f:Function0[_])={
-       val flagForKey="___"+key
-       case class Caching() 
-       getFromCache1(flagForKey).getOrElse
-           {cacheActor.!!( f,{
-              case v:Option[_] =>{cacheIt(v.asInstanceOf[Option[T]]); set(flagForKey,None,waitForEvaluation);v}
-              case _ => None
-            })
-          }
-   }
-
-     def cacheIt(t: =>Option[T])= get(key,window,expiration)(t)
-     getFromCache[T](key).orElse(getFromCache[T](prefixed(key)).map(v=>{scheduleOrIgnore(key,()=>getter);v})
-			 .orElse(cacheIt(getter))) 
-   }
-   def getAsync2[T](key:String,expiration:String,window:String,waitForEvaluation:String="10s")(getter: => Option[T]):Option[T]={
      getAsync1[Option[T]](key,expiration,window,waitForEvaluation)(getter)(o => o.isDefined)
    }
    def getAsync1[A](key:String,expiration:String,window:String,waitForEvaluation:String="10s")(getter: => A)(implicit isDesirable: A => Boolean):A={
@@ -92,12 +76,11 @@ private[cache] object ScalaCache extends CacheDelegate {
             })
           }
        }
-
-   def cacheIt(t: =>A)= get1(key,window,expiration)(t)(isDesirable)
+       def cacheIt(t: =>A)= get1(key,window,expiration)(t)(isDesirable)
    
-   getFromCache[A](key).getOrElse(
-       getFromCache[A](prefixed(key)).map(v=>{scheduleOrIgnore(key,()=>getter);v})
-			             .getOrElse(cacheIt(getter))) 
+       getFromCache[A](key).getOrElse(
+           getFromCache[A](prefixed(key)).map(v=>{scheduleOrIgnore(key,()=>getter);v})
+	                                 .getOrElse(cacheIt(getter))) 
      
    }
    def get1[A](key:String,window:String,expiration:String)(getter: => A)(implicit isDesirable: A => Boolean):A={
