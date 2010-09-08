@@ -65,6 +65,10 @@ private[cache] object ScalaCache extends CacheDelegate {
    def getAsync[T](key:String,expiration:String,window:String,waitForEvaluation:String="10s")(getter: => Option[T]):Option[T]={
      getAsync1[Option[T]](key,expiration,window,waitForEvaluation)(getter)(o => o.isDefined)
    }
+object Instances{
+   implicit def isDesirable[A](o:Option[A]):Boolean=o.isDefined
+   implicit def isDesirableSeq[A,B[X] <: Seq[X]](seq:B[A]):Boolean=seq.nonEmpty
+}
    def getAsync1[A](key:String,expiration:String,window:String,waitForEvaluation:String="10s")(getter: => A)(implicit isDesirable: A => Boolean):A={
        def scheduleOrIgnore(key:String,f:Function0[A])={
          val flagWhileCaching="___"+key
