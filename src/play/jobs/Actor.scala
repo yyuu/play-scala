@@ -6,6 +6,12 @@ import play.exceptions._
 import scala.actors.Actor 
 import scala.actors.Actor._
 
+object Asyncs{
+import scala.actors._
+import scala.actors.Futures._
+ def awaitForAll[A](timeout:Long,futures:Seq[Future[A]]):Seq[Option[A]]= Futures.awaitAll(timeout,futures:_*).map(_.asInstanceOf[Option[A]])
+}
+
 object PlayActor extends Actor {
     
     def !!![T](msg: Function0[T]): Future[Either[Throwable,T]] = (PlayActor !! msg).asInstanceOf[Future[Either[Throwable,T]]]

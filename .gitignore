@@ -4,6 +4,8 @@ test-result
 tmp
 logs
 eclipse
+.#*
+*~
 *.~*
 dist
 *.pyc
