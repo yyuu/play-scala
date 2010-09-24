@@ -65,12 +65,11 @@ object Instances{
          case class Caching() 
          getFromCache1(flagWhileCaching).getOrElse
            {cacheActor.!!( ()=>{set(flagWhileCaching,Caching(),waitForEvaluation);f()},{
-             case None => None 
-             case a   =>{cacheIt(a.asInstanceOf[A]); set(flagWhileCaching,None,waitForEvaluation);Some(a)}
+             case a  => {cacheIt(a.asInstanceOf[A]); _impl.delete(flagWhileCaching);a}
             })
           }
        }
-       def cacheIt(t: =>A)= get(key,window,expiration)(t)(isDesirable)
+       def cacheIt(t: =>A)= get(key,expiration,window)(t)(isDesirable)
    
        getFromCache[A](key).getOrElse(
            getFromCache[A](prefixed(key)).map(v=>{scheduleOrIgnore(key,()=>getter);v})
