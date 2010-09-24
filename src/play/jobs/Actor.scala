@@ -9,7 +9,10 @@ import scala.actors.Actor._
 object Asyncs{
 import scala.actors._
 import scala.actors.Futures._
+//maybe it needs to be reimplemented to avoid using casting, but the interface is OK
  def awaitForAll[A](timeout:Long,futures:Seq[Future[A]]):Seq[Option[A]]= Futures.awaitAll(timeout,futures:_*).map(_.asInstanceOf[Option[A]])
+
+// def awaitForAll[A,B,C](timeout:Long,futures:(Future[A],Future[B],Future[C])):(Option[A],Option[B],Option[C])= Futures.awaitAll(timeout,futures:_*).map(_.asInstanceOf[Option[A]])
 }
 
 object PlayActor extends Actor {
