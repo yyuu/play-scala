@@ -20,15 +20,15 @@ case class ResponseBody(private val response:HttpResponse){
 }
 case class FunctionalWebResponse(response:HttpResponse){
   def body=ResponseBody(response)
-  def asOK():Either[UndesiredStatus,ResponseBody]=as{case r@Status(2,0,0)=>r.body}
+  def focusOnOK():Either[UndesiredStatus,ResponseBody]=focusOn{case r@Status(2,0,0)=>r.body}
   
-  def asStatus(statusCode:Int):Either[UndesiredStatus,ResponseBody]={
+  def focusOnStatus(statusCode:Int):Either[UndesiredStatus,ResponseBody]={
     if(response.getStatus()==statusCode) 
       Right(ResponseBody(response)) 
     else Left(UndesiredStatus(response.getStatus().intValue,response.getString() ))
   }
 
-  def as[A](selectiveTransformer:PartialFunction[FunctionalWebResponse,A]):Either[UndesiredStatus,A]=
+  def focusOn[A](selectiveTransformer:PartialFunction[FunctionalWebResponse,A]):Either[UndesiredStatus,A]=
     if(selectiveTransformer.isDefinedAt(this)) 
       Right(selectiveTransformer(this)) 
     else Left(UndesiredStatus(response.getStatus().intValue,response.getString()))
