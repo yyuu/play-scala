@@ -87,7 +87,7 @@ case class Error[+E,+A](e:Either[E,A])  {
   }
 object Error{
   implicit def eitherToError[E,A](e:Either[E,A]):Error[E,A] = Error[E,A](e) 
- implicit def errorToEither[E,A](e:Error[E,A]):Either[E,A] = e.e 
+  implicit def errorToEither[E,A](e:Error[E,A]):Either[E,A] = e.e 
 }
 
 }
