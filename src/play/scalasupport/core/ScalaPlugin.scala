@@ -165,7 +165,7 @@ class ScalaPlugin extends PlayPlugin {
     private val reporter = new Reporter() {
       override def info0(position: Position, msg: String, severity: Severity, force: Boolean) = {
         severity match {
-          case ERROR if position.isDefined => throw new CompilationException(realOne(position.source.file.name), msg, position.line)
+          case ERROR if position.isDefined => throw new CompilationException(realOne(position.source.file.name), msg, position.line, position.startOrPoint-1, position.endOrPoint-1)
           case ERROR => throw new CompilationException(msg);
           case WARNING if position.isDefined => Logger.warn(msg + ", at line " + position.line + " of " + position.source)
           case WARNING => Logger.warn(msg)
