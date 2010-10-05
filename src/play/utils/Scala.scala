@@ -73,6 +73,23 @@ trait Scala {
     }
     catch {case e: NullPointerException => None}
 
+
+case class Error[+E,+A](e:Either[E,A])  {   
+    def flatMap[B,EE>:E](f:A => Error[EE,B]):Error[EE,B] ={
+      Error(e.right.flatMap(a=> f(a).e))
+    }
+    def map[B](f:A=>B):Error[E,B]={
+      Error(e.right.map(f))
+    }
+    def toOptionLoggingError():Option[A]={
+      e.left.map(m => {error(m.toString); m}).right.toOption
+    }
+  }
+object Error{
+  implicit def eitherToError[E,A](e:Either[E,A]):Error[E,A] = Error[E,A](e) 
+  implicit def errorToEither[E,A](e:Error[E,A]):Either[E,A] = e.e 
+}
+
 }
 
 object Scala extends Scala
