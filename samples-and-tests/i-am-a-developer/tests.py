@@ -75,7 +75,7 @@ class IamADeveloper(unittest.TestCase):
         
         response = browser.follow_link(text_regex='Documentation')
         self.assert_(browser.viewing_html())
-        self.assert_(browser.title() == 'Play manual - Play framework documentation')
+        self.assert_(browser.title() == 'Play manual - Documentation')
         
         html = response.get_data()
         self.assert_(html.count('Getting started'))
