@@ -314,6 +314,9 @@ class ScalaPlugin extends PlayPlugin {
             }
           }
       }
+      
+      // Clear out space
+      virtualDirectory.clear()
 
       // Compile
       if (!toRecompile.isEmpty()) {
