@@ -14,7 +14,11 @@ private[cache] object ScalaCache extends CacheDelegate {
 
   private val cacheActor =
     actor{
-      link{loop{react{case Exit(from: Actor, exc: Exception) => {play.Logger.warn(exc.toString); from.restart()}}}}
+      link{self.trapExit = true;loop{react{case Exit(from: Actor, exc: Exception) => 
+        {
+          play.Logger.trace("cache actor crashed on: "+exc.toString+" resstarting...");
+          from.restart();
+          play.Logger.trace("restarted cache actor")}}}}
       loop{
         react{
           case (f: Function0[_]) => reply(f.asInstanceOf[Function0[Any]]())
