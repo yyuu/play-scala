@@ -42,6 +42,22 @@ class ScalaPlugin extends PlayPlugin {
   
   override def addTemplateExtensions(): JList[String] = List("play.scalasupport.templates.TemplateExtensions")
 
+   /**
+    * Called when play need to bind a Java object from HTTP params
+    */
+   override def bind(name:String, clazz:Class[_], t:java.lang.reflect.Type,
+                      annotations:Array[java.lang.annotation.Annotation] , params: java.util.Map[String, Array[String]])= {
+     clazz match {
+         case c if c == classOf[Option[_]] => {
+           val parameterClass = t.asInstanceOf[java.lang.reflect.ParameterizedType].getActualTypeArguments()(0)
+           val result = play.data.binding.Binder.bind(name, parameterClass.asInstanceOf[Class[_]], parameterClass, annotations, params)
+           Option(result)
+         }
+         case _ => null
+       }
+   }
+//Binder.bind(String name, Class<?> clazz, Type type, Annotation[] annotations, Map<String, String[]> params)
+
   /**
    * Scanning both java and scala sources for compilation
    */
@@ -80,7 +96,7 @@ class ScalaPlugin extends PlayPlugin {
    * compile all classes
    * @param classes classes to be compiled
    * @param return return compiled classes
-   **/
+   */
   override def compileAll(classes: JList[ApplicationClass]) = {
 
     // Precompiled
