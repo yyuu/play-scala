@@ -74,21 +74,21 @@ trait Scala {
     catch {case e: NullPointerException => None}
 
 
-case class Error[+E,+A](e:Either[E,A])  {   
-    def flatMap[B,EE>:E](f:A => Error[EE,B]):Error[EE,B] ={
-      Error(e.right.flatMap(a=> f(a).e))
+case class MayErr[+E,+A](e:Either[E,A])  {   
+    def flatMap[B,EE>:E](f:A => MayErr[EE,B]):MayErr[EE,B] ={
+      MayErr(e.right.flatMap(a=> f(a).e))
     }
-    def map[B](f:A=>B):Error[E,B]={
-      Error(e.right.map(f))
+    def map[B](f:A=>B):MayErr[E,B]={
+      MayErr(e.right.map(f))
     }
-    def filter[EE >: E](p:A=>Boolean,error:EE):Error[EE,A]=Error( e.right.filter(p).getOrElse(Left(error)) )
+    def filter[EE >: E](p:A=>Boolean,error:EE):MayErr[EE,A]=MayErr( e.right.filter(p).getOrElse(Left(error)) )
     def toOptionLoggingError():Option[A]={
       e.left.map(m => {play.Logger.error(m.toString); m}).right.toOption
     }
   }
-object Error{
-  implicit def eitherToError[E,A](e:Either[E,A]):Error[E,A] = Error[E,A](e) 
-  implicit def errorToEither[E,A](e:Error[E,A]):Either[E,A] = e.e 
+object MayErr{
+  implicit def eitherToError[E,A](e:Either[E,A]):MayErr[E,A] = MayErr[E,A](e) 
+  implicit def errorToEither[E,A](e:MayErr[E,A]):Either[E,A] = e.e 
 }
 
 }
