@@ -30,7 +30,7 @@ object Application extends Controller with Secure {
     
 
     def urlcall() = {
-      val res = fromURLPath("http://www.playframework.org/@api/play/Play.html").mkString
+      val res = fromURLPath("http://www.playframework.org/documentation/api/1.1/play/Play.html").mkString
       if (res.contains("javadoc")) "yes" else "no"
     }
 

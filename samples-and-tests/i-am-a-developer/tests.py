@@ -70,23 +70,6 @@ class IamADeveloper(unittest.TestCase):
         html = response.get_data()
         self.assert_(html.count('Your application is ready !'))
         
-        # Open the documentation
-        step('Open the documentation')
-        
-        response = browser.follow_link(text_regex='Documentation')
-        self.assert_(browser.viewing_html())
-        self.assert_(browser.title() == 'Play manual - Documentation')
-        
-        html = response.get_data()
-        self.assert_(html.count('Getting started'))
-        
-        # Go back to home
-        step('Go back to home')
-        
-        response = browser.back()
-        self.assert_(browser.viewing_html())
-        self.assert_(browser.title() == 'Your application is ready !')
-        
         # Refresh
         step('Refresh home')
         
