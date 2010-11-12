@@ -137,11 +137,16 @@ object ScalaController {
         val params = new java.util.HashMap[String,AnyRef]
         for(o <- args) {
             o match {
-                  case (name: String, value: Any) => params.put(name, value.asInstanceOf[AnyRef])
-                  case _ => val names = LocalVariablesNamesTracer.getAllLocalVariableNames(o)
-                            for (name <- names) {
-                                params.put(name, o.asInstanceOf[AnyRef])
-                            }
+                case (name: String, value: Any) => params.put(name, value.asInstanceOf[AnyRef])
+                case _ => val names = LocalVariablesNamesTracer.getAllLocalVariableNames(o)
+                    if(names.isEmpty) {
+                        val simpleName = o.asInstanceOf[AnyRef].getClass.getSimpleName
+                        params.put(simpleName(0).toLower + simpleName.substring(1), o.asInstanceOf[AnyRef])
+                    } else {
+                        for (name <- names) {
+                            params.put(name, o.asInstanceOf[AnyRef])
+                        }
+                    }
               }
         }
         params
