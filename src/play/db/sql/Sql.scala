@@ -49,8 +49,9 @@ object Useful{
 case class Sql(sqlQuery:String,argsInitialOrder:List[String],params:Seq[(String,Any)]=List.empty){
   def on(args:(String,Any)*):Sql=this.copy(params=(this.params) ++ args)
   def onParams(args:Any*):Sql=this.copy(params=(this.params) ++ argsInitialOrder.zip(args))
-  lazy val filledStatement={
-    val s=play.db.DB.getConnection.prepareStatement(sqlQuery)
+  lazy val filledStatement={getFilledStatement(play.db.DB.getConnection)}
+  def getFilledStatement(connection:java.sql.Connection)={
+    val s=connection.prepareStatement(sqlQuery)
     val argsMap=Map(params:_*)
     argsInitialOrder.map(argsMap)
                .zipWithIndex
