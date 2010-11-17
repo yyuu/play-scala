@@ -1,5 +1,11 @@
 package play.db.sql
-
+/*
+ * sample usage:
+ *  val sql=Sql("select * from tasks where id={id}") on "id"->1
+ *  val tasks:Stream[Task]=sql.result() collect {
+ *    case Row(Some(i:Int),Some(name:String))=> Task(i,name)
+ *  }
+ */
 object Row{
  def unapplySeq(row:Row):Option[List[Any]]={
     Some(row.tuples.map(_._2))
@@ -63,4 +69,3 @@ object Sql{
     Useful.unfold(rs)(rs => if(!rs.next()) {rs.close();None} else Some(new Row(rs),rs))
   }
 }
-
