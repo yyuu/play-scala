@@ -2,7 +2,7 @@
 
 <project name="Scala" default="build" basedir=".">
 
-    <property name="play.path" value="/opt/play" />
+	<property name="play.path" value="/opt/local/lib/play-core" />
 
     <path id="project.classpath">
         <pathelement path="${play.path}/framework/classes"/>

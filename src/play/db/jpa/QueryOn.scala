@@ -3,7 +3,7 @@ package play.db.jpa
 import scala.collection.mutable
 import JPQL.{instance => i}
 import play.data.validation.Validation
-
+import collection.JavaConversions._
 /**
  *  provides a mini DSL for Model objects
  **/
@@ -43,12 +43,12 @@ trait QueryOn[T <: JPABase] {
   }
 
   /**
-   * find a record based on a query
+   * find records based on a query
    * @param q query
    * @param ps Array of params
    * @param return a record based on the query and parameters
    */
-  def findBy(q: String, ps: Any*)(implicit m: M[T]) = i.findBy(m, q, ps.asInstanceOf[Seq[AnyRef]].toArray)
+  def findBy(q: String, ps: Any*)(implicit m: M[T]) = i.findBy(m, q, ps.asInstanceOf[Seq[AnyRef]].toArray).toList
 
   /**
    * this is the most generic finder which is also chainable (ie fetch, all, first etc. can be called on
