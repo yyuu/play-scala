@@ -85,6 +85,7 @@ case class MayErr[+E,+A](e:Either[E,A])  {
     def toOptionLoggingError():Option[A]={
       e.left.map(m => {play.Logger.error(m.toString); m}).right.toOption
     }
+    def get= e.fold(e => throw new Error(e.toString),a=>a )
   }
 object MayErr{
   implicit def eitherToError[E,A](e:Either[E,A]):MayErr[E,A] = MayErr[E,A](e) 

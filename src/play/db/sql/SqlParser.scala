@@ -12,3 +12,4 @@ object SqlParser extends JavaTokenParsers{
   def simpleQuotes=("'"+"""([^'\p{Cntrl}\\]|\\[\\/bfnrt]|\\u[a-fA-F0-9]{4})*"""+"'").r
   override def skipWhitespace=false
 }
+
