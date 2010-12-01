@@ -93,7 +93,9 @@ trait MagicParser[T]{
 
     def clean(fieldName:String)=fieldName.split('$').last
     // maybe I need to check in declared methods too?
-    val coherent= zipped.forall(i=> i._1==manifestFor(i._2.getType()))
+   val coherent= zipped.forall(i=> i._1==manifestFor(i._2.getType()))
+    if(!coherent && zipped.map(_._2.getName).exists(_.contains("outer")))
+      throw new java.lang.Error("It seems that your class uses a closure to an outer instance. For MagicParser, please use only top level classes.")
     if(!coherent) throw new java.lang.Error("not coherent to me!")
     implicit def columnToT[T](implicit m:ClassManifest[T]):ColumnTo[T]=
     new ColumnTo[T]{
@@ -147,15 +149,15 @@ trait Row{
   private[sql] def get1[B](a:String)(implicit m : ClassManifest[B]):MayErr[SqlRequestError,B]=
    {for(  meta <- metaData.dictionary.get(a).toRight(ColumnNotFound(a));
           val (nullable,clazz)=meta;
-          val requiredDataType= if(m.erasure==classOf[Option[_]]) 
+          val requiredDataType=if(m.erasure==classOf[Option[_]]) 
                                   m.typeArguments.headOption.collect { case m:ClassManifest[_] => m.erasure}
-                                                            .getOrElse(classOf[Any])
-                                else m;
+                                                            .getOrElse(classOf[Any]).getName
+                                else m.erasure.getName;
           v <- ColumnsDictionary.get(a).toRight(ColumnNotFound(a));
           result <- v match {case b: AnyRef if(nullable != (m.erasure == classOf[Option[_]])) =>  Left(UnexpectedNullableFound(a))
-                             case b:AnyRef  if ({requiredDataType.asInstanceOf[Class[_]].getName} == clazz) =>
+                             case b:AnyRef  if ({requiredDataType} == clazz) =>
                            Right((if (nullable) Option(b) else b).asInstanceOf[B])
-                             case b:AnyRef => Left(TypeDoesNotMatch(requiredDataType.toString + " - " + b.getClass.toString))}) yield result
+                             case b:AnyRef => Left(TypeDoesNotMatch(requiredDataType + " - " + b.getClass.toString))}) yield result
   }
   def apply[B](a:String)(implicit c:ColumnTo[B]):B=get[B](a)(c).get
 }
