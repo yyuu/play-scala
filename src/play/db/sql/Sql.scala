@@ -6,29 +6,17 @@ package play.db.sql
  *    case Row(Some(i:Int),Some(name:String))=> Task(i,name)
  *  }
  */
-object Row{
- def unapplySeq(row:Row):Option[List[Any]]={
-    Some(row.tuples.map(_._2))
-  }
-}
+
 import play.utils.Scala.MayErr
 import play.utils.Scala.MayErr._
 abstract class SqlRequestError
 case class ColumnNotFound(columnName:String) extends SqlRequestError
 case class TypeDoesNotMatch(message:String) extends SqlRequestError
+case class UnexpectedNullableFound(on:String) extends SqlRequestError
 
 trait ColumnTo[A]{
  def transform(row:Row,columnName:String):MayErr[SqlRequestError,A]
 }
-object GetSimple {
- 
- implicit def rowToSimple[A](implicit m:ClassManifest[A]) :ColumnTo[A]= 
-   new ColumnTo[A]{
-     def transform(row:Row,columnName:String) = row.get[A](columnName)(m) 
-}
-}
-
-// A parser combinator for the Sql result
 case class StreamReader[T](s: Stream[T]) extends scala.util.parsing.input.Reader[T]{
   def first = s.head
   def rest = new StreamReader(s.drop(1))
@@ -36,8 +24,8 @@ case class StreamReader[T](s: Stream[T]) extends scala.util.parsing.input.Reader
   def atEnd = s.tail.isEmpty
 }
 object SqlRowsParser extends scala.util.parsing.combinator.Parsers{
+  import Row._
   type Elem=Row
-  import GetSimple.rowToSimple
   import scala.collection.generic.CanBuildFrom
   import scala.collection.mutable.Builder
   def sequence[A](ps:Traversable[Parser[A]])
@@ -50,15 +38,19 @@ object SqlRowsParser extends scala.util.parsing.combinator.Parsers{
   def current[T](columnName:String)(implicit extractor:ColumnTo[T]): Parser[T]=
    Parser[T]{in =>
       extractor.transform(in.first,columnName)
-               .fold(e=>Failure(e.toString,in), a=>Success(a,in))}   
+               .fold(e=>Failure(e.toString,in), a=>{Success(a,in)})}   
 
   def wholeRow[T](p:Parser[T])=p <~ newLine
   def current1[T](columnName:String)(implicit extractor:ColumnTo[T]): Parser[T]=
    commit(current[T](columnName)(extractor))
   
+  def str(columnName:String):Parser[String]=current1[String](columnName)
+  def int(columnName:String):Parser[Int]=current1[Int](columnName)
+  
   def newLine:Parser[Unit]=  Parser[Unit]{
     in => if(in.atEnd) Failure("end",in) else Success(Unit,in.rest) 
   }
+
   def distingwishList[A](differentiator:Parser[Any],a:Parser[A]):Parser[Seq[A]]={
     val d=guard(differentiator)
     d >> 
@@ -66,53 +58,110 @@ object SqlRowsParser extends scala.util.parsing.combinator.Parsers{
    }
 }
 trait MagicParser[T]{
-import SqlRowsParser._
+  import java.lang.reflect._
+  import scala.reflect.Manifest
+
+  def manifestFor(t: Type): Manifest[AnyRef] = t match {
+    case c: Class[_] => Manifest.classType[AnyRef](c)
+    case p: ParameterizedType =>
+      Manifest.classType[AnyRef](
+        p.getRawType.asInstanceOf[Class[AnyRef]],
+        manifestFor(p.getActualTypeArguments.head),
+        p.getActualTypeArguments.tail.map(manifestFor): _*)
+  }
+
+  import SqlRowsParser._
   def apply()(implicit m : ClassManifest[T]):Parser[T]={
-    val cons= m.erasure.getConstructors()(0)
-    val zipped= cons.getParameterTypes()
+    val cons= m.erasure
+               .getConstructors()
+               .headOption
+               .getOrElse(throw new java.lang.Error("no constructors for type " +m))
+
+    val zipped= cons.getGenericParameterTypes().map(manifestFor)
                     .zip(m.erasure.getDeclaredFields()).toList
+
     def clean(fieldName:String)=fieldName.split('$').last
     // maybe I need to check in declared methods too?
-    val coherent= zipped.forall(i=> i._1==i._2.getType())
+    val coherent= zipped.forall(i=> i._1==manifestFor(i._2.getType()))
     if(!coherent) throw new java.lang.Error("not coherent to me!")
+    implicit def columnToT[T](implicit m:ClassManifest[T]):ColumnTo[T]=
+    new ColumnTo[T]{
+     def transform(row:Row,columnName:String) =  row.get1[T](columnName)(m)
+    }
     val paramParser=sequence(zipped.map(i => 
-                       current(clean(i._2.getName))(GetSimple.rowToSimple(
-                                               scala.reflect.ClassManifest.fromClass(i._1)))))
+                       current(clean(i._2.getName))(columnToT((i._1)))))
 
     paramParser ^^ {case args => 
                       {cons.newInstance( args.toSeq.map(_.asInstanceOf[Object]):_*)
                            .asInstanceOf[T] } }
   }
 }
+object Something{
 
-trait Row{
-  import scala.reflect.Manifest  
-  val tuples:List[(String,Any)]
-  lazy val ColumnsDictionary=tuples.toMap
+ // def Groupy[K,V](implicit k:ResultReader[K],v:ResultReader[V]): ResultReader[(K,V)]=
+  //def Groupy1[K,V](implicit k:ResultReader[V => K],v:ResultReader[V]): ResultReader[K]=
 
-  def get[B](a:String)(implicit m : ClassManifest[B]):MayErr[SqlRequestError,B]=
-    ColumnsDictionary
-      .get(a)
-      .toRight(ColumnNotFound(a))
-      .flatMap({case b:AnyRef 
-                  if (m.erasure.isAssignableFrom(b.getClass)) => Right(b.asInstanceOf[B])
-                case b:AnyRef => Left(TypeDoesNotMatch(m.erasure.toString + " - " + b.getClass.toString))})
-  def apply[B](a:String)(implicit m : ClassManifest[B]):B=get[B](a)(m).get
+//  def T2[A1,A2](implicit a1:ResultReader[A1],a2:ResultReader[A2]):ResultReader[(A1,A2)]=
 }
-case class MockRow(tuples: List[(String,Any)]) extends Row 
+object Row{
+  def unapplySeq(row:Row):Option[List[Any]]={
+    Some(row.data.zip(row.metaData.ms.map(_.nullable)).map(i=> if(i._2) Option(i._1) else i._1))
+  }
+
+  implicit def rowToString :ColumnTo[String]= 
+   new ColumnTo[String]{
+     def transform(row:Row,columnName:String) = row.get1[String](columnName) 
+   }
+  implicit def rowToInt :ColumnTo[Int]= 
+   new ColumnTo[Int]{
+     def transform(row:Row,columnName:String) = row.get1[Int](columnName) 
+   }
+  implicit def rowToOption[T](implicit m:ClassManifest[Option[T]]) :ColumnTo[Option[T]]= 
+   new ColumnTo[Option[T]]{
+     def transform(row:Row,columnName:String) =  row.get1[Option[T]](columnName)(m)
+   }
+}
+case class MetaDataItem(column:String,nullable:Boolean,clazz:String)
+case class MetaData(ms:List[MetaDataItem]){
+  lazy val dictionary= ms.map(m => (m.column,(m.nullable,m.clazz))).toMap
+}
+trait Row{
+ val metaData:MetaData
+  import scala.reflect.Manifest  
+  val data:List[Any]
+  lazy val ColumnsDictionary:Map[String,Any]=metaData.ms.map(_.column).zip(data).toMap
+  def get[A](a:String)(implicit c:ColumnTo[A]):MayErr[SqlRequestError,A]=
+    c.transform(this,a)
+
+  private[sql] def get1[B](a:String)(implicit m : ClassManifest[B]):MayErr[SqlRequestError,B]=
+   {for(  meta <- metaData.dictionary.get(a).toRight(ColumnNotFound(a));
+          val (nullable,clazz)=meta;
+          val requiredDataType= if(m.erasure==classOf[Option[_]]) 
+                                  m.typeArguments.headOption.collect { case m:ClassManifest[_] => m.erasure}
+                                                            .getOrElse(classOf[Any])
+                                else m;
+          v <- ColumnsDictionary.get(a).toRight(ColumnNotFound(a));
+          result <- v match {case b: AnyRef if(nullable != (m.erasure == classOf[Option[_]])) =>  Left(UnexpectedNullableFound(a))
+                             case b:AnyRef  if ({requiredDataType.asInstanceOf[Class[_]].getName} == clazz) =>
+                           Right((if (nullable) Option(b) else b).asInstanceOf[B])
+                             case b:AnyRef => Left(TypeDoesNotMatch(requiredDataType.toString + " - " + b.getClass.toString))}) yield result
+  }
+  def apply[B](a:String)(implicit c:ColumnTo[B]):B=get[B](a)(c).get
+}
+case class MockRow(data: List[Any],metaData:MetaData) extends Row
+
 class SqlRow(rs:java.sql.ResultSet) extends Row{
   import java.sql._
   import java.sql.ResultSetMetaData._
-
-  val tuples:List[(String,Any)]={
-    val meta=rs.getMetaData()
-    val nbColumns= meta.getColumnCount()
-    List.range(1,nbColumns+1).map(nb =>{
-           val (key,value)=(meta.getColumnName(nb),rs.getObject(nb))
-           (key,if(meta.isNullable(nb)==columnNullable)
-                 Option(value)
-                else value)})
-  }
+  val meta=rs.getMetaData()
+  val nbColumns= meta.getColumnCount()
+  val metaData=MetaData(List.range(1,nbColumns+1).map(i=>MetaDataItem(meta.getColumnName(i),meta.isNullable(i)==columnNullable,meta.getColumnClassName(i))))
+  val types=
+    List.range(1,nbColumns+1)
+        .map(i=>(meta.getColumnName(i),meta.getColumnClassName(i)))
+        .toMap.lift
+  protected def isInitialTypeOK(columnName:String,clazz:Class[_]):Boolean =  types(columnName).exists(t=> clazz.toString==t)
+  val data:List[Any]=List.range(1,nbColumns+1).map(nb =>rs.getObject(nb))
 }
 object Useful{
     case class Var[T](var content:T)
@@ -156,4 +205,3 @@ object Sql{
     Useful.unfold(rs)(rs => if(!rs.next()) {rs.close();None} else Some ((new SqlRow(rs),rs)))
   }
 }
-
