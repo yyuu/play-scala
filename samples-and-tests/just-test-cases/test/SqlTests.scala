@@ -17,7 +17,7 @@ class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
 
     val in= Stream.range(1,100).map(i => MockRow(List(i.toString, "nameb"),metaData))
    
-    (wholeRow(Task()) *)(StreamReader(in)).get should be  (List.range(1,100).map(i=>Task(i.toString)))
+    (eatRow(Task()) *)(StreamReader(in)).get should be  (List.range(1,100).map(i=>Task(i.toString)))
   }
 
   

@@ -53,6 +53,7 @@ object SqlRowsParser extends scala.util.parsing.combinator.Parsers{
                    .fold(e=>e, a=>{Success(a,in)})}   
 
   def wholeRow[T](p:Parser[T])=p <~ newLine
+  def eatRow[T](p:Parser[T])=p <~ newLine
   def current1[T](columnName:String)(implicit extractor:ColumnTo[T]): Parser[T]=
    commit(current[T](columnName)(extractor))
   
