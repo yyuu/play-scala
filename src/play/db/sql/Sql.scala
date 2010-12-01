@@ -12,7 +12,7 @@ package play.db.sql
  *
  *  //having
  *  case class Task(id: Option[Int], name: Option[String]) 
- *  object Task extends MagicParser[Task2]
+ *  object Task extends MagicParser[Task]
  * 
  */
 
