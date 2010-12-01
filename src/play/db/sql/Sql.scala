@@ -5,6 +5,15 @@ package play.db.sql
  *  val tasks:Stream[Task]=sql.result() collect {
  *    case Row(Some(i:Int),Some(name:String))=> Task(i,name)
  *  }
+ *
+ *
+ *  val in=Sql("select * from tasks where id={id}") on "id"->1 result
+ *  ( Task() <~ newLine * )(StreamReader(in))
+ *
+ *  //having
+ *  case class Task(id: Option[Int], name: Option[String]) 
+ *  object Task extends MagicParser[Task2]
+ * 
  */
 
 import play.utils.Scala.MayErr
@@ -17,15 +26,16 @@ case class UnexpectedNullableFound(on:String) extends SqlRequestError
 trait ColumnTo[A]{
  def transform(row:Row,columnName:String):MayErr[SqlRequestError,A]
 }
-case class StreamReader[T](s: Stream[T]) extends scala.util.parsing.input.Reader[T]{
-  def first = s.head
+case class StreamReader[T](s: Stream[T]) extends scala.util.parsing.input.Reader[Either[EndOfStream,T]]{
+  def first = s.headOption.toRight(EndOfStream())
   def rest = new StreamReader(s.drop(1))
   def pos = scala.util.parsing.input.NoPosition
-  def atEnd = s.tail.isEmpty
+  def atEnd = s.isEmpty
 }
+case class EndOfStream
 object SqlRowsParser extends scala.util.parsing.combinator.Parsers{
   import Row._
-  type Elem=Row
+  type Elem=Either[EndOfStream,Row]
   import scala.collection.generic.CanBuildFrom
   import scala.collection.mutable.Builder
   def sequence[A](ps:Traversable[Parser[A]])
@@ -37,8 +47,10 @@ object SqlRowsParser extends scala.util.parsing.combinator.Parsers{
 
   def current[T](columnName:String)(implicit extractor:ColumnTo[T]): Parser[T]=
    Parser[T]{in =>
-      extractor.transform(in.first,columnName)
-               .fold(e=>Failure(e.toString,in), a=>{Success(a,in)})}   
+      in.first.left.map(_=>Failure("End of Stream",in))
+                   .flatMap(extractor.transform(_,columnName)
+                            .left.map(e=>Failure(e.toString,in)))
+                   .fold(e=>e, a=>{Success(a,in)})}   
 
   def wholeRow[T](p:Parser[T])=p <~ newLine
   def current1[T](columnName:String)(implicit extractor:ColumnTo[T]): Parser[T]=
@@ -50,7 +62,6 @@ object SqlRowsParser extends scala.util.parsing.combinator.Parsers{
   def newLine:Parser[Unit]=  Parser[Unit]{
     in => if(in.atEnd) Failure("end",in) else Success(Unit,in.rest) 
   }
-
   def distingwishList[A](differentiator:Parser[Any],a:Parser[A]):Parser[Seq[A]]={
     val d=guard(differentiator)
     d >> 
