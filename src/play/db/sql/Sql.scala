@@ -44,12 +44,28 @@ object SqlRowsParser extends scala.util.parsing.combinator.Parsers{
           ps.foldLeft(success(bf(ps)))((s,p) =>
             for( ss <- s; pp <- p) yield ss += pp) map (_.result) apply in 
         }
+  implicit def rowFunctionToParser[T](f:(Row => MayErr[SqlRequestError,T])):Parser[T]=
+    Parser[T]{in=>
+      in.first.left.map(_=>Failure("End of Stream",in))
+                   .flatMap(f(_).left.map(e=>Failure(e.toString,in)))
+                   .fold(e=>e, a=> {Success(a,in)}) }
+  implicit def rowParserToFunction[T](p:RowParser[T]):(Row => MayErr[SqlRequestError,T])=p.f
+
+  case class RowParser[A](f: (Row=>MayErr[SqlRequestError,A])) extends Parser[A]{
+    lazy val parser=rowFunctionToParser(f)
+    def apply(in:Input)=parser(in)
+  }
+                  
+  def str(columnName:String):RowParser[String]=get[String](columnName)(implicitly[ColumnTo[String]])
+  def int(columnName:String):(Row => MayErr[SqlRequestError,Int])=get[Int](columnName)(implicitly[ColumnTo[Int]])
+  def get[T](columnName:String)(implicit extractor:ColumnTo[T]):RowParser[T] =
+    RowParser(r => extractor.transform(r,columnName))
 
   def current[T](columnName:String)(implicit extractor:ColumnTo[T]): Parser[T]=
    Parser[T]{in =>
       in.first.left.map(_=>Failure("End of Stream",in))
                    .flatMap(extractor.transform(_,columnName)
-                            .left.map(e=>Failure(e.toString,in)))
+                                     .left.map(e=>Failure(e.toString,in)))
                    .fold(e=>e, a=>{Success(a,in)})}   
 
   def wholeRow[T](p:Parser[T])=p <~ newLine
@@ -57,17 +73,23 @@ object SqlRowsParser extends scala.util.parsing.combinator.Parsers{
   def current1[T](columnName:String)(implicit extractor:ColumnTo[T]): Parser[T]=
    commit(current[T](columnName)(extractor))
   
-  def str(columnName:String):Parser[String]=current1[String](columnName)
-  def int(columnName:String):Parser[Int]=current1[Int](columnName)
-  
   def newLine:Parser[Unit]=  Parser[Unit]{
     in => if(in.atEnd) Failure("end",in) else Success(Unit,in.rest) 
   }
-  def distingwishList[A](differentiator:Parser[Any],a:Parser[A]):Parser[Seq[A]]={
-    val d=guard(differentiator)
-    d >> 
-      (first => ((d ^? {case curr if curr == first => curr }) ~> a) +)
-   }
+
+  def group[A](by:(Row=> MayErr[SqlRequestError,Any]),a:Parser[A]):Parser[Seq[A]]={
+    val d=guard(by)
+    d >> (first => Parser[Seq[A]] {in =>
+      {val (groupy,rest)=in.asInstanceOf[StreamReader[Row]]
+                           .s.span(by(_).right.toOption.exists(r=>r==first));
+       val g=(a *)(StreamReader(groupy))
+       g match{
+         case Success(a,_)=> Success(a,StreamReader(rest))
+         case Failure(msg,_) => Failure(msg,in)
+         case Error(msg,_) => Error(msg,in)
+       }
+       
+       }})}
 }
 trait MagicParser[T]{
   import java.lang.reflect._
