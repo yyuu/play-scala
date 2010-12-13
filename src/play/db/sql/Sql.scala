@@ -40,10 +40,10 @@ object SqlRowsParser extends scala.util.parsing.combinator.Parsers{
   import scala.collection.mutable.Builder
   def sequence[A](ps:Traversable[Parser[A]])
                  (implicit bf:CanBuildFrom[Traversable[_], A, Traversable[A]]) =
-        Parser[Traversable[A]]{ in =>       
-          ps.foldLeft(success(bf(ps)))((s,p) =>
+        Parser[Traversable[A]]{ in => 
+           ps.foldLeft(success(bf(ps)))((s,p) =>
             for( ss <- s; pp <- p) yield ss += pp) map (_.result) apply in 
-        }
+                             }
   implicit def rowFunctionToParser[T](f:(Row => MayErr[SqlRequestError,T])):Parser[T]=
     Parser[T]{in=>
       in.first.left.map(_=>Failure("End of Stream",in))
@@ -106,29 +106,33 @@ trait MagicParser[T]{
 
   import SqlRowsParser._
   def apply()(implicit m : ClassManifest[T]):Parser[T]={
-    val cons= m.erasure
-               .getConstructors()
-               .headOption
-               .getOrElse(throw new java.lang.Error("no constructors for type " +m))
-
-    val zipped= cons.getGenericParameterTypes().map(manifestFor)
-                    .zip(m.erasure.getDeclaredFields()).toList
-
     def clean(fieldName:String)=fieldName.split('$').last
-    // maybe I need to check in declared methods too?
-   val coherent= zipped.forall(i=> i._1==manifestFor(i._2.getType()))
-    if(!coherent && zipped.map(_._2.getName).exists(_.contains("outer")))
+    val name=clean(m.erasure.getName)
+    def isConstructorSupported(c:Constructor[_])=true
+    def getParametersNames(c:Constructor[_]):Seq[String]={
+      import scala.collection.JavaConversions._
+      play.classloading.enhancers.LocalvariablesNamesEnhancer.lookupParameterNames(c)}
+    val consInfo= m.erasure
+               .getConstructors()
+               .sortBy(- _.getGenericParameterTypes().length)
+               .find(isConstructorSupported)
+               .map(c=>(c,c.getGenericParameterTypes().map(manifestFor),getParametersNames(c)))
+               .getOrElse(throw new java.lang.Error("no supported constructors for type " +m))
+   val coherent=consInfo._2.length==consInfo._3.length
+    val types_names= consInfo._2.zip(consInfo._3)
+    if(!coherent && types_names.map(_._2).exists(_.contains("outer")))
       throw new java.lang.Error("It seems that your class uses a closure to an outer instance. For MagicParser, please use only top level classes.")
     if(!coherent) throw new java.lang.Error("not coherent to me!")
+    
     implicit def columnToT[T](implicit m:ClassManifest[T]):ColumnTo[T]=
-    new ColumnTo[T]{
-     def transform(row:Row,columnName:String) =  row.get1[T](columnName)(m)
-    }
-    val paramParser=sequence(zipped.map(i => 
-                       current(clean(i._2.getName))(columnToT((i._1)))))
+      new ColumnTo[T]{
+        def transform(row:Row,columnName:String) =  row.get1[T](columnName)(m)
+      }
+    val paramParser=sequence(types_names.map(i => 
+                       current(clean(name.capitalize+"."+i._2.capitalize))(columnToT((i._1)))))
 
     paramParser ^^ {case args => 
-                      {cons.newInstance( args.toSeq.map(_.asInstanceOf[Object]):_*)
+                      {consInfo._1.newInstance( args.toSeq.map(_.asInstanceOf[Object]):_*)
                            .asInstanceOf[T] } }
   }
 }
@@ -157,10 +161,12 @@ object Row{
      def transform(row:Row,columnName:String) =  row.get1[Option[T]](columnName)(m)
    }
 }
+
 case class MetaDataItem(column:String,nullable:Boolean,clazz:String)
 case class MetaData(ms:List[MetaDataItem]){
   lazy val dictionary= ms.map(m => (m.column,(m.nullable,m.clazz))).toMap
 }
+
 trait Row{
  val metaData:MetaData
   import scala.reflect.Manifest  
@@ -172,10 +178,11 @@ trait Row{
   private[sql] def get1[B](a:String)(implicit m : ClassManifest[B]):MayErr[SqlRequestError,B]=
    {for(  meta <- metaData.dictionary.get(a).toRight(ColumnNotFound(a));
           val (nullable,clazz)=meta;
-          val requiredDataType=if(m.erasure==classOf[Option[_]]) 
-                                  m.typeArguments.headOption.collect { case m:ClassManifest[_] => m.erasure}
-                                                            .getOrElse(classOf[Any]).getName
-                                else m.erasure.getName;
+          val requiredDataType=
+            if(m.erasure==classOf[Option[_]]) 
+              m.typeArguments.headOption.collect { case m:ClassManifest[_] => m.erasure}
+               .getOrElse(classOf[Any]).getName
+            else m.erasure.getName;
           v <- ColumnsDictionary.get(a).toRight(ColumnNotFound(a));
           result <- v match {case b: AnyRef if(nullable != (m.erasure == classOf[Option[_]])) =>  Left(UnexpectedNullableFound(a))
                              case b:AnyRef  if ({requiredDataType} == clazz) =>
@@ -184,6 +191,7 @@ trait Row{
   }
   def apply[B](a:String)(implicit c:ColumnTo[B]):B=get[B](a)(c).get
 }
+
 case class MockRow(data: List[Any],metaData:MetaData) extends Row
 
 class SqlRow(rs:java.sql.ResultSet) extends Row{
