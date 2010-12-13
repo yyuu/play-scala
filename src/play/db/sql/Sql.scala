@@ -59,14 +59,10 @@ object SqlRowsParser extends scala.util.parsing.combinator.Parsers{
   def str(columnName:String):RowParser[String]=get[String](columnName)(implicitly[ColumnTo[String]])
   def int(columnName:String):(Row => MayErr[SqlRequestError,Int])=get[Int](columnName)(implicitly[ColumnTo[Int]])
   def get[T](columnName:String)(implicit extractor:ColumnTo[T]):RowParser[T] =
-    RowParser(r => extractor.transform(r,columnName))
+    RowParser( extractor.transform(_,columnName))
 
-  def current[T](columnName:String)(implicit extractor:ColumnTo[T]): Parser[T]=
-   Parser[T]{in =>
-      in.first.left.map(_=>Failure("End of Stream",in))
-                   .flatMap(extractor.transform(_,columnName)
-                                     .left.map(e=>Failure(e.toString,in)))
-                   .fold(e=>e, a=>{Success(a,in)})}   
+  def current[T](columnName:String)(implicit extractor:ColumnTo[T]): RowParser[T]=
+   RowParser( extractor.transform(_,columnName))
 
   def wholeRow[T](p:Parser[T])=p <~ newLine
   def eatRow[T](p:Parser[T])=p <~ newLine
@@ -86,9 +82,7 @@ object SqlRowsParser extends scala.util.parsing.combinator.Parsers{
        g match{
          case Success(a,_)=> Success(a,StreamReader(rest))
          case Failure(msg,_) => Failure(msg,in)
-         case Error(msg,_) => Error(msg,in)
-       }
-       
+         case Error(msg,_) => Error(msg,in) }
        }})}
 }
 trait MagicParser[T]{
@@ -108,28 +102,42 @@ trait MagicParser[T]{
   def apply()(implicit m : ClassManifest[T]):Parser[T]={
     def clean(fieldName:String)=fieldName.split('$').last
     val name=clean(m.erasure.getName)
-    def isConstructorSupported(c:Constructor[_])=true
+
+    def supportesTypes[C](m:ClassManifest[C]):Option[ColumnTo[C]]= 
+      (m.erasure match {
+        case c if c==classOf[String] => Some(Row.rowToString)
+        case c if c==classOf[Int] => Some(Row.rowToInt)
+       //TODO for Option you need to call recursively, this makes it applicable to future extensions (Option[List[Int]])
+        case c if c==classOf[Option[_]] =>{
+           val typeParam=m.typeArguments.headOption.collect { case m:ClassManifest[_] => m}
+               .getOrElse(implicitly[ClassManifest[Any]])
+           supportesTypes(typeParam).flatMap(_=> Some(Row.rowToOption1(typeParam)):Option[_])}
+        case _ => None
+      }).asInstanceOf[Option[ColumnTo[C]]]
+    def isConstructorSupported(c:Constructor[_])={
+      c.getGenericParameterTypes().forall(t=>supportesTypes(manifestFor(t)).isDefined)
+    }
+
     def getParametersNames(c:Constructor[_]):Seq[String]={
       import scala.collection.JavaConversions._
-      play.classloading.enhancers.LocalvariablesNamesEnhancer.lookupParameterNames(c)}
-    val consInfo= m.erasure
-               .getConstructors()
-               .sortBy(- _.getGenericParameterTypes().length)
-               .find(isConstructorSupported)
-               .map(c=>(c,c.getGenericParameterTypes().map(manifestFor),getParametersNames(c)))
-               .getOrElse(throw new java.lang.Error("no supported constructors for type " +m))
-   val coherent=consInfo._2.length==consInfo._3.length
+      play.classloading.enhancers.LocalvariablesNamesEnhancer.lookupParameterNames(c)
+    }
+    val consInfo= 
+        m.erasure
+          .getConstructors()
+          .sortBy(- _.getGenericParameterTypes().length)
+          .find(isConstructorSupported)
+          .map(c=>(c,c.getGenericParameterTypes().map(manifestFor),getParametersNames(c)))
+          .getOrElse(throw new java.lang.Error("no supported constructors for type " +m))
+
+    val coherent=consInfo._2.length==consInfo._3.length
     val types_names= consInfo._2.zip(consInfo._3)
     if(!coherent && types_names.map(_._2).exists(_.contains("outer")))
       throw new java.lang.Error("It seems that your class uses a closure to an outer instance. For MagicParser, please use only top level classes.")
     if(!coherent) throw new java.lang.Error("not coherent to me!")
     
-    implicit def columnToT[T](implicit m:ClassManifest[T]):ColumnTo[T]=
-      new ColumnTo[T]{
-        def transform(row:Row,columnName:String) =  row.get1[T](columnName)(m)
-      }
     val paramParser=sequence(types_names.map(i => 
-                       current(clean(name.capitalize+"."+i._2.capitalize))(columnToT((i._1)))))
+                       current(clean(name.capitalize+"."+i._2.capitalize))(supportesTypes(i._1).get)))
 
     paramParser ^^ {case args => 
                       {consInfo._1.newInstance( args.toSeq.map(_.asInstanceOf[Object]):_*)
@@ -150,15 +158,21 @@ object Row{
 
   implicit def rowToString :ColumnTo[String]= 
    new ColumnTo[String]{
-     def transform(row:Row,columnName:String) = row.get1[String](columnName) 
+     def transform(row:Row,columnName:String) = row.get1[String](columnName,false) 
    }
   implicit def rowToInt :ColumnTo[Int]= 
    new ColumnTo[Int]{
-     def transform(row:Row,columnName:String) = row.get1[Int](columnName) 
+     def transform(row:Row,columnName:String) = row.get1[Int](columnName,false) 
    }
-  implicit def rowToOption[T](implicit m:ClassManifest[Option[T]]) :ColumnTo[Option[T]]= 
+  //TODO better to require an implicit of ColumnTo[T] can be useful for extensiblity
+  implicit def rowToOption1[T](implicit m:ClassManifest[T]) :ColumnTo[Option[T]]= 
    new ColumnTo[Option[T]]{
-     def transform(row:Row,columnName:String) =  row.get1[Option[T]](columnName)(m)
+     def transform(row:Row,columnName:String) = {
+       for(meta <- row.metaData.dictionary.get(columnName).toRight(ColumnNotFound(columnName));
+            val (nullable,_)=meta;
+           result <- (if(!nullable)   Left(UnexpectedNullableFound(columnName)):MayErr[SqlRequestError,T]
+                      else  row.get1[T](columnName,true)(m))) yield Option(result)
+     }  
    }
 }
 
@@ -175,7 +189,7 @@ trait Row{
   def get[A](a:String)(implicit c:ColumnTo[A]):MayErr[SqlRequestError,A]=
     c.transform(this,a)
 
-  private[sql] def get1[B](a:String)(implicit m : ClassManifest[B]):MayErr[SqlRequestError,B]=
+  private[sql] def get1[B](a:String,nullableAlreadyHandled:Boolean)(implicit m : ClassManifest[B]):MayErr[SqlRequestError,B]=
    {for(  meta <- metaData.dictionary.get(a).toRight(ColumnNotFound(a));
           val (nullable,clazz)=meta;
           val requiredDataType=
@@ -184,10 +198,10 @@ trait Row{
                .getOrElse(classOf[Any]).getName
             else m.erasure.getName;
           v <- ColumnsDictionary.get(a).toRight(ColumnNotFound(a));
-          result <- v match {case b: AnyRef if(nullable != (m.erasure == classOf[Option[_]])) =>  Left(UnexpectedNullableFound(a))
-                             case b:AnyRef  if ({requiredDataType} == clazz) =>
-                           Right((if (nullable) Option(b) else b).asInstanceOf[B])
-                             case b:AnyRef => Left(TypeDoesNotMatch(requiredDataType + " - " + b.getClass.toString))}) yield result
+          result <- v match {//case b: AnyRef if(nullable != (m.erasure == classOf[Option[_]])) =>  Left(UnexpectedNullableFound(a))
+                             case b if(nullable && !nullableAlreadyHandled ) =>  Left(UnexpectedNullableFound(a))
+                             case b  if ({requiredDataType} == clazz) => Right(b.asInstanceOf[B])
+                             case b => Left(TypeDoesNotMatch(requiredDataType + " - " + clazz))}) yield result
   }
   def apply[B](a:String)(implicit c:ColumnTo[B]):B=get[B](a)(c).get
 }
@@ -200,11 +214,7 @@ class SqlRow(rs:java.sql.ResultSet) extends Row{
   val meta=rs.getMetaData()
   val nbColumns= meta.getColumnCount()
   val metaData=MetaData(List.range(1,nbColumns+1).map(i=>MetaDataItem(meta.getColumnName(i),meta.isNullable(i)==columnNullable,meta.getColumnClassName(i))))
-  val types=
-    List.range(1,nbColumns+1)
-        .map(i=>(meta.getColumnName(i),meta.getColumnClassName(i)))
-        .toMap.lift
-  protected def isInitialTypeOK(columnName:String,clazz:Class[_]):Boolean =  types(columnName).exists(t=> clazz.toString==t)
+  
   val data:List[Any]=List.range(1,nbColumns+1).map(nb =>rs.getObject(nb))
 }
 object Useful{

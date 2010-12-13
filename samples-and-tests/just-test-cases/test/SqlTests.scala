@@ -8,8 +8,12 @@ import org.scalatest.matchers._
 import play.db.sql._
 import SqlRowsParser._
 
+// Constructors with unspported type of parameter won't be picked
+case class Task(id:String,ids:Option[List[Int]]){
+def this(ids:Option[List[Int]])=this("1",ids)
+  def this(id:String)=this(id,None)
 
-case class Task(id:String)
+}
 object Task extends MagicParser[Task]
 class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
   def meta(items:(String,(Boolean,Class[_]))*)=MetaData(items.toList.map(i=>MetaDataItem(i._1,i._2._1,i._2._2.getName)))
@@ -20,6 +24,7 @@ class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
       val in= StreamReader(Stream.range(1,100).map(i => MockRow(List(i.toString, "nameb"),metaData)))
 
       commit(eatRow(str("id")))* (in) should be (Error(ColumnNotFound("id").toString,in))
+
       eatRow(str("id"))+ (in) should be (Failure(ColumnNotFound("id").toString,in))
       
       (eatRow(str("id")))* (in) should be (Success(List(),in))
@@ -39,9 +44,14 @@ class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
       val in1= StreamReader(Stream.range(1,100).map(i => MockRow(List(i.toString, "nameb"),metaData1)))
 
       commit(eatRow(Task()) +)(in1).get should be(
-        List.range(1,100).map(i=>Task(i.toString)))
+        List.range(1,100).map(i=>new Task(i.toString)))
   }
-
+  @Test def testNullables {
+    import play.db.sql.Row._
+     val metaData=meta("Person.Id"->(true,classOf[Int]))
+     val in= StreamReader(Stream.range(1,100).map(i=>MockRow(List( if(i % 2 ==0) i else null),metaData)))
+     println(commit(eatRow(get[Option[Int]]("Person.Id")) +)(in) )
+  } 
   @Test def useSqlParserForGroupBys {
     val metaData=meta("Person.Id"->(false,classOf[Int]),
                       "Person.Name"->(false,classOf[String]),
