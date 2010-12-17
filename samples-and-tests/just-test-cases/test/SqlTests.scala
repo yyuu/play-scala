@@ -14,7 +14,7 @@ def this(ids:Option[List[Int]])=this("1",ids)
   def this(id:String)=this(id,None)
 
 }
-object Task extends MagicParser[Task] with HasId1[String,Task]
+object Task extends MagicParser[Task] 
 
 class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
   def meta(items:(String,(Boolean,Class[_]))*)=MetaData(items.toList.map(i=>MetaDataItem(i._1,i._2._1,i._2._2.getName)))
