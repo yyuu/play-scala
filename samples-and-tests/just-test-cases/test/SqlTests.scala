@@ -6,7 +6,7 @@ import org.scalatest._
 import org.scalatest.matchers._
 
 import play.db.sql._
-import SqlRowsParser._
+import SqlRowsParser._ 
 
 // Constructors with unspported type of parameter won't be picked
 case class Task(id:String,ids:Option[List[Int]]){
@@ -14,19 +14,19 @@ def this(ids:Option[List[Int]])=this("1",ids)
   def this(id:String)=this(id,None)
 
 }
-object Task extends MagicParser[Task]
+object Task extends MagicParser[Task] with HasId1[String,Task]
+
 class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
   def meta(items:(String,(Boolean,Class[_]))*)=MetaData(items.toList.map(i=>MetaDataItem(i._1,i._2._1,i._2._2.getName)))
   @Test def useTheMagicParser { 
       val metaData=meta("Task.Id"->(true,classOf[String]),
                         "Task.Name"->(false,classOf[String]))
-
+   
       val in= StreamReader(Stream.range(1,100).map(i => MockRow(List(i.toString, "nameb"),metaData)))
 
       commit(eatRow(str("id")))* (in) should be (Error(ColumnNotFound("id").toString,in))
 
       eatRow(str("id"))+ (in) should be (Failure(ColumnNotFound("id").toString,in))
-      
       (eatRow(str("id")))* (in) should be (Success(List(),in))
 
       eatRow(str("Task.Id"))+ (in) should be (Failure(UnexpectedNullableFound("Task.Id").toString,in))
@@ -42,8 +42,8 @@ class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
       val metaData1=meta("Task.Id"->(false,classOf[String]),
                         "Task.Name"->(false,classOf[String]))
       val in1= StreamReader(Stream.range(1,100).map(i => MockRow(List(i.toString, "nameb"),metaData1)))
-
-      commit(eatRow(Task()) +)(in1).get should be(
+      import Row._
+     commit(eatRow(Task()) +)(in1).get should be(
         List.range(1,100).map(i=>new Task(i.toString)))
   }
   @Test def testNullables {
@@ -64,16 +64,28 @@ class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
                     Stream.range(1,100)
                            .map(j =>
                              MockRow(List(i, "person"+i, 13, j, "comment"+j),metaData)))
-
+    // manual groupBy
     val groupByPerson=group(by=int("Person.Id"),eatRow(str("Comment.Text")))* ;
     
     groupByPerson(StreamReader(in)).get should be (
       List.fill(99)(List.range(1,100).map("comment"+_)))
+    
+    // "magical" groupBy
+    import Magic._
+    val parsePeople=group(by=Person,Comment) ^^ 
+                      {case (p,cs) => p.copy(comments=cs) } *;
 
-   // Task() >> {t=> group(by=Task.Id,Comment!) ^^ t.copy(comments=_)} *
-   // Task() ~ group(by=Task,Comment()) ^^ {case (t,cs) => t.copy(comments=cs)} *
-   // group(by=Task,Comment) ^^ {case (t,cs) => t.copy(comments=cs)} *
+    ( parsePeople (StreamReader(in)) get ) should be (
+      List.range(1,100).map(
+        i=> Person(i, "person"+i, Seq.range(1,100).map(
+              j=> Comment(j,"comment"+j) ))))
 
   }
   
 }
+case class Person(id: Int,name:String,comments:Seq[Comment]) {
+  def this(id:Int,name:String)=this(id,name,List())
+}
+object Person extends MagicParser[Person]
+case class Comment(id: Int,text:String) 
+object Comment extends MagicParser[Comment] 

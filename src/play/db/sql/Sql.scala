@@ -85,10 +85,18 @@ object SqlRowsParser extends scala.util.parsing.combinator.Parsers{
          case Error(msg,_) => Error(msg,in) }
        }})}
 }
-trait MagicParser[T]{
+
+object Magic{
+import  SqlRowsParser._
+ implicit def magicToParser[T](m:MagicParser[T])(implicit ma:ClassManifest[T])=m()(ma)
+ def group[B <: {val id:Any},D](by: MagicParser[B],p:Parser[D])(implicit m:ClassManifest[B])={
+   val name=(m.erasure.getName.capitalize+".Id")
+    by() ~ SqlRowsParser.group(by=(row=>Right(row.ColumnsDictionary.get(name).orNull)),eatRow(p)) ^^ {case c ~ p => (c,p)}
+  }
+}
+trait MagicParser[T] {
   import java.lang.reflect._
   import scala.reflect.Manifest
-
   def manifestFor(t: Type): Manifest[AnyRef] = t match {
     case c: Class[_] => Manifest.classType[AnyRef](c)
     case p: ParameterizedType =>
@@ -129,7 +137,7 @@ trait MagicParser[T]{
           .find(isConstructorSupported)
           .map(c=>(c,c.getGenericParameterTypes().map(manifestFor),getParametersNames(c)))
           .getOrElse(throw new java.lang.Error("no supported constructors for type " +m))
-
+    
     val coherent=consInfo._2.length==consInfo._3.length
     val types_names= consInfo._2.zip(consInfo._3)
     if(!coherent && types_names.map(_._2).exists(_.contains("outer")))
@@ -185,7 +193,7 @@ trait Row{
  val metaData:MetaData
   import scala.reflect.Manifest  
   val data:List[Any]
-  lazy val ColumnsDictionary:Map[String,Any]=metaData.ms.map(_.column).zip(data).toMap
+  private[sql] lazy val ColumnsDictionary:Map[String,Any]=metaData.ms.map(_.column).zip(data).toMap
   def get[A](a:String)(implicit c:ColumnTo[A]):MayErr[SqlRequestError,A]=
     c.transform(this,a)
 
