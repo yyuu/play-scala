@@ -124,7 +124,7 @@ private[cache] object ScalaCache extends CacheDelegate {
     get(key).getOrElse({
       val result = getter;
       if (isDesirable(result)) cacheIt(result)
-      else get(prefixed(key)).getOrElse(result)
+      else get(prefixed(key)).map({v=> set(key, v, "2min");v}).getOrElse(result)
     })
   }
 }
