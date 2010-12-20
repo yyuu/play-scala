@@ -33,7 +33,6 @@ class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
 
           import Magic._
       (Task)* (in) should be(Success(List(),in))
-
       (Task)+ (in) should be(
         Failure(UnexpectedNullableFound("Task.Id").toString,in))
 

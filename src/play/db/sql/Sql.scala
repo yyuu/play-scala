@@ -32,12 +32,19 @@ case class StreamReader[T](s: Stream[T]) extends scala.util.parsing.input.Reader
   def pos = scala.util.parsing.input.NoPosition
   def atEnd = s.isEmpty
 }
+
 case class EndOfStream
 object SqlRowsParser extends scala.util.parsing.combinator.Parsers{
   import Row._
   type Elem=Either[EndOfStream,Row]
   import scala.collection.generic.CanBuildFrom
   import scala.collection.mutable.Builder
+  implicit def extendParser[A](a:Parser[A]):ExtendedParser[A]= ExtendedParser(a)
+  implicit def extendMagicParser[A](a:MagicParser[A])(implicit m:ClassManifest[A]):ExtendedParser[A]= ExtendedParser(a.parser(m))
+  case class ExtendedParser[A](p:Parser[A]){
+    // a combinator that keeps first parser from consuming input
+    def ~<[B](b:Parser[B]):Parser[A ~ B]= guard(p) ~ b
+  }
   def sequence[A](ps:Traversable[Parser[A]])
                  (implicit bf:CanBuildFrom[Traversable[_], A, Traversable[A]]) =
         Parser[Traversable[A]]{ in => 
@@ -91,7 +98,7 @@ import  SqlRowsParser._
  implicit def magicToParser[T](m:MagicParser[T])(implicit ma:ClassManifest[T])=m.parser(ma)
  def group[B <: {val id:Any},D](by: MagicParser[B],p:Parser[D])(implicit m:ClassManifest[B])={
    val name=(m.erasure.getName.capitalize+".Id")
-    guard(by) ~ SqlRowsParser.group(by=(row=>Right(row.ColumnsDictionary.get(name).orNull)),p) ^^ {case c ~ p => (c,p)}
+    by ~< SqlRowsParser.group(by=(row=>Right(row.ColumnsDictionary.get(name).orNull)),p) ^^ {case c ~ p => (c,p)}
   }
 }
 trait MagicParser[T] {
