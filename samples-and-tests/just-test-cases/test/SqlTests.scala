@@ -13,34 +13,36 @@ case class Task(id:String,ids:Option[List[Int]]){
 def this(ids:Option[List[Int]])=this("1",ids)
   def this(id:String)=this(id,None)
 }
-object Task extends MagicParser[Task] 
+object Task extends Magic[Task] 
+case class Student(id:String)
+object Student extends Magic[Student]
 
 class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
   def meta(items:(String,(Boolean,Class[_]))*)=MetaData(items.toList.map(i=>MetaDataItem(i._1,i._2._1,i._2._2.getName)))
   @Test def useTheMagicParser { 
-      val metaData=meta("Task.Id"->(true,classOf[String]),
-                        "Task.Name"->(false,classOf[String]))
+      val metaData=meta("TASK.ID"->(true,classOf[String]),
+                        "TASK.NAME"->(false,classOf[String]))
    
       val in= StreamReader(Stream.range(1,100).map(i => MockRow(List(i.toString, "nameb"),metaData)))
 
-      commit((str("id")))* (in) should be (Error(ColumnNotFound("id").toString,in))
+      commit((str("ID")))* (in) should be (Error(ColumnNotFound("ID").toString,in))
 
-      (str("id"))+ (in) should be (Failure(ColumnNotFound("id").toString,in))
-      (str("id"))* (in) should be (Success(List(),in))
+      (str("ID"))+ (in) should be (Failure(ColumnNotFound("ID").toString,in))
+      (str("ID"))* (in) should be (Success(List(),in))
 
-      str("Task.Id")+ (in) should be (
-        Failure(UnexpectedNullableFound("Task.Id").toString,in))
+      str("TASK.ID")+ (in) should be (
+        Failure(UnexpectedNullableFound("TASK.ID").toString,in))
 
           import Magic._
       (Task)* (in) should be(Success(List(),in))
       (Task)+ (in) should be(
-        Failure(UnexpectedNullableFound("Task.Id").toString,in))
+        Failure(UnexpectedNullableFound("TASK.ID").toString,in))
 
       commit((Task)+) (in) should be(
-        Error(UnexpectedNullableFound("Task.Id").toString,in))
+        Error(UnexpectedNullableFound("TASK.ID").toString,in))
 
-      val metaData1=meta("Task.Id"->(false,classOf[String]),
-                        "Task.Name"->(false,classOf[String]))
+      val metaData1=meta("TASK.ID"->(false,classOf[String]),
+                        "TASK.NAME"->(false,classOf[String]))
       val in1= StreamReader(Stream.range(1,100).map(i => MockRow(List(i.toString, "nameb"),metaData1)))
 
       import Row._
@@ -49,16 +51,16 @@ class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
   }
   @Test def testNullables {
     import play.db.sql.Row._
-     val metaData=meta("Person.Id"->(true,classOf[Int]))
+     val metaData=meta("PERSON.ID"->(true,classOf[Int]))
      val in= StreamReader(Stream.range(1,100).map(i=>MockRow(List( if(i % 2 ==0) i else null),metaData)))
-     println(commit((get[Option[Int]]("Person.Id")) +)(in) )
+     println(commit((get[Option[Int]]("PERSON.ID")) +)(in) )
   } 
   @Test def useSqlParserForGroupBys {
-    val metaData=meta("Person.Id"->(false,classOf[Int]),
-                      "Person.Name"->(false,classOf[String]),
-                      "Person.Age"->(true,classOf[Int]),
-                      "Comment.Id"->(false,classOf[Int]),
-                      "Comment.Text"->(false,classOf[String]))
+    val metaData=meta("PERSON.ID"->(false,classOf[Int]),
+                      "PERSON.NAME"->(false,classOf[String]),
+                      "PERSON.AGE"->(true,classOf[Int]),
+                      "COMMENT.ID"->(false,classOf[Int]),
+                      "COMMENT.TEXT"->(false,classOf[String]))
    
     val in= Stream.range(1,100)
                   .flatMap(i => 
@@ -66,7 +68,7 @@ class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
                            .map(j =>
                              MockRow(List(i, "person"+i, 13, j, "comment"+j),metaData)))
     // manual groupBy
-    val groupByPerson=group(by=int("Person.Id"),(str("Comment.Text")))* ;
+    val groupByPerson=group(by=int("PERSON.ID"),(str("COMMENT.TEXT")))* ;
     
     groupByPerson(StreamReader(in)).get should be (
       List.fill(99)(List.range(1,100).map("comment"+_)))
@@ -85,20 +87,26 @@ class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
   
   @Test def useSomeMagicSql{
     
-     play.db.DB.execute("DROP TABLE IF EXISTS Task") 
+     play.db.DB.execute("DROP TABLE IF EXISTS Task")
+      play.db.DB.execute("DROP TABLE IF EXISTS Student") 
      play.db.DB.execute("""CREATE TABLE Task 
                            (Id char(60) NOT NULL) """)
-    
+         play.db.DB.execute("""CREATE TABLE Student 
+                           (Id char(60) NOT NULL,
+                            Task_Id char(60) NOT NULL) """)
 
     play.db.DB.execute("""insert into Task Values('1')""")
-    Task.find("1") should be (Some(new Task("1")))
-    Task.findAll() should be (List(new Task("1")))
-    Task.find("2") should be (None)
+play.db.DB.execute("""insert into Student Values('1','1')""")
+   
+    Task.findById("1") should be (Some(new Task("1")))
+    Task.all() should be (List(new Task("1")))
+    Task.findById("2") should be (None)
+    play.db.sql.Sql.sql("select * from Task join Student on Task.id=Student.Task_Id").as(Task ~< Student) should be (SqlRowsParser.~(new Task("1"),Student("1")))
   }
 }
 case class Person(id: Int,name:String,comments:Seq[Comment]) {
   def this(id:Int,name:String)=this(id,name,List())
 }
-object Person extends MagicParser[Person]
+object Person extends Magic[Person]
 case class Comment(id: Int,text:String) 
-object Comment extends MagicParser[Comment] 
+object Comment extends Magic[Comment] 

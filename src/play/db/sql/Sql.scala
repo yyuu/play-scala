@@ -40,7 +40,7 @@ object SqlRowsParser extends scala.util.parsing.combinator.Parsers{
   import scala.collection.generic.CanBuildFrom
   import scala.collection.mutable.Builder
   implicit def extendParser[A](a:Parser[A]):ExtendedParser[A]= ExtendedParser(a)
-  implicit def extendMagicParser[A](a:MagicParser[A])(implicit m:ClassManifest[A]):ExtendedParser[A]= ExtendedParser(a.parser(m))
+ 
   case class ExtendedParser[A](p:Parser[A]){
     // a combinator that keeps first parser from consuming input
     def ~<[B](b:Parser[B]):Parser[A ~ B]= guard(p) ~ b
@@ -95,13 +95,13 @@ object SqlRowsParser extends scala.util.parsing.combinator.Parsers{
 
 object Magic{
 import  SqlRowsParser._
- implicit def magicToParser[T](m:MagicParser[T])(implicit ma:ClassManifest[T])=m.parser(ma)
- def group[B <: {val id:Any},D](by: MagicParser[B],p:Parser[D])(implicit m:ClassManifest[B])={
-   val name=(m.erasure.getName.capitalize+".Id")
-    by ~< SqlRowsParser.group(by=(row=>Right(row.ColumnsDictionary.get(name).orNull)),p) ^^ {case c ~ p => (c,p)}
+  def group[B <: {val id:Any},D](by: Parser[B],p:Parser[D])(implicit m:ClassManifest[B])={
+      val name=(m.erasure.getName.toUpperCase()+".ID")
+      by ~< SqlRowsParser.group(by=(row=>Right(row.ColumnsDictionary.get(name).orNull)),p) ^^
+      {case c ~ p => (c,p)}
   }
 }
-trait MagicParser[T] {
+case class Magic[T](implicit m:ClassManifest[T]) extends SqlRowsParser.Parser[T]{
   import java.lang.reflect._
   import scala.reflect.Manifest
   def manifestFor(t: Type): Manifest[AnyRef] = t match {
@@ -112,27 +112,24 @@ trait MagicParser[T] {
         manifestFor(p.getActualTypeArguments.head),
         p.getActualTypeArguments.tail.map(manifestFor): _*)
   }
- import SqlRowsParser._
+  import SqlRowsParser._
   import Sql._
-
-  def find(id:Any)(implicit m : ClassManifest[T]):Option[T] =
-    sql("select "+getSqlColumnsLabels(m)+" from "+clean(m.erasure.getName)+" where Id={id}")
-          .on("id"->id)
-          .as[Option[T]]()(phrase(parser(m)*).map(_.headOption))
-
-  def findAll()(implicit m : ClassManifest[T]):Seq[T]=
-    sql("select "+getSqlColumnsLabels(m)+" from "+clean(m.erasure.getName))
-        .on("table"->clean(m.erasure.getName))
-        .as[Seq[T]]()(parser(m)*)
   
-  def getSqlColumnsLabels(m : ClassManifest[T]):String=
-    electConstructorAndGetInfo(m)._2.map(_._1)
-                                 .map(c=> c+" AS \""+c+"\"")
-                                 .mkString(", ")
-
   def clean(fieldName:String)=fieldName.split('$').last
-  def electConstructorAndGetInfo( m : ClassManifest[T]):(Constructor[_],Seq[(String,ColumnTo[_])])={
-      val name=clean(m.erasure.getName)
+  val name=clean(m.erasure.getName)
+
+   def findById(id:Any):Option[T] =
+    sql("select * from "+name+" where Id={id}")
+          .on("id"->id)
+          .as[Option[T]](phrase(this*).map(_.headOption))
+
+  def all():Seq[T]=
+    sql("select * from "+name)
+        .asSimple
+        .as[Seq[T]](this*)
+ 
+  val electConstructorAndGetInfo:(Constructor[_],Seq[(String,ColumnTo[_])])={
+      
       def supportesTypes[C](m:ClassManifest[C]):Option[ColumnTo[C]]= 
       (m.erasure match {
         case c if c==classOf[String] => Some(Row.rowToString)
@@ -162,24 +159,25 @@ trait MagicParser[T] {
 
     val coherent=consInfo._2.length==consInfo._3.length
     val names_types= consInfo._3.zip(consInfo._2.map(t=>supportesTypes(t).get))
-                             .map(nt=>(name.capitalize+"."+clean(nt._1.capitalize),nt._2))
+                             .map(nt=>(name.toUpperCase()+"."+clean(nt._1.toUpperCase()),nt._2))
     if(!coherent && names_types.map(_._1).exists(_.contains("outer")))
       throw new java.lang.Error("It seems that your class uses a closure to an outer instance. For MagicParser, please use only top level classes.")
     if(!coherent) throw new java.lang.Error("not coherent to me!")
     (consInfo._1,names_types)
   }
-  def parser(implicit m : ClassManifest[T]):Parser[T]={
+
+    def apply(input:Input):ParseResult[T]={
     val name=clean(m.erasure.getName)   
-    val (c,names_types)=electConstructorAndGetInfo(m)
+    val (c,names_types)=electConstructorAndGetInfo
     val paramParser=eatRow(sequence(names_types.map(i => 
                        guard[Any](current(i._1)(i._2)))))
 
-    paramParser ^^ {case args => 
+    (paramParser ^^ {case args => 
                       {c.newInstance( args.toSeq.map(_.asInstanceOf[Object]):_*)
-                           .asInstanceOf[T] } }
+                           .asInstanceOf[T] } }) (input)
   }
-}
 
+}
 object Row{
   def unapplySeq(row:Row):Option[List[Any]]={
     Some(row.data.zip(row.metaData.ms.map(_.nullable)).map(i=> if(i._2) Option(i._1) else i._1))
@@ -242,7 +240,7 @@ class SqlRow(rs:java.sql.ResultSet) extends Row{
   import java.sql.ResultSetMetaData._
   val meta=rs.getMetaData()
   val nbColumns= meta.getColumnCount()
-  val metaData=MetaData(List.range(1,nbColumns+1).map(i=>MetaDataItem(meta.getColumnLabel(i),meta.isNullable(i)==columnNullable,meta.getColumnClassName(i))))
+  val metaData=MetaData(List.range(1,nbColumns+1).map(i=>MetaDataItem(meta.getTableName(i)+"."+meta.getColumnName(i),meta.isNullable(i)==columnNullable,meta.getColumnClassName(i))))
   
   val data:List[Any]=List.range(1,nbColumns+1).map(nb =>rs.getObject(nb))
 }
@@ -270,7 +268,7 @@ case class SimpleSql(sql:SqlQuery,params:Seq[(String,Any)]) extends Sql{
   def onParams(args:Any*):SimpleSql = 
     this.copy(params=(this.params) ++ sql.argsInitialOrder.zip(args))
 
-   def getFilledStatement(connection:java.sql.Connection)={
+  def getFilledStatement(connection:java.sql.Connection)={
     val s=connection.prepareStatement(sql.query)
     val argsMap=Map(params:_*)
     sql.argsInitialOrder.map(argsMap)
@@ -308,7 +306,7 @@ trait Sql{
   def result(conn:java.sql.Connection=connection) =
     Sql.resultSetToStream(getFilledStatement(connection).executeQuery())
   import SqlRowsParser._
-  def as[T](conn:java.sql.Connection=connection)(implicit parser:Parser[T]):T =
+  def as[T](parser:Parser[T])(implicit conn:java.sql.Connection=connection):T =
     parser(StreamReader(result(connection))) match{
             case Success(a,_)=>a
             case Failure(e,_)  => error(e)
@@ -319,7 +317,9 @@ trait Sql{
     getFilledStatement(connection).executeUpdate()
 } 
 
-case class SqlQuery(query:String,argsInitialOrder:List[String]=List.empty){
+case class SqlQuery(query:String,argsInitialOrder:List[String]=List.empty) extends Sql{
+  def getFilledStatement(connection:java.sql.Connection):java.sql.PreparedStatement =
+    asSimple.getFilledStatement(connection)
   def asSimple:SimpleSql=SimpleSql(this,Nil)
   def asBatch:BatchSql=BatchSql(this,Nil)  
 }
