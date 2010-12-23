@@ -101,7 +101,10 @@ import  SqlRowsParser._
       {case c ~ p => (c,p)}
   }
 }
-case class Magic[T](implicit m:ClassManifest[T]) extends SqlRowsParser.Parser[T]{
+case class Magic[T](implicit m:ClassManifest[T]) extends MagicSql[T]
+
+trait MagicSql[T] extends SqlRowsParser.Parser[T]{
+  val m:ClassManifest[T]
   import java.lang.reflect._
   import scala.reflect.Manifest
   def manifestFor(t: Type): Manifest[AnyRef] = t match {
@@ -118,7 +121,7 @@ case class Magic[T](implicit m:ClassManifest[T]) extends SqlRowsParser.Parser[T]
   def clean(fieldName:String)=fieldName.split('$').last
   val name=clean(m.erasure.getName)
 
-   def findById(id:Any):Option[T] =
+  def findById(id:Any):Option[T] =
     sql("select * from "+name+" where Id={id}")
           .on("id"->id)
           .as[Option[T]](phrase(this*).map(_.headOption))

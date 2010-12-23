@@ -10,7 +10,7 @@ import SqlRowsParser._
 
 // Constructors with unspported type of parameter won't be picked
 case class Task(id:String,ids:Option[List[Int]]){
-def this(ids:Option[List[Int]])=this("1",ids)
+  def this(ids:Option[List[Int]])=this("1",ids)
   def this(id:String)=this(id,None)
 }
 object Task extends Magic[Task] 
