@@ -18,6 +18,7 @@ package play.db.sql
 
 import play.utils.Scala.MayErr
 import play.utils.Scala.MayErr._
+import java.util.Date
 abstract class SqlRequestError
 case class ColumnNotFound(columnName:String) extends SqlRequestError
 case class TypeDoesNotMatch(message:String) extends SqlRequestError
@@ -96,7 +97,7 @@ object SqlRowsParser extends scala.util.parsing.combinator.Parsers{
 object Magic{
 import  SqlRowsParser._
   def group[B <: {val id:Any},D](by: Parser[B],p:Parser[D])(implicit m:ClassManifest[B])={
-      val name=(m.erasure.getName.toUpperCase()+".ID")
+      val name=(m.erasure.getSimpleName.toUpperCase()+".ID")
       by ~< SqlRowsParser.group(by=(row=>Right(row.ColumnsDictionary.get(name).orNull)),p) ^^
       {case c ~ p => (c,p)}
   }
@@ -116,17 +117,25 @@ case class Magic[T](implicit m:ClassManifest[T]) extends SqlRowsParser.Parser[T]
   import Sql._
   
   def clean(fieldName:String)=fieldName.split('$').last
-  val name=clean(m.erasure.getName)
+  val name=clean(m.erasure.getSimpleName)
 
    def findById(id:Any):Option[T] =
     sql("select * from "+name+" where Id={id}")
           .on("id"->id)
           .as[Option[T]](phrase(this*).map(_.headOption))
 
-  def all():Seq[T]=
-    sql("select * from "+name)
+  def all():Seq[T] =
+    sql("select * from " + name)
         .asSimple
         .as[Seq[T]](this*)
+        
+  def find(stmt:String):Seq[T]=
+     sql(stmt match {
+         case s if s.startsWith("select") => s
+         case s if s.startsWith("where") => "select * from " + name + " " + s
+         case s if s.startsWith("order by") => "select * from " + name + " " + s
+         case s => "select * from " + name + " where " + s
+     }).asSimple.as[Seq[T]](this*)
  
   val electConstructorAndGetInfo:(Constructor[_],Seq[(String,ColumnTo[_])])={
       
@@ -134,6 +143,8 @@ case class Magic[T](implicit m:ClassManifest[T]) extends SqlRowsParser.Parser[T]
       (m.erasure match {
         case c if c==classOf[String] => Some(Row.rowToString)
         case c if c==classOf[Int] => Some(Row.rowToInt)
+        case c if c==classOf[Long] => Some(Row.rowToLong)
+        case c if c==classOf[Date] => Some(Row.rowToDate)
        //TODO for Option you need to call recursively, this makes it applicable to future extensions (Option[List[Int]])
         case c if c==classOf[Option[_]] =>{
            val typeParam=m.typeArguments.headOption.collect { case m:ClassManifest[_] => m}
@@ -182,7 +193,7 @@ object Row{
   def unapplySeq(row:Row):Option[List[Any]]={
     Some(row.data.zip(row.metaData.ms.map(_.nullable)).map(i=> if(i._2) Option(i._1) else i._1))
   }
-
+  
   implicit def rowToString :ColumnTo[String]= 
    new ColumnTo[String]{
      def transform(row:Row,columnName:String) = row.get1[String](columnName,false) 
@@ -191,6 +202,15 @@ object Row{
    new ColumnTo[Int]{
      def transform(row:Row,columnName:String) = row.get1[Int](columnName,false) 
    }
+   implicit def rowToLong :ColumnTo[Long]= 
+    new ColumnTo[Long]{
+      def transform(row:Row,columnName:String) = row.get1[Long](columnName,false) 
+    } 
+   implicit def rowToDate :ColumnTo[Date]= 
+    new ColumnTo[Date]{
+      def transform(row:Row,columnName:String) = row.get1[Date](columnName,false)
+    }  
+   
   //TODO better to require an implicit of ColumnTo[T] can be useful for extensiblity
   implicit def rowToOption1[T](implicit m:ClassManifest[T]) :ColumnTo[Option[T]]= 
    new ColumnTo[Option[T]]{
@@ -215,11 +235,18 @@ trait Row{
   private[sql] lazy val ColumnsDictionary:Map[String,Any]=metaData.ms.map(_.column).zip(data).toMap
   def get[A](a:String)(implicit c:ColumnTo[A]):MayErr[SqlRequestError,A]=
     c.transform(this,a)
+    
+  private def getType(t:String) = t match {
+      case "long" => Class.forName("java.lang.Long")
+      case "int" => Class.forName("java.lang.Int")
+      case "boolean" => Class.forName("java.lang.Boolean")
+      case _ => Class.forName(t)
+  }
 
   private[sql] def get1[B](a:String,nullableAlreadyHandled:Boolean)(implicit m : ClassManifest[B]):MayErr[SqlRequestError,B]=
    {for(  meta <- metaData.dictionary.get(a).toRight(ColumnNotFound(a));
           val (nullable,clazz)=meta;
-          val requiredDataType=
+          val requiredDataType =
             if(m.erasure==classOf[Option[_]]) 
               m.typeArguments.headOption.collect { case m:ClassManifest[_] => m.erasure}
                .getOrElse(classOf[Any]).getName
@@ -227,7 +254,7 @@ trait Row{
           v <- ColumnsDictionary.get(a).toRight(ColumnNotFound(a));
           result <- v match {//case b: AnyRef if(nullable != (m.erasure == classOf[Option[_]])) =>  Left(UnexpectedNullableFound(a))
                              case b if(nullable && !nullableAlreadyHandled ) =>  Left(UnexpectedNullableFound(a))
-                             case b  if ({requiredDataType} == clazz) => Right(b.asInstanceOf[B])
+                             case b if(getType(requiredDataType).isAssignableFrom(getType(clazz))) => Right(b.asInstanceOf[B])
                              case b => Left(TypeDoesNotMatch(requiredDataType + " - " + clazz))}) yield result
   }
   def apply[B](a:String)(implicit c:ColumnTo[B]):B=get[B](a)(c).get
@@ -238,11 +265,13 @@ case class MockRow(data: List[Any],metaData:MetaData) extends Row
 class SqlRow(rs:java.sql.ResultSet) extends Row{
   import java.sql._
   import java.sql.ResultSetMetaData._
-  val meta=rs.getMetaData()
-  val nbColumns= meta.getColumnCount()
-  val metaData=MetaData(List.range(1,nbColumns+1).map(i=>MetaDataItem(meta.getTableName(i)+"."+meta.getColumnName(i),meta.isNullable(i)==columnNullable,meta.getColumnClassName(i))))
+
+  val meta = rs.getMetaData()
+  val nbColumns = meta.getColumnCount()
+  val metaData = MetaData(List.range(1,nbColumns+1).map(i=>MetaDataItem( (meta.getTableName(i) + "." + meta.getColumnName(i)).toUpperCase, meta.isNullable(i)==columnNullable,meta.getColumnClassName(i))))
+  val data:List[Any] = List.range(1,nbColumns+1).map(nb =>rs.getObject(nb))
   
-  val data:List[Any]=List.range(1,nbColumns+1).map(nb =>rs.getObject(nb))
+  override def toString() = "Row(" + ( Range.inclusive(1, nbColumns).map( i => "'" + (meta.getTableName(i) + "." + meta.getColumnName(i)).toUpperCase + "':" + rs.getObject(i) + " as " + meta.getColumnClassName(i) ).reduceLeft(_ + ", " + _) ) + ")"
 }
 object Useful{
     case class Var[T](var content:T)

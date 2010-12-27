@@ -135,19 +135,27 @@ object ScalaController {
 
     def argsToParams(args: Any*) = {
         val params = new java.util.HashMap[String,AnyRef]
+        
+        def addIt(name: String, o: Any) {
+            val names = LocalVariablesNamesTracer.getAllLocalVariableNames(o)
+            o match {
+                case None => // ignore it
+                case Some(value) => params.put(name, value.asInstanceOf[AnyRef])
+                case _ => params.put(name, o.asInstanceOf[AnyRef])
+            }
+        }
+        
         for(o <- args) {
             o match {
-                case (name: String, value: Any) => params.put(name, value.asInstanceOf[AnyRef])
+                case (name: String, value: Any) => addIt(name, value)
                 case _ => val names = LocalVariablesNamesTracer.getAllLocalVariableNames(o)
-                    if(names.isEmpty) {
-                        val simpleName = o.asInstanceOf[AnyRef].getClass.getSimpleName
-                        params.put(simpleName(0).toLower + simpleName.substring(1), o.asInstanceOf[AnyRef])
-                    } else {
-                        for (name <- names) {
-                            params.put(name, o.asInstanceOf[AnyRef])
-                        }
-                    }
-              }
+                          if(names.isEmpty) {
+                              val simpleName = o.asInstanceOf[AnyRef].getClass.getSimpleName
+                              addIt(simpleName(0).toLower + simpleName.substring(1), o)
+                          } else {
+                              for (name <- names) addIt(name, o)
+                          }
+            }
         }
         params
     }
