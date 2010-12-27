@@ -35,13 +35,16 @@ case class StreamReader[T](s: Stream[T]) extends scala.util.parsing.input.Reader
 }
 
 case class EndOfStream
-object SqlRowsParser extends scala.util.parsing.combinator.Parsers{
+
+object SqlRowsParser extends SqlRowsParser
+
+trait SqlRowsParser extends scala.util.parsing.combinator.Parsers{
   import Row._
   type Elem=Either[EndOfStream,Row]
   import scala.collection.generic.CanBuildFrom
   import scala.collection.mutable.Builder
   implicit def extendParser[A](a:Parser[A]):ExtendedParser[A]= ExtendedParser(a)
- 
+  
   case class ExtendedParser[A](p:Parser[A]){
     // a combinator that keeps first parser from consuming input
     def ~<[B](b:Parser[B]):Parser[A ~ B]= guard(p) ~ b
@@ -69,6 +72,9 @@ object SqlRowsParser extends scala.util.parsing.combinator.Parsers{
   def get[T](columnName:String)(implicit extractor:ColumnTo[T]):RowParser[T] =
     RowParser( extractor.transform(_,columnName))
 
+  def contains[T](columnName:String,t:T)(implicit extractor:ColumnTo[T]) :Parser[Unit]=
+      guard(get[T](columnName)(extractor) ^? {case t => Unit})
+
   def current[T](columnName:String)(implicit extractor:ColumnTo[T]): RowParser[T]=
    RowParser( extractor.transform(_,columnName))
 
@@ -84,6 +90,7 @@ object SqlRowsParser extends scala.util.parsing.combinator.Parsers{
   def group[A](by:(Row=> MayErr[SqlRequestError,Any]),a:Parser[A]):Parser[Seq[A]]={
     val d=guard(by)
     d >> (first => Parser[Seq[A]] {in =>
+        //instead of cast it'd be much better to override type Reader
       {val (groupy,rest)=in.asInstanceOf[StreamReader[Row]]
                            .s.span(by(_).right.toOption.exists(r=>r==first));
        val g=(a *)(StreamReader(groupy))
@@ -92,8 +99,15 @@ object SqlRowsParser extends scala.util.parsing.combinator.Parsers{
          case Failure(msg,_) => Failure(msg,in)
          case Error(msg,_) => Error(msg,in) }
        }})}
-}
 
+  implicit def symbolToColumn(columnName:Symbol):ColumnSymbol=ColumnSymbol(columnName)
+  case class ColumnSymbol(name:Symbol){
+    def of[T](implicit extractor:ColumnTo[T] ):Parser[T]=
+      get[T](name.name)(extractor)
+    def is[T](t:T)(implicit extractor:ColumnTo[T] ):Parser[Unit]=
+      contains[T](name.name,t)(extractor)
+  }
+}
 object Magic{
 import  SqlRowsParser._
   def group[B <: {val id:Any},D](by: Parser[B],p:Parser[D])(implicit m:ClassManifest[B])={
@@ -102,7 +116,13 @@ import  SqlRowsParser._
       {case c ~ p => (c,p)}
   }
 }
-case class Magic[T](implicit m:ClassManifest[T]) extends SqlRowsParser.Parser[T]{
+case class Magic[T]( override val tableName:Option[String]=None)(implicit val m:ClassManifest[T]) extends MagicSql[T]{
+  def apply(tableName:Symbol)= this.copy(tableName=Some(tableName.name))
+}
+
+trait MagicSql[T] extends SqlRowsParser.Parser[T]{
+  val m:ClassManifest[T]
+  val tableName:Option[String]=None
   import java.lang.reflect._
   import scala.reflect.Manifest
   def manifestFor(t: Type): Manifest[AnyRef] = t match {
@@ -112,14 +132,14 @@ case class Magic[T](implicit m:ClassManifest[T]) extends SqlRowsParser.Parser[T]
         p.getRawType.asInstanceOf[Class[AnyRef]],
         manifestFor(p.getActualTypeArguments.head),
         p.getActualTypeArguments.tail.map(manifestFor): _*)
-  }
+    }
   import SqlRowsParser._
   import Sql._
   
   def clean(fieldName:String)=fieldName.split('$').last
-  val name=clean(m.erasure.getSimpleName)
+  val name=tableName.getOrElse(clean(m.erasure.getSimpleName))
 
-   def findById(id:Any):Option[T] =
+  def findById(id:Any):Option[T] =
     sql("select * from "+name+" where Id={id}")
           .on("id"->id)
           .as[Option[T]](phrase(this*).map(_.headOption))

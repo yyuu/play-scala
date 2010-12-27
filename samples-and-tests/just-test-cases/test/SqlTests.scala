@@ -10,7 +10,7 @@ import SqlRowsParser._
 
 // Constructors with unspported type of parameter won't be picked
 case class Task(id:String,ids:Option[List[Int]]){
-def this(ids:Option[List[Int]])=this("1",ids)
+  def this(ids:Option[List[Int]])=this("1",ids)
   def this(id:String)=this(id,None)
 }
 object Task extends Magic[Task] 
@@ -24,7 +24,6 @@ class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
                         "TASK.NAME"->(false,classOf[String]))
    
       val in= StreamReader(Stream.range(1,100).map(i => MockRow(List(i.toString, "nameb"),metaData)))
-
       commit((str("ID")))* (in) should be (Error(ColumnNotFound("ID").toString,in))
 
       (str("ID"))+ (in) should be (Failure(ColumnNotFound("ID").toString,in))
@@ -97,13 +96,40 @@ class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
 
     play.db.DB.execute("""insert into Task Values('1')""")
 play.db.DB.execute("""insert into Student Values('1','1')""")
-   
     Task.findById("1") should be (Some(new Task("1")))
     Task.all() should be (List(new Task("1")))
     Task.findById("2") should be (None)
     play.db.sql.Sql.sql("select * from Task join Student on Task.id=Student.Task_Id").as(Task ~< Student) should be (SqlRowsParser.~(new Task("1"),Student("1")))
   }
+  
+  @Test def testAlternate(){
+    play.db.DB.execute("DROP TABLE IF EXISTS Link")
+    play.db.DB.execute("DROP TABLE IF EXISTS Text")
+
+
+         play.db.DB.execute("""CREATE TABLE Link 
+                           (Id char(60) NOT NULL,
+                            Name char(60) NOT NULL,
+                            URL char(200) NOT Null) """)
+         play.db.DB.execute("""CREATE TABLE Text 
+                           (Id char(60) NOT NULL,
+                            Title char(60) NOT NULL,
+                            Body char(360) NOT Null) """)
+    play.db.DB.execute("""insert into Link Values('1','zengularity','http://www.zengularity.com')""")
+    play.db.DB.execute("""insert into Text Values('1','Functional Web','It rocks!')""")
+play.db.DB.execute("""insert into Text Values('1','Functional Web','It rocks!')""")
+      println(  play.db.sql.Sql.sql("select * from Text Outer Join Link on Title=Name").result().toList.map(_.data))
+
 }
+
+}
+abstract class Post
+
+  case class Link(id:String,name:String,url:String) extends Post
+  object Link extends Magic[Link]
+  case class Text(id:String,title:String,body:String) extends Post
+  object Text extends Magic[Text]
+
 case class Person(id: Int,name:String,comments:Seq[Comment]) {
   def this(id:Int,name:String)=this(id,name,List())
 }
