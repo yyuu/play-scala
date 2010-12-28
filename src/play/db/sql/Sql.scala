@@ -73,7 +73,7 @@ trait SqlRowsParser extends scala.util.parsing.combinator.Parsers{
     RowParser( extractor.transform(_,columnName))
 
   def contains[T](columnName:String,t:T)(implicit extractor:ColumnTo[T]) :Parser[Unit]=
-      guard(get[T](columnName)(extractor) ^? {case t => Unit})
+      guard(get[T](columnName)(extractor) ^? {case a if a==t => Unit})
 
   def current[T](columnName:String)(implicit extractor:ColumnTo[T]): RowParser[T]=
    RowParser( extractor.transform(_,columnName))

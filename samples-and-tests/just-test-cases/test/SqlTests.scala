@@ -103,32 +103,32 @@ play.db.DB.execute("""insert into Student Values('1','1')""")
   }
   
   @Test def testAlternate(){
-    play.db.DB.execute("DROP TABLE IF EXISTS Link")
-    play.db.DB.execute("DROP TABLE IF EXISTS Text")
+    play.db.DB.execute("DROP TABLE IF EXISTS Post")
 
-
-         play.db.DB.execute("""CREATE TABLE Link 
+         play.db.DB.execute("""CREATE TABLE Post 
                            (Id char(60) NOT NULL,
-                            Name char(60) NOT NULL,
-                            URL char(200) NOT Null) """)
-         play.db.DB.execute("""CREATE TABLE Text 
-                           (Id char(60) NOT NULL,
+                            Type char(60) NOT NULL,
                             Title char(60) NOT NULL,
-                            Body char(360) NOT Null) """)
-    play.db.DB.execute("""insert into Link Values('1','zengularity','http://www.zengularity.com')""")
-    play.db.DB.execute("""insert into Text Values('1','Functional Web','It rocks!')""")
-    play.db.DB.execute("""insert into Text Values('1','Functional Web','It rocks!')""")
-      println(  play.db.sql.Sql.sql("select * from Text Full Join Link on Title=Name").result().toList.map(_.data))
+                            URL char(200)  DEFAULT 'non' NOT Null,
+                            Body char(360) DEFAULT 'non' NOT Null) """)
+      
+    play.db.DB.execute("""insert into Post Values('1','Link','zengularity','http://www.zengularity.com','non')""")
+    play.db.DB.execute("""insert into Post Values('1','Text','Functional Web','non','It rocks!')""")
+    play.db.DB.execute("""insert into Post Values('1','Text','Functional Web','non','It rocks!')""")
+    import Row._
+      println(  play.db.sql.Sql.sql("select * from Post")
+              .as( (Symbol("POST.TYPE").is("Text") ~> Text) |
+                   (Symbol("POST.TYPE").is("Link") ~> Link) *))
 
   }
 
 }
 abstract class Post
 
-  case class Link(id:String,name:String,url:String) extends Post
-  object Link extends Magic[Link]
+  case class Link(id:String,title:String,url:String) extends Post
+  object Link extends Magic[Link](Some("Post"))
   case class Text(id:String,title:String,body:String) extends Post
-  object Text extends Magic[Text]
+  object Text extends Magic[Text](Some("Post"))
 
 case class Person(id: Int,name:String,comments:Seq[Comment]) {
   def this(id:Int,name:String)=this(id,name,List())
