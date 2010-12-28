@@ -117,8 +117,8 @@ play.db.DB.execute("""insert into Student Values('1','1')""")
     play.db.DB.execute("""insert into Post Values('1','Text','Functional Web','non','It rocks!')""")
     import Row._
       println(  play.db.sql.Sql.sql("select * from Post")
-              .as( (Symbol("POST.TYPE").is("Text") ~> Text) |
-                   (Symbol("POST.TYPE").is("Link") ~> Link) *))
+              .as( Symbol("POST.TYPE").is("Text") ~> Text |
+                   Symbol("POST.TYPE").is("Link") ~> Link *))
 
   }
 
