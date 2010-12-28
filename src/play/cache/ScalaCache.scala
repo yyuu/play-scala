@@ -12,7 +12,7 @@ private[cache] object ScalaCache extends CacheDelegate {
 
   private def prefixed(key: String) = "__" + key
 
-  private val cacheActor =
+  private lazy val cacheActor =
     actor{
       link{self.trapExit = true;loop{react{case Exit(from: Actor, exc: Exception) => 
         {
