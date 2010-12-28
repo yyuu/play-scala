@@ -50,7 +50,7 @@ class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
   }
   @Test def testNullables {
     import play.db.sql.Row._
-     val metaData=meta("PERSON.ID"->(true,classOf[Int]))
+     val metaData=meta("PERSON.ID"->(true,classOf[java.lang.Integer]))
      val in= StreamReader(Stream.range(1,100).map(i=>MockRow(List( if(i % 2 ==0) i else null),metaData)))
      println(commit((get[Option[Int]]("PERSON.ID")) +)(in) )
   } 
@@ -117,10 +117,10 @@ play.db.DB.execute("""insert into Student Values('1','1')""")
                             Body char(360) NOT Null) """)
     play.db.DB.execute("""insert into Link Values('1','zengularity','http://www.zengularity.com')""")
     play.db.DB.execute("""insert into Text Values('1','Functional Web','It rocks!')""")
-play.db.DB.execute("""insert into Text Values('1','Functional Web','It rocks!')""")
-      println(  play.db.sql.Sql.sql("select * from Text Outer Join Link on Title=Name").result().toList.map(_.data))
+    play.db.DB.execute("""insert into Text Values('1','Functional Web','It rocks!')""")
+      println(  play.db.sql.Sql.sql("select * from Text Full Join Link on Title=Name").result().toList.map(_.data))
 
-}
+  }
 
 }
 abstract class Post

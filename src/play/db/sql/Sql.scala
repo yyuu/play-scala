@@ -226,10 +226,11 @@ object Row{
     new ColumnTo[Long]{
       def transform(row:Row,columnName:String) = row.get1[Long](columnName,false) 
     } 
-   implicit def rowToDate :ColumnTo[Date]= 
-    new ColumnTo[Date]{
+   implicit def rowToDate[A >: Date] :ColumnTo[A]= 
+    new ColumnTo[A]{
       def transform(row:Row,columnName:String) = row.get1[Date](columnName,false)
-    }  
+    }
+  
    
   //TODO better to require an implicit of ColumnTo[T] can be useful for extensiblity
   implicit def rowToOption1[T](implicit m:ClassManifest[T]) :ColumnTo[Option[T]]= 
@@ -255,26 +256,26 @@ trait Row{
   private[sql] lazy val ColumnsDictionary:Map[String,Any]=metaData.ms.map(_.column).zip(data).toMap
   def get[A](a:String)(implicit c:ColumnTo[A]):MayErr[SqlRequestError,A]=
     c.transform(this,a)
-    
   private def getType(t:String) = t match {
       case "long" => Class.forName("java.lang.Long")
-      case "int" => Class.forName("java.lang.Int")
+      case "int" => Class.forName("java.lang.Integer")
       case "boolean" => Class.forName("java.lang.Boolean")
       case _ => Class.forName(t)
   }
 
+ 
   private[sql] def get1[B](a:String,nullableAlreadyHandled:Boolean)(implicit m : ClassManifest[B]):MayErr[SqlRequestError,B]=
    {for(  meta <- metaData.dictionary.get(a).toRight(ColumnNotFound(a));
           val (nullable,clazz)=meta;
           val requiredDataType =
             if(m.erasure==classOf[Option[_]]) 
-              m.typeArguments.headOption.collect { case m:ClassManifest[_] => m.erasure}
-               .getOrElse(classOf[Any]).getName
-            else m.erasure.getName;
+              m.typeArguments.headOption.collect { case m:ClassManifest[_] => m}
+               .getOrElse(implicitly[ClassManifest[Any]])
+            else m;
           v <- ColumnsDictionary.get(a).toRight(ColumnNotFound(a));
           result <- v match {//case b: AnyRef if(nullable != (m.erasure == classOf[Option[_]])) =>  Left(UnexpectedNullableFound(a))
                              case b if(nullable && !nullableAlreadyHandled ) =>  Left(UnexpectedNullableFound(a))
-                             case b if(getType(requiredDataType).isAssignableFrom(getType(clazz))) => Right(b.asInstanceOf[B])
+                             case b if(requiredDataType >:>  TypeWrangler.javaType(getType(clazz))) => Right(b.asInstanceOf[B])
                              case b => Left(TypeDoesNotMatch(requiredDataType + " - " + clazz))}) yield result
   }
   def apply[B](a:String)(implicit c:ColumnTo[B]):B=get[B](a)(c).get
