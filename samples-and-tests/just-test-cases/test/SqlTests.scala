@@ -19,17 +19,21 @@ object Student extends Magic[Student]
 
 class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
   def meta(items:(String,(Boolean,Class[_]))*)=MetaData(items.toList.map(i=>MetaDataItem(i._1,i._2._1,i._2._2.getName)))
+
   @Test def useTheMagicParser { 
       val metaData=meta("TASK.ID"->(true,classOf[String]),
                         "TASK.NAME"->(false,classOf[String]))
    
       val in= StreamReader(Stream.range(1,100).map(i => MockRow(List(i.toString, "nameb"),metaData)))
-      commit((str("ID")))* (in) should be (Error(ColumnNotFound("ID").toString,in))
+      commit((str("ID1")))* (in) should be (Error(ColumnNotFound("ID1").toString,in))
 
-      (str("ID"))+ (in) should be (Failure(ColumnNotFound("ID").toString,in))
+      (str("ID1"))+ (in) should be (Failure(ColumnNotFound("ID1").toString,in))
       (str("ID"))* (in) should be (Success(List(),in))
 
       str("TASK.ID")+ (in) should be (
+        Failure(UnexpectedNullableFound("TASK.ID").toString,in))
+
+      str("ID")+ (in) should be (
         Failure(UnexpectedNullableFound("TASK.ID").toString,in))
 
           import Magic._
@@ -67,8 +71,8 @@ class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
                            .map(j =>
                              MockRow(List(i, "person"+i, 13, j, "comment"+j),metaData)))
     // manual groupBy
+   
     val groupByPerson=group(by=int("PERSON.ID"),(str("COMMENT.TEXT")))* ;
-    
     groupByPerson(StreamReader(in)).get should be (
       List.fill(99)(List.range(1,100).map("comment"+_)))
     
@@ -116,9 +120,9 @@ play.db.DB.execute("""insert into Student Values('1','1')""")
     play.db.DB.execute("""insert into Post Values('1','Text','Functional Web','non','It rocks!')""")
     play.db.DB.execute("""insert into Post Values('1','Text','Functional Web','non','It rocks!')""")
     import Row._
-      println(  play.db.sql.Sql.sql("select * from Post")
-              .as( Symbol("POST.TYPE").is("Text") ~> Text |
-                   Symbol("POST.TYPE").is("Link") ~> Link *))
+     println(play.db.sql.Sql.sql("select * from Post")
+              .as( 'TYPE.is("Text") ~> Text |
+                   'TYPE.is("Link") ~> Link *))
 
   }
 

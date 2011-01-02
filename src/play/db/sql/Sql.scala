@@ -60,15 +60,20 @@ trait SqlRowsParser extends scala.util.parsing.combinator.Parsers{
       in.first.left.map(_=>Failure("End of Stream",in))
                    .flatMap(f(_).left.map(e=>Failure(e.toString,in)))
                    .fold(e=>e, a=> {Success(a,in)}) })
+
   implicit def rowParserToFunction[T](p:RowParser[T]):(Row => MayErr[SqlRequestError,T])=p.f
 
-  case class RowParser[A](f: (Row=>MayErr[SqlRequestError,A])) extends Parser[A]{
+  case class RowParser[A](f: (Row=>MayErr[SqlRequestError,A])) extends Parser[A] {
     lazy val parser=rowFunctionToParser(f)
     def apply(in:Input)=parser(in)
   }
                   
-  def str(columnName:String):RowParser[String]=get[String](columnName)(implicitly[ColumnTo[String]])
-  def int(columnName:String):(Row => MayErr[SqlRequestError,Int])=get[Int](columnName)(implicitly[ColumnTo[Int]])
+  def str(columnName:String):RowParser[String] =
+    get[String](columnName)(implicitly[ColumnTo[String]])
+
+  def int(columnName:String): RowParser[Int] =
+    get[Int](columnName)(implicitly[ColumnTo[Int]])
+
   def get[T](columnName:String)(implicit extractor:ColumnTo[T]):RowParser[T] =
     RowParser( extractor.transform(_,columnName))
 
@@ -78,8 +83,8 @@ trait SqlRowsParser extends scala.util.parsing.combinator.Parsers{
   def current[T](columnName:String)(implicit extractor:ColumnTo[T]): RowParser[T]=
    RowParser( extractor.transform(_,columnName))
 
-  def wholeRow[T](p:Parser[T])=p <~ newLine
   def eatRow[T](p:Parser[T])=p <~ newLine
+
   def current1[T](columnName:String)(implicit extractor:ColumnTo[T]): Parser[T]=
    commit(current[T](columnName)(extractor))
   
@@ -87,12 +92,12 @@ trait SqlRowsParser extends scala.util.parsing.combinator.Parsers{
     in => if(in.atEnd) Failure("end",in) else Success(Unit,in.rest) 
   }
 
-  def group[A](by:(Row=> MayErr[SqlRequestError,Any]),a:Parser[A]):Parser[Seq[A]]={
+  def group[A](by:(Row=> MayErr[SqlRequestError,Any]),a:Parser[A]):Parser[Seq[A]] = {
     val d=guard(by)
     d >> (first => Parser[Seq[A]] {in =>
         //instead of cast it'd be much better to override type Reader
-      {val (groupy,rest)=in.asInstanceOf[StreamReader[Row]]
-                           .s.span(by(_).right.toOption.exists(r=>r==first));
+      {val (groupy,rest) =in.asInstanceOf[StreamReader[Row]]
+                            .s.span(by(_).right.toOption.exists(r=>r==first));
        val g=(a *)(StreamReader(groupy))
        g match{
          case Success(a,_)=> Success(a,StreamReader(rest))
@@ -101,6 +106,7 @@ trait SqlRowsParser extends scala.util.parsing.combinator.Parsers{
        }})}
 
   implicit def symbolToColumn(columnName:Symbol):ColumnSymbol=ColumnSymbol(columnName)
+
   case class ColumnSymbol(name:Symbol){
     def of[T](implicit extractor:ColumnTo[T] ):Parser[T]=
       get[T](name.name)(extractor)
@@ -112,7 +118,7 @@ object Magic{
 import  SqlRowsParser._
   def group[B <: {val id:Any},D](by: Parser[B],p:Parser[D])(implicit m:ClassManifest[B])={
       val name=(m.erasure.getSimpleName.toUpperCase()+".ID")
-      by ~< SqlRowsParser.group(by=(row=>Right(row.ColumnsDictionary.get(name).orNull)),p) ^^
+      by ~< SqlRowsParser.group(by=(row=>row.get1[Any](name,true)),p) ^^
       {case c ~ p => (c,p)}
   }
 }
@@ -198,15 +204,15 @@ trait MagicSql[T] extends SqlRowsParser.Parser[T]{
   }
 
     def apply(input:Input):ParseResult[T]={
-    val name=clean(m.erasure.getName)   
-    val (c,names_types)=electConstructorAndGetInfo
-    val paramParser=eatRow(sequence(names_types.map(i => 
+      val name=clean(m.erasure.getName)   
+      val (c,names_types)=electConstructorAndGetInfo
+      val paramParser=eatRow(sequence(names_types.map(i => 
                        guard[Any](current(i._1)(i._2)))))
 
-    (paramParser ^^ {case args => 
-                      {c.newInstance( args.toSeq.map(_.asInstanceOf[Object]):_*)
+      (paramParser ^^ {case args => 
+          {c.newInstance( args.toSeq.map(_.asInstanceOf[Object]):_*)
                            .asInstanceOf[T] } }) (input)
-  }
+    }
 
 }
 object Row{
@@ -247,15 +253,23 @@ object Row{
 case class MetaDataItem(column:String,nullable:Boolean,clazz:String)
 case class MetaData(ms:List[MetaDataItem]){
   lazy val dictionary= ms.map(m => (m.column,(m.nullable,m.clazz))).toMap
+  lazy val dictionary2:Map[String,(String,Boolean,String)] = 
+    ms.map(m => {val Array(table,column)=m.column.split('.');
+                 (column,(table,m.nullable,m.clazz))}).toMap
+
 }
 
 trait Row{
  val metaData:MetaData
-  import scala.reflect.Manifest  
-  val data:List[Any]
-  private[sql] lazy val ColumnsDictionary:Map[String,Any]=metaData.ms.map(_.column).zip(data).toMap
+  import scala.reflect.Manifest
+  protected[sql] val data:List[Any]
+ // private 
+  private lazy val ColumnsDictionary:Map[String,Any] =
+    metaData.ms.map(_.column).zip(data).toMap
+
   def get[A](a:String)(implicit c:ColumnTo[A]):MayErr[SqlRequestError,A]=
     c.transform(this,a)
+
   private def getType(t:String) = t match {
       case "long" => Class.forName("java.lang.Long")
       case "int" => Class.forName("java.lang.Integer")
@@ -265,32 +279,45 @@ trait Row{
 
  
   private[sql] def get1[B](a:String,nullableAlreadyHandled:Boolean)(implicit m : ClassManifest[B]):MayErr[SqlRequestError,B]=
-   {for(  meta <- metaData.dictionary.get(a).toRight(ColumnNotFound(a));
-          val (nullable,clazz)=meta;
+   {for(  meta <- metaData.dictionary2.get(a).map(m=>(m._1+"."+a,m._2,m._3))
+                          .orElse(metaData.dictionary.get(a).map(m=> (a,m._1,m._2)))
+                          .toRight(ColumnNotFound(a));
+          val (qualified,nullable,clazz)=meta;
           val requiredDataType =
             if(m.erasure==classOf[Option[_]]) 
               m.typeArguments.headOption.collect { case m:ClassManifest[_] => m}
                .getOrElse(implicitly[ClassManifest[Any]])
             else m;
-          v <- ColumnsDictionary.get(a).toRight(ColumnNotFound(a));
-          result <- v match {//case b: AnyRef if(nullable != (m.erasure == classOf[Option[_]])) =>  Left(UnexpectedNullableFound(a))
-                             case b if(nullable && !nullableAlreadyHandled ) =>  Left(UnexpectedNullableFound(a))
-                             case b if(requiredDataType >:>  TypeWrangler.javaType(getType(clazz))) => Right(b.asInstanceOf[B])
-                             case b => Left(TypeDoesNotMatch(requiredDataType + " - " + clazz))}) yield result
+          v <- ColumnsDictionary.get(qualified).toRight(ColumnNotFound(qualified));
+          result <- v match {
+            case b if(nullable && !nullableAlreadyHandled ) =>
+              Left(UnexpectedNullableFound(qualified))
+            case b if(requiredDataType >:>  TypeWrangler.javaType(getType(clazz))) =>
+              Right(b.asInstanceOf[B])
+            case b => Left(TypeDoesNotMatch(requiredDataType + " - " + clazz))} )
+    yield result
   }
+
   def apply[B](a:String)(implicit c:ColumnTo[B]):B=get[B](a)(c).get
 }
 
 case class MockRow(data: List[Any],metaData:MetaData) extends Row
 
-class SqlRow(rs:java.sql.ResultSet) extends Row{
+class SqlRow(rs:java.sql.ResultSet) extends Row {
   import java.sql._
   import java.sql.ResultSetMetaData._
 
   val meta = rs.getMetaData()
   val nbColumns = meta.getColumnCount()
-  val metaData = MetaData(List.range(1,nbColumns+1).map(i=>MetaDataItem( (meta.getTableName(i) + "." + meta.getColumnName(i)).toUpperCase, meta.isNullable(i)==columnNullable,meta.getColumnClassName(i))))
-  val data:List[Any] = List.range(1,nbColumns+1).map(nb =>rs.getObject(nb))
+  val metaData = 
+    MetaData(List.range(1,nbColumns+1).map(i =>
+      MetaDataItem(column = ( meta.getTableName(i) + "." +
+                              meta.getColumnName(i) ).toUpperCase,
+                   nullable = meta.isNullable(i)==columnNullable,
+                   clazz = meta.getColumnClassName(i))))
+
+  val data:List[Any] = List.range(1,nbColumns+1)
+                           .map(nb =>rs.getObject(nb))
   
   override def toString() = "Row(" + ( Range.inclusive(1, nbColumns).map( i => "'" + (meta.getTableName(i) + "." + meta.getColumnName(i)).toUpperCase + "':" + rs.getObject(i) + " as " + meta.getColumnClassName(i) ).reduceLeft(_ + ", " + _) ) + ")"
 }
