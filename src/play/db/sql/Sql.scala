@@ -216,9 +216,7 @@ trait MagicSql[T] extends SqlRowsParser.Parser[T]{
 
 }
 object Row{
-  def unapplySeq(row:Row):Option[List[Any]]={
-    Some(row.data.zip(row.metaData.ms.map(_.nullable)).map(i=> if(i._2) Option(i._1) else i._1))
-  }
+  def unapplySeq(row:Row):Option[List[Any]]=Some(row.asList)
   
   implicit def rowToString :ColumnTo[String]= 
    new ColumnTo[String]{
@@ -263,7 +261,13 @@ trait Row{
  val metaData:MetaData
   import scala.reflect.Manifest
   protected[sql] val data:List[Any]
- // private 
+  
+  lazy val asList =
+    data.zip(metaData.ms.map(_.nullable))
+        .map(i=> if(i._2) Option(i._1) else i._1)
+  lazy val asMap =
+    metaData.ms.map(_.column).zip(asList).toMap
+
   private lazy val ColumnsDictionary:Map[String,Any] =
     metaData.ms.map(_.column).zip(data).toMap
 
