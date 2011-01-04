@@ -19,13 +19,14 @@ package play.db.sql
 import play.utils.Scala.MayErr
 import play.utils.Scala.MayErr._
 import java.util.Date
+
 abstract class SqlRequestError
 case class ColumnNotFound(columnName:String) extends SqlRequestError
 case class TypeDoesNotMatch(message:String) extends SqlRequestError
 case class UnexpectedNullableFound(on:String) extends SqlRequestError
 
 trait ColumnTo[A]{
- def transform(row:Row,columnName:String):MayErr[SqlRequestError,A]
+  def transform(row:Row,columnName:String):MayErr[SqlRequestError,A]
 }
 case class StreamReader[T](s: Stream[T]) extends scala.util.parsing.input.Reader[Either[EndOfStream,T]]{
   def first = s.headOption.toRight(EndOfStream())
@@ -103,7 +104,8 @@ trait SqlRowsParser extends scala.util.parsing.combinator.Parsers{
          case Success(a,_)=> Success(a,StreamReader(rest))
          case Failure(msg,_) => Failure(msg,in)
          case Error(msg,_) => Error(msg,in) }
-       }})}
+       }})
+  }
 
   implicit def symbolToColumn(columnName:Symbol):ColumnSymbol=ColumnSymbol(columnName)
 
@@ -114,21 +116,59 @@ trait SqlRowsParser extends scala.util.parsing.combinator.Parsers{
       contains[T](name.name,t)(extractor)
   }
 }
+
+
+
 object Magic{
-import  SqlRowsParser._
+  import  SqlRowsParser._
   def group[B <: {val id:Any},D](by: Parser[B],p:Parser[D])(implicit m:ClassManifest[B])={
       val name=(m.erasure.getSimpleName.toUpperCase()+".ID")
       by ~< SqlRowsParser.group(by=(row=>row.get1[Any](name,true)),p) ^^
       {case c ~ p => (c,p)}
   }
 }
+case class Entity[T,A](private val id:T,v:A)
+
+case class MEntity[ID,V](override val tableName:Option[String]=None)(implicit val m:ClassManifest[V],val columnTo:ColumnTo[ID]) extends MagicEntity[ID,V]
+trait MagicEntity[ID,V] extends MagicSql[Entity[ID,V]]{
+  import SqlRowsParser._
+  import Sql._
+  val columnTo:ColumnTo[ID]
+  type E=Entity[ID,V]
+  def findById1(id:ID):Option[E] =
+    sql("select * from "+name+" where Id={id}")
+          .on("id"->id)
+          .as[Option[E]](phrase(this*).map(_.headOption))
+
+  def update(e:E):MayErr[String,E]=Left("Not implemented")
+
+  def create(v:V):MayErr[String,E]=Left("Not Implemented")
+  
+  override def apply(input:Input):ParseResult[E]={
+      val (c,names_types)=electConstructorAndGetInfo
+      val paramParser=eatRow(sequence(names_types.map(i => 
+                       guard[Any](current(i._1)(i._2)))))
+      val idParser=(guard[ID](current[ID](getQualifiedColumnName("ID"))(columnTo)))
+  
+      (idParser ~ paramParser ^^ {case id ~ args => 
+        Entity(id,  
+               {c.newInstance( args.toSeq.map(_.asInstanceOf[Object]):_*)
+                 .asInstanceOf[V] }) }) (input)
+  }
+
+}
+
 case class Magic[T]( override val tableName:Option[String]=None)(implicit val m:ClassManifest[T]) extends MagicSql[T]{
   def apply(tableName:Symbol)= this.copy(tableName=Some(tableName.name))
 }
 
 trait MagicSql[T] extends SqlRowsParser.Parser[T]{
-  val m:ClassManifest[T]
+ val m:ClassManifest[_]
   val tableName:Option[String]=None
+  def clean(fieldName:String)=fieldName.split('$').last
+  val name=tableName.getOrElse(clean(m.erasure.getSimpleName).toUpperCase())
+  def getQualifiedColumnName(column:String)= name+"."+column
+
   import java.lang.reflect._
   import scala.reflect.Manifest
   def manifestFor(t: Type): Manifest[AnyRef] = t match {
@@ -141,15 +181,10 @@ trait MagicSql[T] extends SqlRowsParser.Parser[T]{
     }
   import SqlRowsParser._
   import Sql._
-  
-  def clean(fieldName:String)=fieldName.split('$').last
-  val name=tableName.getOrElse(clean(m.erasure.getSimpleName))
-
   def findById(id:Any):Option[T] =
     sql("select * from "+name+" where Id={id}")
           .on("id"->id)
           .as[Option[T]](phrase(this*).map(_.headOption))
-
   def all():Seq[T] =
     sql("select * from " + name)
         .asSimple
@@ -166,45 +201,51 @@ trait MagicSql[T] extends SqlRowsParser.Parser[T]{
   val electConstructorAndGetInfo:(Constructor[_],Seq[(String,ColumnTo[_])])={
       
       def supportesTypes[C](m:ClassManifest[C]):Option[ColumnTo[C]]= 
-      (m.erasure match {
-        case c if c==classOf[String] => Some(Row.rowToString)
-        case c if c==classOf[Int] => Some(Row.rowToInt)
-        case c if c==classOf[Long] => Some(Row.rowToLong)
-        case c if c==classOf[Date] => Some(Row.rowToDate)
-       //TODO for Option you need to call recursively, this makes it applicable to future extensions (Option[List[Int]])
-        case c if c==classOf[Option[_]] =>{
-           val typeParam=m.typeArguments.headOption.collect { case m:ClassManifest[_] => m}
-               .getOrElse(implicitly[ClassManifest[Any]])
-           supportesTypes(typeParam).flatMap(_=> Some(Row.rowToOption1(typeParam)):Option[_])}
-        case _ => None
-      }).asInstanceOf[Option[ColumnTo[C]]]
-    def isConstructorSupported(c:Constructor[_])={
-      c.getGenericParameterTypes().forall(t=>supportesTypes(manifestFor(t)).isDefined)
-    }
+        (m.erasure match {
+          case c if c==classOf[String] => Some(Row.rowToString)
+          case c if c==classOf[Int] => Some(Row.rowToInt)
+          case c if c==classOf[Long] => Some(Row.rowToLong)
+          case c if c==classOf[Date] => Some(Row.rowToDate)
+          //TODO for Option you need to call recursively, this makes it applicable to future extensions (Option[List[Int]])
+          case c if c==classOf[Option[_]] =>{
+            val typeParam=m.typeArguments.headOption.collect { case m:ClassManifest[_] => m}
+                            .getOrElse(implicitly[ClassManifest[Any]])
+            supportesTypes(typeParam).flatMap( _ =>
+              Some(Row.rowToOption1(typeParam)):Option[_] ) }
+          case _ => None
+        }).asInstanceOf[Option[ColumnTo[C]]]
 
-    def getParametersNames(c:Constructor[_]):Seq[String]={
-      import scala.collection.JavaConversions._
-      play.classloading.enhancers.LocalvariablesNamesEnhancer.lookupParameterNames(c)
-    }
-    val consInfo= 
-        m.erasure
-          .getConstructors()
-          .sortBy(- _.getGenericParameterTypes().length)
-          .find(isConstructorSupported)
-          .map(c=>(c,c.getGenericParameterTypes().map(manifestFor),getParametersNames(c)))
-          .getOrElse(throw new java.lang.Error("no supported constructors for type " +m))
+      def isConstructorSupported(c:Constructor[_])={
+        c.getGenericParameterTypes().forall(t=>supportesTypes(manifestFor(t)).isDefined)
+      }
 
-    val coherent=consInfo._2.length==consInfo._3.length
-    val names_types= consInfo._3.zip(consInfo._2.map(t=>supportesTypes(t).get))
-                             .map(nt=>(name.toUpperCase()+"."+clean(nt._1.toUpperCase()),nt._2))
-    if(!coherent && names_types.map(_._1).exists(_.contains("outer")))
-      throw new java.lang.Error("It seems that your class uses a closure to an outer instance. For MagicParser, please use only top level classes.")
-    if(!coherent) throw new java.lang.Error("not coherent to me!")
-    (consInfo._1,names_types)
-  }
+      def getParametersNames(c:Constructor[_]):Seq[String]={
+        import scala.collection.JavaConversions._
+        play.classloading.enhancers.LocalvariablesNamesEnhancer.lookupParameterNames(c)
+      }
+
+      val consInfo= 
+          m.erasure
+           .getConstructors()
+           .sortBy(- _.getGenericParameterTypes().length)
+           .find(isConstructorSupported)
+           .map(c=>(c,c.getGenericParameterTypes().map(manifestFor),getParametersNames(c)))
+           .getOrElse(throw new java.lang.Error("no supported constructors for type " +m))
+
+      val coherent=consInfo._2.length==consInfo._3.length
+      val names_types =
+        consInfo._3.zip(consInfo._2.map(t=>supportesTypes(t).get))
+                .map(nt=>(getQualifiedColumnName(clean(nt._1.toUpperCase())),nt._2))
+
+      if(!coherent && names_types.map(_._1).exists(_.contains("outer")))
+         throw new java.lang.Error("It seems that your class uses a closure to an outer instance. For MagicParser, please use only top level classes.")
+
+      if(!coherent) throw new java.lang.Error("not coherent to me!")
+
+      (consInfo._1,names_types)
+    }
 
     def apply(input:Input):ParseResult[T]={
-      val name=clean(m.erasure.getName)   
       val (c,names_types)=electConstructorAndGetInfo
       val paramParser=eatRow(sequence(names_types.map(i => 
                        guard[Any](current(i._1)(i._2)))))
@@ -226,11 +267,11 @@ object Row{
    new ColumnTo[Int]{
      def transform(row:Row,columnName:String) = row.get1[Int](columnName,false) 
    }
-   implicit def rowToLong :ColumnTo[Long]= 
+  implicit def rowToLong :ColumnTo[Long]= 
     new ColumnTo[Long]{
       def transform(row:Row,columnName:String) = row.get1[Long](columnName,false) 
     } 
-   implicit def rowToDate[A >: Date] :ColumnTo[A]= 
+  implicit def rowToDate[A >: Date] :ColumnTo[A]= 
     new ColumnTo[A]{
       def transform(row:Row,columnName:String) = row.get1[Date](columnName,false)
     }

@@ -120,9 +120,12 @@ play.db.DB.execute("""insert into Student Values('1','1')""")
     play.db.DB.execute("""insert into Post Values('1','Text','Functional Web','non','It rocks!')""")
     play.db.DB.execute("""insert into Post Values('1','Text','Functional Web','non','It rocks!')""")
     import Row._
-     println(play.db.sql.Sql.sql("select * from Post")
+     play.db.sql.Sql.sql("select * from Post")
               .as( 'TYPE.is("Text") ~> Text |
-                   'TYPE.is("Link") ~> Link *))
+                   'TYPE.is("Link") ~> Link +) should be (
+                     List(Link("1","zengularity","http://www.zengularity.com"),
+                          Text("1","Functional Web","It rocks!"),
+                          Text("1","Functional Web","It rocks!")))
 
   }
 
@@ -130,9 +133,9 @@ play.db.DB.execute("""insert into Student Values('1','1')""")
 abstract class Post
 
   case class Link(id:String,title:String,url:String) extends Post
-  object Link extends Magic[Link](Some("Post"))
+  object Link extends Magic[Link](Some("POST"))
   case class Text(id:String,title:String,body:String) extends Post
-  object Text extends Magic[Text](Some("Post"))
+  object Text extends Magic[Text](Some("POST"))
 
 case class Person(id: Int,name:String,comments:Seq[Comment]) {
   def this(id:Int,name:String)=this(id,name,List())
