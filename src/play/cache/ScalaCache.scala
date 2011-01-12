@@ -92,11 +92,11 @@ private[cache] object ScalaCache extends CacheDelegate {
       case class Caching()
 
       getFromCache1(flagWhileCaching).getOrElse
-          {
+         {Actor.actor {
             cacheActor.!!(() => {set(flagWhileCaching, Caching(), waitForEvaluation); f()}, {
               case a => {cacheIt(a.asInstanceOf[A]); _impl.delete(flagWhileCaching); a}
             })
-          }
+          }}
     }
     def cacheIt(t: => A) = get(key, expiration, window)(t)(isDesirable)
 
