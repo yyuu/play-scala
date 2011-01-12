@@ -127,7 +127,7 @@ object Magic{
       {case c ~ p => (c,p)}
   }
 }
-case class Entity[T,A](private val id:T,v:A)
+case class Entity[T,A](id:T,v:A)
 
 case class MEntity[ID,V](override val tableName:Option[String]=None)(implicit val m:ClassManifest[V],val columnTo:ColumnTo[ID]) extends MagicEntity[ID,V]
 trait MagicEntity[ID,V] extends MagicSql[Entity[ID,V]]{
@@ -135,14 +135,34 @@ trait MagicEntity[ID,V] extends MagicSql[Entity[ID,V]]{
   import Sql._
   val columnTo:ColumnTo[ID]
   type E=Entity[ID,V]
+  import scala.util.control.Exception._
+  val (_,names_types)=electConstructorAndGetInfo
+  val names_methods = 
+    handling(classOf[NoSuchMethodException])
+        .by(throw new Exception("The elected constructor doesn't have corresponding methods for all its parameters."))
+        .apply(names_types.map(nt=>(nt._1,m.erasure.getDeclaredMethod(nt._1))))
+
   def findById1(id:ID):Option[E] =
     sql("select * from "+name+" where Id={id}")
           .on("id"->id)
           .as[Option[E]](phrase(this*).map(_.headOption))
 
-  def update(e:E):MayErr[String,E]=Left("Not implemented")
+  def update(e:E):Int={
+    val toUpdate=names_methods.map(_._1).map(n => n+" = "+"{"+n+"}").mkString(",")
+    sql("update "+name+" set "+toUpdate+" where id={id}")
+      .on("id"->e.id)
+      .onParams(names_methods.map(_._2).map(m=>m.invoke(e.v)))
+      .executeUpdate()
+  }
 
-  def create(v:V):MayErr[String,E]=Left("Not Implemented")
+  def create(v:V):E={
+    val toInsert= names_methods.map(_._1)
+    val query=sql("insert into "+name+" ("+toInsert.mkString(", ")+" ) values ("+toInsert.map("{"+_+"}").mkString(", ")+")")
+            .onParams(names_methods.map(_._2) .map(m=>m.invoke(v)))
+    val (statement,ok)= query.execute1()
+    val rs=statement.getGeneratedKeys()
+    Entity(get("ID")(columnTo)( StreamReader(Sql.resultSetToStream(rs))).get,v)
+  }
   
   override def apply(input:Input):ParseResult[E]={
       val (c,names_types)=electConstructorAndGetInfo
@@ -348,23 +368,9 @@ trait Row{
 
 case class MockRow(data: List[Any],metaData:MetaData) extends Row
 
-class SqlRow(rs:java.sql.ResultSet) extends Row {
-  import java.sql._
-  import java.sql.ResultSetMetaData._
-
-  val meta = rs.getMetaData()
-  val nbColumns = meta.getColumnCount()
-  val metaData = 
-    MetaData(List.range(1,nbColumns+1).map(i =>
-      MetaDataItem(column = ( meta.getTableName(i) + "." +
-                              meta.getColumnName(i) ).toUpperCase,
-                   nullable = meta.isNullable(i)==columnNullable,
-                   clazz = meta.getColumnClassName(i))))
-
-  val data:List[Any] = List.range(1,nbColumns+1)
-                           .map(nb =>rs.getObject(nb))
+case class SqlRow(metaData:MetaData,data: List[Any]) extends Row {
   
-  override def toString() = "Row(" + ( Range.inclusive(1, nbColumns).map( i => "'" + (meta.getTableName(i) + "." + meta.getColumnName(i)).toUpperCase + "':" + rs.getObject(i) + " as " + meta.getColumnClassName(i) ).reduceLeft(_ + ", " + _) ) + ")"
+  override def toString() = "Row("+metaData.ms.zip(data).map(t => "'" + t._1.column + "':" + t._2 + " as " + t._1.clazz).mkString(", ") + ")"
 }
 object Useful{
     case class Var[T](var content:T)
@@ -435,6 +441,9 @@ trait Sql{
             case Error(e,_) => error(e) }
   def execute(conn:java.sql.Connection=connection):Boolean =
     getFilledStatement(connection).execute()
+
+   def execute1(conn:java.sql.Connection=connection):(java.sql.PreparedStatement,Boolean) =
+    {val statement=getFilledStatement(connection);(statement,statement.execute())}
   def executeUpdate(conn:java.sql.Connection=connection):Int =
     getFilledStatement(connection).executeUpdate()
 } 
@@ -453,7 +462,22 @@ object Sql{
   def sql(inSql:String):SqlQuery={val (sql,paramsNames)= parse(inSql);SqlQuery(sql,paramsNames)}
   import java.sql._
   import java.sql.ResultSetMetaData._
+  def metaData(rs:java.sql.ResultSet)={
+    val meta = rs.getMetaData()
+    val nbColumns = meta.getColumnCount()
+    MetaData(List.range(1,nbColumns+1).map(i =>
+      MetaDataItem(column = ( meta.getTableName(i) + "." +
+                              meta.getColumnName(i) ).toUpperCase,
+                   nullable = meta.isNullable(i)==columnNullable,
+                   clazz = meta.getColumnClassName(i))))
+  }
+ def data(rs:java.sql.ResultSet):List[Any] = {
+   val meta = rs.getMetaData()
+   val nbColumns = meta.getColumnCount()
+   List.range(1,nbColumns+1)
+       .map(nb =>rs.getObject(nb))
+ }
   def resultSetToStream(rs:java.sql.ResultSet):Stream[SqlRow]={
-    Useful.unfold(rs)(rs => if(!rs.next()) {rs.close();None} else Some ((new SqlRow(rs),rs)))
+    Useful.unfold(rs)(rs => if(!rs.next()) {rs.close();None} else Some ((new SqlRow(metaData(rs),data(rs)),rs)))
   }
 }
