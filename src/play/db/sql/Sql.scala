@@ -24,6 +24,7 @@ abstract class SqlRequestError
 case class ColumnNotFound(columnName:String) extends SqlRequestError
 case class TypeDoesNotMatch(message:String) extends SqlRequestError
 case class UnexpectedNullableFound(on:String) extends SqlRequestError
+case object NoColumnsInReturnedResult extends SqlRequestError
 
 trait ColumnTo[A]{
   def transform(row:Row,columnName:String):MayErr[SqlRequestError,A]
@@ -129,23 +130,17 @@ object Magic{
 }
 case class Entity[T,A](id:T,v:A)
 
-case class MEntity[ID,V](override val tableName:Option[String]=None)(implicit val m:ClassManifest[V],val columnTo:ColumnTo[ID]) extends MagicEntity[ID,V]
-trait MagicEntity[ID,V] extends MagicSql[Entity[ID,V]]{
+case class MEntity[ID,V](
+  override val tableName:Option[String]=None,
+  val idParser:SqlRowsParser.Parser[ID]=
+    SqlRowsParser.RowParser(row => row.asList.headOption.map(_.asInstanceOf[ID]).toRight(NoColumnsInReturnedResult)))(implicit val m:ClassManifest[V],val columnTo:ColumnTo[ID]) extends MagicEntity[ID,V]
+trait MagicEntity[ID,V] extends MagicSql[Entity[ID,V]] {
   import SqlRowsParser._
   import Sql._
+  val idParser:Parser[ID]
   val columnTo:ColumnTo[ID]
   type E=Entity[ID,V]
   import scala.util.control.Exception._
-  val (_,names_types)=electConstructorAndGetInfo
-  val names_methods = 
-    handling(classOf[NoSuchMethodException])
-        .by(throw new Exception("The elected constructor doesn't have corresponding methods for all its parameters."))
-        .apply(names_types.map(nt=>(nt._1,m.erasure.getDeclaredMethod(nt._1))))
-
-  def findById1(id:ID):Option[E] =
-    sql("select * from "+name+" where Id={id}")
-          .on("id"->id)
-          .as[Option[E]](phrase(this*).map(_.headOption))
 
   def update(e:E):Int={
     val toUpdate=names_methods.map(_._1).map(n => n+" = "+"{"+n+"}").mkString(",")
@@ -156,24 +151,36 @@ trait MagicEntity[ID,V] extends MagicSql[Entity[ID,V]]{
   }
 
   def create(v:V):E={
-    val toInsert= names_methods.map(_._1)
+    val toInsert= names_methods.map(_._1).map(_.split('.').last.toLowerCase)
     val query=sql("insert into "+name+" ("+toInsert.mkString(", ")+" ) values ("+toInsert.map("{"+_+"}").mkString(", ")+")")
-            .onParams(names_methods.map(_._2) .map(m=>m.invoke(v)))
+            .onParams(names_methods.map(_._2).map(m=>m.invoke(v)):_*)
+
     val (statement,ok)= query.execute1()
     val rs=statement.getGeneratedKeys()
-    Entity(get("ID")(columnTo)( StreamReader(Sql.resultSetToStream(rs))).get,v)
+    val id=idParser(StreamReader(Sql.resultSetToStream(rs)))
+    Entity(id.get,v)
+  } 
+
+  import java.sql.SQLIntegrityConstraintViolationException
+  override def insert(e:E):MayErr[SQLIntegrityConstraintViolationException,Boolean]={
+      val toInsert= names_methods.map(_._1)
+      val query=sql("insert into "+name+" (id, "+toInsert.mkString(", ")+" ) values ({id}, "+toInsert.map("{"+_+"}").mkString(", ")+")")
+        .on("id" -> e.id)    
+        .onParams(names_methods.map(_._2) .map(m=>m.invoke(e.v)))
+      catching(classOf[SQLIntegrityConstraintViolationException])
+        .either(query.execute())
+        .left.map(_.asInstanceOf[SQLIntegrityConstraintViolationException])
   }
-  
   override def apply(input:Input):ParseResult[E]={
-      val (c,names_types)=electConstructorAndGetInfo
+    //it should be possible to reuse a Parser[V] from MagicSql[V] and just add an id parser
+    //couldn't implement it due to hierarchy complexity with generic types
+     val (c,names_types)=electConstructorAndGetInfo
       val paramParser=eatRow(sequence(names_types.map(i => 
                        guard[Any](current(i._1)(i._2)))))
       val idParser=(guard[ID](current[ID](getQualifiedColumnName("ID"))(columnTo)))
-  
       (idParser ~ paramParser ^^ {case id ~ args => 
-        Entity(id,  
-               {c.newInstance( args.toSeq.map(_.asInstanceOf[Object]):_*)
-                 .asInstanceOf[V] }) }) (input)
+          {Entity(id,c.newInstance( args.toSeq.map(_.asInstanceOf[Object]):_*)
+                           .asInstanceOf[V] )} })(input)
   }
 
 }
@@ -181,8 +188,9 @@ trait MagicEntity[ID,V] extends MagicSql[Entity[ID,V]]{
 case class Magic[T]( override val tableName:Option[String]=None)(implicit val m:ClassManifest[T]) extends MagicSql[T]{
   def apply(tableName:Symbol)= this.copy(tableName=Some(tableName.name))
 }
-
 trait MagicSql[T] extends SqlRowsParser.Parser[T]{
+  import scala.util.control.Exception._
+
  val m:ClassManifest[_]
   val tableName:Option[String]=None
   def clean(fieldName:String)=fieldName.split('$').last
@@ -191,35 +199,8 @@ trait MagicSql[T] extends SqlRowsParser.Parser[T]{
 
   import java.lang.reflect._
   import scala.reflect.Manifest
-  def manifestFor(t: Type): Manifest[AnyRef] = t match {
-    case c: Class[_] => Manifest.classType[AnyRef](c)
-    case p: ParameterizedType =>
-      Manifest.classType[AnyRef](
-        p.getRawType.asInstanceOf[Class[AnyRef]],
-        manifestFor(p.getActualTypeArguments.head),
-        p.getActualTypeArguments.tail.map(manifestFor): _*)
-    }
-  import SqlRowsParser._
-  import Sql._
-  def findById(id:Any):Option[T] =
-    sql("select * from "+name+" where Id={id}")
-          .on("id"->id)
-          .as[Option[T]](phrase(this*).map(_.headOption))
-  def all():Seq[T] =
-    sql("select * from " + name)
-        .asSimple
-        .as[Seq[T]](this*)
-        
-  def find(stmt:String):Seq[T]=
-     sql(stmt match {
-         case s if s.startsWith("select") => s
-         case s if s.startsWith("where") => "select * from " + name + " " + s
-         case s if s.startsWith("order by") => "select * from " + name + " " + s
-         case s => "select * from " + name + " where " + s
-     }).asSimple.as[Seq[T]](this*)
- 
+
   val electConstructorAndGetInfo:(Constructor[_],Seq[(String,ColumnTo[_])])={
-      
       def supportesTypes[C](m:ClassManifest[C]):Option[ColumnTo[C]]= 
         (m.erasure match {
           case c if c==classOf[String] => Some(Row.rowToString)
@@ -261,9 +242,59 @@ trait MagicSql[T] extends SqlRowsParser.Parser[T]{
          throw new java.lang.Error("It seems that your class uses a closure to an outer instance. For MagicParser, please use only top level classes.")
 
       if(!coherent) throw new java.lang.Error("not coherent to me!")
-
       (consInfo._1,names_types)
+
+  }
+  val (_,names_types)=electConstructorAndGetInfo
+
+  val names_methods = 
+    handling(classOf[NoSuchMethodException])
+        .by(e =>throw new Exception( "The elected constructor doesn't have corresponding methods for all its parameters. "+e.toString))
+        .apply(names_types.map(nt=>(nt._1,m.erasure.getDeclaredMethod(nt._1.split('.').last.toLowerCase))))
+
+
+
+
+  def manifestFor(t: Type): Manifest[AnyRef] = t match {
+    case c: Class[_] => Manifest.classType[AnyRef](c)
+    case p: ParameterizedType =>
+      Manifest.classType[AnyRef](
+        p.getRawType.asInstanceOf[Class[AnyRef]],
+        manifestFor(p.getActualTypeArguments.head),
+        p.getActualTypeArguments.tail.map(manifestFor): _*)
     }
+  import SqlRowsParser._
+  import Sql._
+  def findById(id:Any):Option[T] =
+    sql("select * from "+name+" where Id={id}")
+          .on("id"->id)
+          .as[Option[T]](phrase(this*).map(_.headOption))
+  def all():Seq[T] =
+    sql("select * from " + name)
+        .asSimple
+        .as[Seq[T]](this*)
+        
+  def find(stmt:String):Seq[T]=
+     sql(stmt match {
+         case s if s.startsWith("select") => s
+         case s if s.startsWith("where") => "select * from " + name + " " + s
+         case s if s.startsWith("order by") => "select * from " + name + " " + s
+         case s => "select * from " + name + " where " + s
+     }).asSimple.as[Seq[T]](this*)
+
+
+  import java.sql.SQLIntegrityConstraintViolationException
+  def insert(v:T):MayErr[SQLIntegrityConstraintViolationException,Boolean]={
+      val toInsert= names_methods.map(_._1)
+      val query=sql("insert into "+name+" ( "+toInsert.mkString(", ")+" ) values ( "+toInsert.map("{"+_+"}").mkString(", ")+")")
+        .onParams(names_methods.map(_._2) .map(m=>m.invoke(v)))
+      
+      catching(classOf[SQLIntegrityConstraintViolationException])
+        .either(query.execute())
+        .left.map(_.asInstanceOf[SQLIntegrityConstraintViolationException])
+  }
+ 
+  
 
     def apply(input:Input):ParseResult[T]={
       val (c,names_types)=electConstructorAndGetInfo
@@ -442,8 +473,8 @@ trait Sql{
   def execute(conn:java.sql.Connection=connection):Boolean =
     getFilledStatement(connection).execute()
 
-   def execute1(conn:java.sql.Connection=connection):(java.sql.PreparedStatement,Boolean) =
-    {val statement=getFilledStatement(connection);(statement,statement.execute())}
+   def execute1(conn:java.sql.Connection=connection):(java.sql.PreparedStatement,Int) =
+    {val statement=getFilledStatement(connection);(statement,{statement.executeUpdate()})}
   def executeUpdate(conn:java.sql.Connection=connection):Int =
     getFilledStatement(connection).executeUpdate()
 } 
