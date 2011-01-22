@@ -103,7 +103,7 @@ class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
 
     play.db.DB.execute("""insert into Task Values('1','some comment')""")
 play.db.DB.execute("""insert into Student Values('1','1')""")
-    TaskE.findById("1") should be (Some(Entity("1",new Task("some comment"))))
+    TaskE.get("1") should be (Some(Entity("1",new Task("some comment"))))
     Task.all() should be (List(new Task("some comment")))
     TaskE.all() should be (List(Entity("1",new Task("some comment"))))
     TaskE.findById("2") should be (None)

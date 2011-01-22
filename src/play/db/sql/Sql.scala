@@ -141,6 +141,11 @@ trait MagicEntity[ID,V] extends MagicSql[Entity[ID,V]] {
   val columnTo:ColumnTo[ID]
   type E=Entity[ID,V]
   import scala.util.control.Exception._
+ 
+  def get(id:ID):Option[E] =
+    sql("select * from "+name+" where Id={id}")
+          .on("id"->id)
+          .as[Option[E]](phrase(this*).map(_.headOption))
 
   def update(e:E):Int={
     val toUpdate=names_methods.map(_._1).map(n => n+" = "+"{"+n+"}").mkString(",")
