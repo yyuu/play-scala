@@ -9,19 +9,34 @@ import scala.actors._
  */
 
 private[cache] object ScalaCache extends CacheDelegate {
-
+  case class CacheMessage[A](key: String, expiration: String, window: String, waitForEvaluation: String = "10s", f:()=>A, isDesireable:A => Boolean)
   private def prefixed(key: String) = "__" + key
 
+  case class Caching()
+
+  private lazy val supervisor= actor {
+    self.trapExit=true
+    loop{react{case Exit(from: Actor, exc: Exception) => 
+        {
+          play.Logger.warn("cache actor crashed on: "+exc.toString+" resstarting...");
+          from.restart();
+          play.Logger.warn("restarted cache actor")}}}
+  }
   private lazy val cacheActor =
     actor{
-      link{self.trapExit = true;loop{react{case Exit(from: Actor, exc: Exception) => 
-        {
-          play.Logger.trace("cache actor crashed on: "+exc.toString+" resstarting...");
-          from.restart();
-          play.Logger.trace("restarted cache actor")}}}}
+      self.link(supervisor)
       loop{
         react{
-          case (f: Function0[_]) => reply(f.asInstanceOf[Function0[Any]]())
+          case CacheMessage(key, expiration, window, waitForEvaluation,f,isDesireable) => {
+            val flagWhileCaching = "___" + key
+            getFromCache1(flagWhileCaching).getOrElse
+              {set(flagWhileCaching, Caching(), waitForEvaluation);
+               get[Any](key,expiration,window)(f())(isDesireable)
+               play.Logger.info("asynchronously recached: "+ key)
+               _impl.delete(flagWhileCaching)
+              }
+            
+          }
           case _ => None
         }
       }
@@ -76,6 +91,7 @@ private[cache] object ScalaCache extends CacheDelegate {
     implicit def isDesirableSeq[A, B[X] <: Seq[X]](seq: B[A]): Boolean = seq.nonEmpty
   }
 
+
   /**
    * retrieves a key in async fashion
    * @param key cache key
@@ -86,23 +102,10 @@ private[cache] object ScalaCache extends CacheDelegate {
    */
 
   def getAsync[A](key: String, expiration: String, window: String, waitForEvaluation: String = "10s")(getter: => A)(implicit isDesirable: A => Boolean): A = {
-    def scheduleOrIgnore(key: String, f: Function0[A]) = {
-      val flagWhileCaching = "___" + key
-
-      case class Caching()
-
-      getFromCache1(flagWhileCaching).getOrElse
-         {Actor.actor {
-            cacheActor.!!(() => {set(flagWhileCaching, Caching(), waitForEvaluation); f()}, {
-              case a => {cacheIt(a.asInstanceOf[A]); _impl.delete(flagWhileCaching); a}
-            })
-          }}
-    }
-    def cacheIt(t: => A) = get(key, expiration, window)(t)(isDesirable)
 
     getFromCache[A](key).getOrElse(
-      getFromCache[A](prefixed(key)).map(v => {scheduleOrIgnore(key, () => getter); v})
-        .getOrElse(cacheIt(getter)))
+      getFromCache[A](prefixed(key)).map(v => {cacheActor ! CacheMessage(key, expiration, window, waitForEvaluation, () => getter,isDesirable); v})
+        .getOrElse(get(key,expiration,window)(getter)(isDesirable)))
 
   }
 
