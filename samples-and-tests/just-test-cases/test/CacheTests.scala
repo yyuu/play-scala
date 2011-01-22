@@ -55,7 +55,16 @@ class CacheTests extends UnitTestCase with ShouldMatchersForJUnit {
    /*println(result.zip(result.tail).foldLeft(Seq.empty[String])((l,p)=>(l++Seq.fill(p._1.elapsed.intValue+1)("'"))++Seq.fill((p._2.sent-p._1.got).intValue)("_")).flatten.mkString)*/
   
  }
+  @Test def aCrashScenario {
    
+    Cache.getAsync("akey","1s","10s")("initial value")(_=>true)
+    Thread.sleep(1000)
+    Range(1,100).map(_=>Cache.getAsync[String]("akey","1s","10s","1s"){throw new Exception()}(_=>true))
+    Thread.sleep(1000)
+    Cache.getAsync("akey","1s","10s")("end value")(_=>true)
+    Thread.sleep(100)
+    Cache.getAsync("akey","1s","10s")("end value")(_=>true) should be ("end value")
+  }
     
 }
 
