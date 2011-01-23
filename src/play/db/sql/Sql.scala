@@ -8,11 +8,12 @@ package play.db.sql
  *
  *
  *  val in=Sql("select * from tasks where id={id}") on "id"->1 result
- *  ( Task() <~ newLine * )(StreamReader(in))
+ *  val tasks: List[Task] = in.as( Task * )
+ *  val alsoTasks : List[Task] = Task.all()
  *
  *  //having
  *  case class Task(id: Option[Int], name: Option[String]) 
- *  object Task extends MagicParser[Task]
+ *  object Task extends Magic[Task]
  * 
  */
 
