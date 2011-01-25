@@ -41,7 +41,7 @@ case class EndOfStream
 
 object SqlRowsParser extends SqlRowsParser
 
-trait SqlRowsParser extends scala.util.parsing.combinator.Parsers{
+trait SqlRowsParser extends scala.util.parsing.combinator.PackratParsers{
   import Row._
   type Elem=Either[EndOfStream,Row]
   import scala.collection.generic.CanBuildFrom
@@ -469,18 +469,19 @@ trait Sql{
   def filledStatement=getFilledStatement(connection)
   def apply(conn:java.sql.Connection=connection) = result(connection)
   def result(conn:java.sql.Connection=connection) =
-    Sql.resultSetToStream(getFilledStatement(connection).executeQuery())
+    Sql.resultSetToStream(resultSet(connection))
+  def resultSet (conn:java.sql.Connection=connection)= 
+    (getFilledStatement(connection).executeQuery())
   import SqlRowsParser._
   def as[T](parser:Parser[T])(implicit conn:java.sql.Connection=connection):T =
-    parser(StreamReader(result(connection))) match{
-            case Success(a,_)=>a
-            case Failure(e,_)  => error(e)
-            case Error(e,_) => error(e) }
+    Sql.as[T](parser,resultSet(connection))
+
   def execute(conn:java.sql.Connection=connection):Boolean =
     getFilledStatement(connection).execute()
 
    def execute1(conn:java.sql.Connection=connection):(java.sql.PreparedStatement,Int) =
     {val statement=getFilledStatement(connection);(statement,{statement.executeUpdate()})}
+
   def executeUpdate(conn:java.sql.Connection=connection):Int =
     getFilledStatement(connection).executeUpdate()
 } 
@@ -495,8 +496,8 @@ object Sql{
   implicit def sqlToSimple(sql:SqlQuery):SimpleSql=sql.asSimple
   implicit def sqlToBatch(sql:SqlQuery):BatchSql=sql.asBatch
 
-  import SqlParser._
-  def sql(inSql:String):SqlQuery={val (sql,paramsNames)= parse(inSql);SqlQuery(sql,paramsNames)}
+
+  def sql(inSql:String):SqlQuery={val (sql,paramsNames)= SqlParser.parse(inSql);SqlQuery(sql,paramsNames)}
   import java.sql._
   import java.sql.ResultSetMetaData._
   def metaData(rs:java.sql.ResultSet)={
@@ -517,4 +518,10 @@ object Sql{
   def resultSetToStream(rs:java.sql.ResultSet):Stream[SqlRow]={
     Useful.unfold(rs)(rs => if(!rs.next()) {rs.close();None} else Some ((new SqlRow(metaData(rs),data(rs)),rs)))
   }
+  import SqlRowsParser._
+  def as[T](parser:Parser[T],rs:java.sql.ResultSet):T =
+    parser(StreamReader(resultSetToStream(rs))) match{
+            case Success(a,_)=>a
+            case Failure(e,_)  => error(e)
+            case Error(e,_) => error(e) }
 }
