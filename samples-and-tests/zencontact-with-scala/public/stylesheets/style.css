@@ -147,7 +147,7 @@ nav a.selected
 /* ----------------------------------------------
  * LIST
  * ------------------------------------------- */
-table
+table#list 
 {
 	width: 100%;
 	table-layout: fixed;
@@ -159,7 +159,7 @@ table
 	border: 1px solid rgba(0,0,0,0.1);
 }
 
-thead
+#list thead
 {
 	border-radius: 10px;
 	-moz-border-radius: 10px;
@@ -174,34 +174,34 @@ thead
 	text-shadow: rgba(0,0,0,0.5) 0 -1px 1px;
 }
 
-th
+#list th
 {
 	padding: 10px 5px 5px;
 }
 
 
-tbody tr
+#list tbody tr
 {
 	opacity: 0.8;
 	text-shadow: rgba(0,0,0,0.5) 0 1px 1px;
 }
 
-tbody tr:hover
+#list tbody tr:hover
 {
 	opacity: 1;
 }
 
-tbody tr:nth-child(even)
+#list tbody tr:nth-child(even)
 {
 	background: rgba(0,0,0,0.05);
 }
 
-tbody tr:nth-child(odd)
+#list tbody tr:nth-child(odd)
 {
 	background: rgba(255,255,255,0.05);
 }
 
-td
+#list td
 {
 	padding: 5px;
 	border-top: 1px solid rgba(255,255,255,0.1);
@@ -211,7 +211,7 @@ td
 	white-space:nowrap;
 }
 
-td a, td input[type=submit]
+#list td a, td input[type=submit]
 {
     text-decoration: none;
     background: #fff;
@@ -230,13 +230,13 @@ td a, td input[type=submit]
     height: 16px;
 }
 
-td a:active, td input[type=submit]:active
+#list td a:active, td input[type=submit]:active
 {
     position: relative;
     top: 1px;
 }
 
-td input
+#list td input
 {
     font-family: "Qlassik Bold";
 	text-align: left;
@@ -251,27 +251,27 @@ td input
 	width: 200px;
 }
 
-td.editing 
+#list td.editing 
 {
     padding: 0px 5px;
 }
 
-th.name, td.name input
+#list th.name, td.name input
 {
     width: 85px;
 }
 
-th.firstname, td.firstname input
+#list th.firstname, td.firstname input
 {
     width: 90px;
 }
 
-th.birthdate, td.birthdate input
+#list th.birthdate, td.birthdate input
 {
     width: 80px;
 }
 
-th.action 
+#list th.action 
 {
     width: 55px;
 }
