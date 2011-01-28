@@ -38,14 +38,24 @@ import javax.print.attribute.standard.Severity
  */
 class ScalaPlugin extends PlayPlugin {
     
-  var lastHash = 0
+  override def onLoad {
+      play.templates.CustomGroovy()
+  }
   
-  override def addTemplateExtensions(): JList[String] = List("play.scalasupport.templates.TemplateExtensions")
+  override def overrideTemplateSource(template: play.templates.BaseTemplate, source: String) = {
+      if(template.isInstanceOf[play.templates.GroovyTemplate]) {
+          template.source.replace("?.", "?.safeNull()?.")
+      } else {
+          null
+      }
+  }
+    
+  override def addTemplateExtensions(): JList[String] = List("play.templates.TemplateScalaExtensions")
 
    /**
     * Called when play need to bind a Java object from HTTP params
     */
-   override def bind(name:String, clazz:Class[_], t:java.lang.reflect.Type,
+  override def bind(name:String, clazz:Class[_], t:java.lang.reflect.Type,
                       annotations:Array[java.lang.annotation.Annotation] , params: java.util.Map[String, Array[String]])= {
      clazz match {
          case c if c == classOf[Option[_]] => {
@@ -55,8 +65,11 @@ class ScalaPlugin extends PlayPlugin {
          }
          case _ => null
        }
-   }
-//Binder.bind(String name, Class<?> clazz, Type type, Annotation[] annotations, Map<String, String[]> params)
+  }
+
+  // ---------------- COMPILATION
+   
+  var lastHash = 0
 
   /**
    * Scanning both java and scala sources for compilation

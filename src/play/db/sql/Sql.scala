@@ -37,7 +37,7 @@ case class StreamReader[T](s: Stream[T]) extends scala.util.parsing.input.Reader
   def atEnd = s.isEmpty
 }
 
-case class EndOfStream
+case class EndOfStream()
 
 object SqlRowsParser extends SqlRowsParser
 

@@ -18,7 +18,8 @@ object Application extends Controller {
     }
     
     def list = {
-        Template("contacts" -> Contact.find("order by name, firstname ASC"))
+        case class User(name: Option[String])
+        Template("contacts" -> Contact.find("order by name, firstname ASC"), "guillaume" -> User(Some("Guillaume")))
     }
        
     def form(id: Long) = {
