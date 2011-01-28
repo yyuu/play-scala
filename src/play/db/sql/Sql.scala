@@ -134,7 +134,7 @@ case class Entity[T,A](id:T,v:A)
 case class MEntity[ID,V](
   override val tableName:Option[String]=None,
   val idParser:SqlRowsParser.Parser[ID]=
-    SqlRowsParser.RowParser(row => row.asList.headOption.map(_.asInstanceOf[ID]).toRight(NoColumnsInReturnedResult)))(implicit val m:ClassManifest[V],val columnTo:ColumnTo[ID]) extends MagicEntity[ID,V]
+    SqlRowsParser.RowParser(row => row.asList.headOption.flatMap(a => (if (a.isInstanceOf[Option[_]]) a else Option(a)).asInstanceOf[Option[ID]]).toRight(NoColumnsInReturnedResult)))(implicit val m:ClassManifest[V],val columnTo:ColumnTo[ID]) extends MagicEntity[ID,V]
 trait MagicEntity[ID,V] extends MagicSql[Entity[ID,V]] {
   import SqlRowsParser._
   import Sql._
@@ -149,10 +149,10 @@ trait MagicEntity[ID,V] extends MagicSql[Entity[ID,V]] {
           .as[Option[E]](phrase(this*).map(_.headOption))
 
   def update(e:E):Int={
-    val toUpdate=names_methods.map(_._1).map(n => n+" = "+"{"+n+"}").mkString(",")
+    val toUpdate=names_methods.map(_._1).map(_.split('.').last.toLowerCase).map(n => n+" = "+"{"+n+"}").mkString(", ")
     sql("update "+name+" set "+toUpdate+" where id={id}")
-      .on("id"->e.id)
-      .onParams(names_methods.map(_._2).map(m=>m.invoke(e.v)))
+     // .on("id"->e.id)
+      .onParams(names_methods.map(_._2).map(m=>m.invoke(e.v)) :+ e.id : _*)
       .executeUpdate()
   }
 
@@ -434,7 +434,7 @@ case class SimpleSql(sql:SqlQuery,params:Seq[(String,Any)]) extends Sql{
     this.copy(params=(this.params) ++ sql.argsInitialOrder.zip(args))
 
   def getFilledStatement(connection:java.sql.Connection)={
-    val s=connection.prepareStatement(sql.query)
+    val s =connection.prepareStatement(sql.query,java.sql.Statement.RETURN_GENERATED_KEYS)
     val argsMap=Map(params:_*)
     sql.argsInitialOrder.map(argsMap)
                .zipWithIndex
