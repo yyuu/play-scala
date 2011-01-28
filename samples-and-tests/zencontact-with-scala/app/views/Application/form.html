@@ -1,35 +1,34 @@
 #{extends 'main.html' /}
 #{set title:'Form' /}
 
-#{form @save()}
-    <input type="hidden" name="contact.id" value="${contact?.id}">
+#{form contact?.id ? @save(contact.id) : @create()}
     
     <p class="field">
         <label for="name">Name:</label>
-        <input type="text" id="name" name="contact.name" value="${contact?.name}">
+        <input type="text" id="name" name="contact.name" value="${contact?.v?.name}">
         <span class="error">${errors.forKey('contact.name')}</span>
     </p>
 
     <p class="field">
         <label for="firstname">First name:</label>
-        <input type="text" id="firstname" name="contact.firstname" value="${contact?.firstname}">
+        <input type="text" id="firstname" name="contact.firstname" value="${contact?.v?.firstname}">
         <span class="error">${errors.forKey('contact.firstname')}</span>
     </p>
 
     <p class="field">
         <label for="birthdate">Birth date:</label>
-        <input type="text" id="birthdate" name="contact.birthdate" value="${contact?.birthdate?.format('yyyy-MM-dd')}">
+        <input type="text" id="birthdate" name="contact.birthdate" value="${contact?.v?.birthdate?.format('yyyy-MM-dd')}">
         <span class="error">${errors.forKey('contact.birthdate')}</span>
     </p>
 
     <p class="field">
         <label for="email">Email:</label>
-        <input type="text" id="email" name="contact.email" value="${contact?.email}">
+        <input type="text" id="email" name="contact.email" value="${contact?.v?.email}">
         <span class="error">${errors.forKey('contact.email')}</span>
     </p>
 
     <p class="buttons">
-     	<a href="@{list()}">Cancel</a> or <input type="submit" value="Save this contact" id="saveContact">
+        <a href="@{list()}">Cancel</a> or <input type="submit" value="Save this contact" id="saveContact">
     </p>
     
     <script type="text/javascript" charset="utf-8">

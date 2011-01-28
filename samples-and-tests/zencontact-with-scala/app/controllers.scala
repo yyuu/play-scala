@@ -8,6 +8,9 @@ import java.util._
 
 import models._
 
+import play.db.sql._
+import play.db.sql.Sql._
+
 object Application extends Controller {
     
     def index = {
@@ -15,15 +18,39 @@ object Application extends Controller {
     }
     
     def list = {
-        Template("contacts" -> Contacts.find("order by name, firstname").fetch) 
+        Template("contacts" -> Contact.find("order by name, firstname ASC"))
     }
        
     def form(id: Long) = {
-        Template("contact" -> Contacts.findById(id).orNull)
+        Template("contact" -> Contact.findById(id))
     }
     
-    def save(@Valid contact: Contact) = {
-        if (contact.validateAndSave()) Action(list) else if (request.isAjax) BadRequest else "@form".asTemplate(contact)
+    def save(id: Long, @Valid contact: Contact) = {
+        if(Validation.hasErrors()) {
+            "@form".asTemplate("contact" -> Entity(id, contact) )
+        } else {
+            Contact.update(Entity(id, contact))        
+            Action(list)
+        }        
+    }
+    
+    def create(@Valid contact: Contact) = {
+        if(Validation.hasErrors()) {
+            "@form".asTemplate("contact" -> Entity(null,contact) )
+        } else {
+            val newContact = Contact.create(contact)
+            Action(form(newContact.id))
+        }
     }
 
+}
+
+case class GroovyWrapper(val value: Any) extends groovy.lang.GroovyObjectSupport {
+    
+    override def getProperty(property: String) = {
+        val proxy = new groovy.util.Proxy()
+        proxy.wrap(value)
+        proxy.getProperty(property)
+    }
+    
 }

@@ -1,19 +1,20 @@
 package models
 
-import play.db.jpa._
+import play.db.sql._
+import SqlRowsParser._
+import Row._
+
 import play.data.Validators._
 
 import java.util._
 
 // ~~~ Contact
 
-@Entity class Contact(	
-    @Required var firstname: String,	
-    @Required var name: String,
-    @Required var birthdate: Date,
-    @Required @Email var email: String
-) extends Model
+case class Contact(
+    @Required firstname: String,
+    @Required name: String,
+    @Required birthdate: Date,
+    @Required @Email email: String
+)
 
-object Contacts extends QueryOn[Contact] 
-
-
+object Contact extends MEntity[Long, Contact]

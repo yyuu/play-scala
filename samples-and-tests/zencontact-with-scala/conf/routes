@@ -5,9 +5,11 @@
 # Home page
 GET     /                                       Application.index
 GET     /contacts                               Application.list
-POST    /contacts                               Application.save
+POST    /contacts                               Application.create
+POST    /contacts/{id}                          Application.save
 GET     /contacts/{id}                          Application.form
 GET     /contacts/new                           Application.form
 
 # Map static resources from the /app/public folder to the /public path
 GET     /                                       staticDir:public
+

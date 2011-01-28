@@ -18,7 +18,7 @@
     		<nav>
     			<a id="home" href="@{index()}" class="${request.action =~ /index/ ? 'selected' : ''}">Home</a>
     			<a id="list" href="@{list()}" class="${request.action =~ /list/ ? 'selected' : ''}">List</a>
-    			<a id="new" href="@{form()}" class="${request.action =~ /form|save/ ? 'selected' : ''}">New</a>
+    			<a id="new" href="@{form()}" class="${request.action =~ /form|save|create/ ? 'selected' : ''}">New</a>
     		</nav>
     		<section>
     		    #{doLayout /}
