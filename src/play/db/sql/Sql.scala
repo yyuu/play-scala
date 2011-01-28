@@ -151,7 +151,6 @@ trait MagicEntity[ID,V] extends MagicSql[Entity[ID,V]] {
   def update(e:E):Int={
     val toUpdate=names_methods.map(_._1).map(_.split('.').last.toLowerCase).map(n => n+" = "+"{"+n+"}").mkString(", ")
     sql("update "+name+" set "+toUpdate+" where id={id}")
-     // .on("id"->e.id)
       .onParams(names_methods.map(_._2).map(m=>m.invoke(e.v)) :+ e.id : _*)
       .executeUpdate()
   }
@@ -165,7 +164,13 @@ trait MagicEntity[ID,V] extends MagicSql[Entity[ID,V]] {
     val rs=statement.getGeneratedKeys()
     val id=idParser(StreamReader(Sql.resultSetToStream(rs)))
     Entity(id.get,v)
-  } 
+  }   
+  
+  def delete(id:ID):Int={
+      sql("delete from "+name+" where id={id}")
+      .on("id"->id)
+      .executeUpdate()
+  }
 
   import java.sql.SQLIntegrityConstraintViolationException
   override def insert(e:E):MayErr[SQLIntegrityConstraintViolationException,Boolean]={
@@ -298,9 +303,7 @@ trait MagicSql[T] extends SqlRowsParser.Parser[T]{
       catching(classOf[SQLIntegrityConstraintViolationException])
         .either(query.execute())
         .left.map(_.asInstanceOf[SQLIntegrityConstraintViolationException])
-  }
- 
-  
+  }  
 
     def apply(input:Input):ParseResult[T]={
       val (c,names_types)=electConstructorAndGetInfo

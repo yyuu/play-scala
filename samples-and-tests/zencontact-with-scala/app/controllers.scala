@@ -42,7 +42,12 @@ object Application extends Controller {
             Action(form(newContact.id))
         }
     }
-
+    
+    def delete(id: Long) = {
+        Contact.delete(id)
+        Action(list)
+    }
+    
 }
 
 case class GroovyWrapper(val value: Any) extends groovy.lang.GroovyObjectSupport {
