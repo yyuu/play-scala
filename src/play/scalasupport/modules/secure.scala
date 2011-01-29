@@ -5,8 +5,8 @@ import play.classloading.enhancers.ControllersEnhancer.ByPass
 import java.lang.reflect.InvocationTargetException
 
 /**
-* creates a wrapper around controllers.Secure
-*/
+ * creates a wrapper around controllers.Secure
+ */
 trait SecureWrapper {
     @Before def checkAccess {
         try {

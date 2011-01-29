@@ -1,4 +1,4 @@
-package play.scalasupport
+package play.utils
 
 private[play] object ActionProxy {
     

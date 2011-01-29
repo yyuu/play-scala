@@ -6,12 +6,12 @@ import java.util.concurrent.Future
 
 class ScalaWaitFor(tasks: Future[_]) extends Result {
 
-  val delegate = new play.Invoker.Suspend(tasks)
+    val delegate = new play.Invoker.Suspend(tasks)
 
-  Http.Request.current().isNew = false
+    Http.Request.current().isNew = false
   
-  def apply(request: Http.Request , response:Http.Response) {
-    throw delegate
-  }
+    def apply(request: Http.Request , response:Http.Response) {
+        throw delegate
+    }
   
 }

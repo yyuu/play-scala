@@ -24,7 +24,6 @@ package object play {
 
     def configuration = new RichConfiguration(play.Play.configuration)
 
-
     // - IMPLICITS
     implicit def withEscape(x: Any) = new WithEscape(x)
     

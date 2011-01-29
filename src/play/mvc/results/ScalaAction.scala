@@ -6,14 +6,14 @@ import play.mvc.Http
 
 class ScalaAction(action: => Any) extends Result {
 
-  val actionDefinition = ControllerDelegate.reverseForScala 
+    val actionDefinition = ControllerDelegate.reverseForScala 
   
-  action 
+    action 
   
-  val delegate = new Redirect(actionDefinition.url) 
+    val delegate = new Redirect(actionDefinition.url) 
 
-  def apply(request: Http.Request , response:Http.Response) {
-    delegate.apply(request, response)
-  }
+    def apply(request: Http.Request , response:Http.Response) {
+        delegate.apply(request, response)
+    }
   
 }

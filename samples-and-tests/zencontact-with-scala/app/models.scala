@@ -4,7 +4,7 @@ import play.db.sql._
 import SqlRowsParser._
 import Row._
 
-import play.data.Validators._
+import play.data.validation.Annotations._
 
 import java.util._
 

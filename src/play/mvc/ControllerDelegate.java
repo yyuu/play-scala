@@ -12,10 +12,8 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.concurrent.Future;
 
-
 /**
- * 
- * provides java interop
+ * Provides java interop
  */
 public abstract class ControllerDelegate {
 
@@ -30,11 +28,12 @@ public abstract class ControllerDelegate {
     }
     
     public static RenderTemplate renderTemplateForScala(String template, Map<String,Object> args) {
-	try{    
-	  if (template == null)
-	    Controller.renderTemplate(args);
-	  else
-            Controller.renderTemplate(template, args);
+        try{    
+            if (template == null) {
+                Controller.renderTemplate(args);
+            } else {
+                Controller.renderTemplate(template, args);
+            }            
         } catch(Throwable t) {
             if(t instanceof RenderTemplate) {
                 return (RenderTemplate)t;

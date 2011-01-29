@@ -13,8 +13,8 @@ import play.classloading.enhancers.LocalvariablesNamesEnhancer.LocalVariablesSup
 import play.classloading.enhancers.ControllersEnhancer.ControllerSupport
 
 /**
-* utility class to provider an easier way to render argumetns
-*/
+ * utility class to provider an easier way to render argumetns
+ */
 private[mvc] class RichRenderArgs(val renderArgs: RenderArgs) {
     def +=(variable: Tuple2[String, Any]) {
         renderArgs.put(variable._1, variable._2)
@@ -22,8 +22,8 @@ private[mvc] class RichRenderArgs(val renderArgs: RenderArgs) {
 }
 
 /**
-* utility class to provide some extra syntatic sugar while dealing with a session
-*/
+ * utility class to provide some extra syntatic sugar while dealing with a session
+ */
 private[mvc] class RichSession(val session: Session) {
     def apply(key: String) = {
         session.contains(key) match {
@@ -34,8 +34,8 @@ private[mvc] class RichSession(val session: Session) {
 }
 
 /**
-* Wrap a String as template name
-*/
+ * Wrap a String as template name
+ */
 private[mvc] class StringAsTemplate(val name: String) {
     def asTemplate(args: Any*) = new results.ScalaRenderTemplate(name,ScalaController.argsToParams(args: _*))
     def asTemplate = new results.ScalaRenderTemplate(name)

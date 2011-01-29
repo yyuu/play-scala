@@ -5,14 +5,14 @@ import play.mvc.Http
 
 class ScalaSuspend(num: Int) extends Result {
 
-  def this(s: String) = this(1000 * play.libs.Time.parseDuration(s))
+    def this(s: String) = this(1000 * play.libs.Time.parseDuration(s))
 
-  val delegate = new play.Invoker.Suspend(num)
+    val delegate = new play.Invoker.Suspend(num)
 
-  Http.Request.current().isNew = false
+    Http.Request.current().isNew = false
   
-  def apply(request: Http.Request , response:Http.Response) {
-    throw delegate
-  }
+    def apply(request: Http.Request , response:Http.Response) {
+        throw delegate
+    }
   
 }

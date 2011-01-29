@@ -2,5 +2,4 @@ package play.mvc
 
 import play.classloading.enhancers.LocalvariablesNamesEnhancer.LocalVariablesSupport
 
-
 abstract class ScalaMailer extends MailerDelegate with LocalVariablesSupport

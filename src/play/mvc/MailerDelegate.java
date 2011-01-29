@@ -5,16 +5,15 @@ import java.util.concurrent.Future;
 import org.apache.commons.mail.*;
 
 /**
- *
- * creates a delegate which can be used to take over play.mvc.Mailer namespace with a type
+ * Creates a delegate which can be used to take over play.mvc.Mailer namespace with a type
  * alias. Extending from this class means that we can avoid circular references which would
  * occur if ScalaMailer was inhereted directly from @see play.mvc.Controller and we used a type alias
  * to map ScalaMailer to play.mvc.Mailer
  * This class will be removed before 1.1
- *
  */
 @Deprecated
 public abstract class MailerDelegate {
+    
     public void setSubject(String subject, Object... args) {
         Mailer.setSubject(subject, args);
     }
