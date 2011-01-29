@@ -135,6 +135,7 @@ case class MEntity[ID,V](
   override val tableName:Option[String]=None,
   val idParser:SqlRowsParser.Parser[ID]=
     SqlRowsParser.RowParser(row => row.asList.headOption.flatMap(a => (if (a.isInstanceOf[Option[_]]) a else Option(a)).asInstanceOf[Option[ID]]).toRight(NoColumnsInReturnedResult)))(implicit val m:ClassManifest[V],val columnTo:ColumnTo[ID]) extends MagicEntity[ID,V]
+    
 trait MagicEntity[ID,V] extends MagicSql[Entity[ID,V]] {
   import SqlRowsParser._
   import Sql._
@@ -285,6 +286,12 @@ trait MagicSql[T] extends SqlRowsParser.Parser[T]{
         .asSimple
         .as[Seq[T]](this*)
         
+  def count:Int={
+      val rs = sql("select count(*) from "+name+"").resultSet()
+      rs.first()
+      rs.getInt(1)
+  }
+        
   def find(stmt:String):Seq[T]=
      sql(stmt match {
          case s if s.startsWith("select") => s
@@ -292,7 +299,6 @@ trait MagicSql[T] extends SqlRowsParser.Parser[T]{
          case s if s.startsWith("order by") => "select * from " + name + " " + s
          case s => "select * from " + name + " where " + s
      }).asSimple.as[Seq[T]](this*)
-
 
   import java.sql.SQLIntegrityConstraintViolationException
   def insert(v:T):MayErr[SQLIntegrityConstraintViolationException,Boolean]={

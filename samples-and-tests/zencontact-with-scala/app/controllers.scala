@@ -4,7 +4,7 @@ import play._
 import play.mvc._
 import play.data.validation._
 
-import java.util._
+import java.util.Date
 
 import models._
 
@@ -50,12 +50,3 @@ object Application extends Controller {
     
 }
 
-case class GroovyWrapper(val value: Any) extends groovy.lang.GroovyObjectSupport {
-    
-    override def getProperty(property: String) = {
-        val proxy = new groovy.util.Proxy()
-        proxy.wrap(value)
-        proxy.getProperty(property)
-    }
-    
-}

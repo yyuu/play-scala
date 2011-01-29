@@ -1,4 +1,4 @@
-package play.scalasupport.core
+package play.scalasupport
 
 import play._
 import play.test._
@@ -38,38 +38,38 @@ import javax.print.attribute.standard.Severity
  */
 class ScalaPlugin extends PlayPlugin {
     
-  override def onLoad {
+    override def onLoad {
       play.templates.CustomGroovy()
-  }
+    }
   
-  override def overrideTemplateSource(template: play.templates.BaseTemplate, source: String) = {
+    override def overrideTemplateSource(template: play.templates.BaseTemplate, source: String) = {
       if(template.isInstanceOf[play.templates.GroovyTemplate]) {
           template.source.replace("?.", "?.safeNull()?.")
       } else {
           null
       }
-  }
+    }
     
-  override def addTemplateExtensions(): JList[String] = List("play.templates.TemplateScalaExtensions")
+    override def addTemplateExtensions(): JList[String] = List("play.templates.TemplateScalaExtensions")
 
-   /**
-    * Called when play need to bind a Java object from HTTP params
-    */
-  override def bind(name:String, clazz:Class[_], t:java.lang.reflect.Type,
-                      annotations:Array[java.lang.annotation.Annotation] , params: java.util.Map[String, Array[String]])= {
-     clazz match {
-         case c if c == classOf[Option[_]] => {
-           val parameterClass = t.asInstanceOf[java.lang.reflect.ParameterizedType].getActualTypeArguments()(0)
-           val result = play.data.binding.Binder.bind(name, parameterClass.asInstanceOf[Class[_]], parameterClass, annotations, params)
-           Option(result)
-         }
-         case _ => null
+    /**
+     * Custom binders for Scala
+     * - Option[T]
+     */
+    override def bind(name:String, clazz:Class[_], t:java.lang.reflect.Type, annotations:Array[java.lang.annotation.Annotation] , params: java.util.Map[String, Array[String]])= {
+        clazz match {
+            case c if c == classOf[Option[_]] => {
+                val parameterClass = t.asInstanceOf[java.lang.reflect.ParameterizedType].getActualTypeArguments()(0)
+                val result = play.data.binding.Binder.bind(name, parameterClass.asInstanceOf[Class[_]], parameterClass, annotations, params)
+                Option(result)
+            }
+            case _ => null
        }
-  }
+    }
 
-  // ---------------- COMPILATION
+    // ---------------- COMPILATION
    
-  var lastHash = 0
+    var lastHash = 0
 
   /**
    * Scanning both java and scala sources for compilation

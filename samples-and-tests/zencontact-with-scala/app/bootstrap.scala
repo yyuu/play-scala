@@ -6,7 +6,11 @@ import models._
 @OnApplicationStart class Bootstrap extends Job {
 
     override def doJob {
-        //if (Contacts.count == 0) Fixtures.load("data.yml")
+        if (Contact.count == 0) {
+            Yaml[List[Contact]]("data.yml").foreach {
+                Contact.create(_)
+            }
+        }
     }
 
 }

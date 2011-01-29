@@ -4,8 +4,8 @@ import play.db.jpa.JPABase
  * overriding java types with  cala wrappers
  */
 package object controllers {
-    type CRUDFor[T] = play.scalasupport.crud.CRUDWrapper[T]
-    type Secured = play.scalasupport.secure.SecureWrapper
+    type CRUDFor[T] = play.modules.scala.crud.CRUDWrapper[T]
+    type Secured = play.modules.scala.secure.SecureWrapper
     implicit def enrichJavaModel(underlying: JPABase) = play.db.jpa.asScala.enrichJavaModel(underlying)
 }
 

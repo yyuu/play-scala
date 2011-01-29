@@ -1,16 +1,16 @@
-Contact(warry):
+- !!models.Contact
     name:       Dantec
     firstname:  Maxime
     birthdate:  1985-11-12
     email:      hello@warry.fr
 
-Contact(guillaume):
+- !!models.Contact
     name:       Bort
     firstname:  Guillaume
     birthdate:  1980-12-21
     email:      guillaume.bort@gmail.com
 
-Contact(たの):
+- !!models.Contact
     name:       鈴木
     firstname:  太郎
     birthdate:  1970-05-13

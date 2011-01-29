@@ -1,4 +1,4 @@
-package play.scalasupport.crud
+package play.modules.scala.crud
 
 import play.utils._
 import play.mvc._

@@ -1,4 +1,4 @@
-package play.scalasupport.secure
+package play.modules.scala.secure
 
 import play.mvc._
 import play.classloading.enhancers.ControllersEnhancer.ByPass

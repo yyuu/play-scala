@@ -1,4 +1,4 @@
-package play.scalasupport.core
+package play.scalasupport
 
 import java.io.{ ByteArrayInputStream, ByteArrayOutputStream, InputStream, OutputStream, File => JFile }
 import scala.tools.nsc.io._
@@ -8,7 +8,7 @@ import PartialFunction._
 /**
  * defines a scala source file
  */
-private[core] class SFile(val name: String, val jfile: JFile) extends AbstractFile {
+private[scalasupport] class SFile(val name: String, val jfile: JFile) extends AbstractFile {
   
   override def hashCode = name.hashCode
   override def equals(that: Any) = cond(that) { case x: SFile => x.name == name }
@@ -35,7 +35,7 @@ private[core] class SFile(val name: String, val jfile: JFile) extends AbstractFi
 /**
  * defines a scala source directory
  */
-private[core] class SDirectory(val name: String, maybeContainer: Option[SDirectory])
+private[scalasupport] class SDirectory(val name: String, maybeContainer: Option[SDirectory])
 extends AbstractFile {
   def path: String =
     maybeContainer match {
