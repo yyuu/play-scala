@@ -1,7 +1,8 @@
 package models
 
 import play.db.jpa._
-import play.data.Validators._
+import play.db.jpa.Annotations._
+import play.data.validation.Annotations._
 
 import java.util._
 
