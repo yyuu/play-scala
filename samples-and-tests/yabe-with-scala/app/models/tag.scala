@@ -3,7 +3,8 @@ package models
 import java.util._
  
 import play.db.jpa._
-import play.data.Validators._
+import play.db.jpa.Annotations._
+import play.data.validation.Annotations._
 
 @Entity
 class Tag (@Required var name:String) extends Model with Comparable[Tag] {

@@ -11,7 +11,7 @@ import scala.collection.mutable.Stack
 class BasicTest extends UnitFlatSpec with ShouldMatchers with BeforeAndAfterEach {
     
     override def beforeEach() {
-        Fixtures.deleteAll()
+        Fixtures.deleteDatabase()
     }
  
     it should "create and retrieve a user" in {
@@ -124,7 +124,7 @@ class BasicTest extends UnitFlatSpec with ShouldMatchers with BeforeAndAfterEach
     }
     
     it should "work if things combined together" in {
-        Fixtures.load("data.yml")
+        Fixtures.loadModels("data.yml")
 
         // Count things
         2 should equal (Users.count())

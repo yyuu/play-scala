@@ -1,6 +1,6 @@
 *{ You can use plain selenium command using the selenium tag }*
 
-#{fixture delete:'all', load:'test-data.yml' /}
+#{fixture 'FreshDatabase' /}
 
 #{selenium}
     // Open the home page, and check that no error occured
@@ -20,10 +20,10 @@
 	assertTextPresent('Bort')
 	assertTextPresent('Guillaume')
 	assertTextPresent('guillaume.bort@gmail.com')
-	assertTextPresent('みがえらせ')
+	assertTextPresent('鈴木')
 	
 	// Go to detail
-	clickAndWait('link=>')
+	clickAndWait('link=edit')
 	
 	// Update form
 	type('firstname', 'Jojo')
@@ -49,6 +49,9 @@
 	type('birthdate', '1970-03-02')
 	type('email', 'james@bond.com')
 	clickAndWait('saveContact')
+	
+	// Go to list
+	clickAndWait('link=List')
 	
 	assertTextPresent('James')
 	assertTextPresent('Bond')
