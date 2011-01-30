@@ -94,6 +94,14 @@ trait SqlRowsParser extends scala.util.parsing.combinator.PackratParsers{
   def newLine:Parser[Unit]=  Parser[Unit]{
     in => if(in.atEnd) Failure("end",in) else Success(Unit,in.rest) 
   }
+  def scalar[T](implicit m:Manifest[T])=
+    SqlRowsParser.RowParser(row => 
+      row.asList
+         .headOption.toRight(NoColumnsInReturnedResult)
+                    .flatMap(a=>
+                             if (m >:>  TypeWrangler.javaType(a.asInstanceOf[AnyRef].getClass))
+                               Right(a.asInstanceOf[T]) 
+                             else Left(TypeDoesNotMatch(m.erasure + " and "+a.asInstanceOf[AnyRef].getClass)) ))
 
   def group[A](by:(Row=> MayErr[SqlRequestError,Any]),a:Parser[A]):Parser[Seq[A]] = {
     val d=guard(by)
@@ -265,8 +273,6 @@ trait MagicSql[T] extends SqlRowsParser.Parser[T]{
         .apply(names_types.map(nt=>(nt._1,m.erasure.getDeclaredMethod(nt._1.split('.').last.toLowerCase))))
 
 
-
-
   def manifestFor(t: Type): Manifest[AnyRef] = t match {
     case c: Class[_] => Manifest.classType[AnyRef](c)
     case p: ParameterizedType =>
@@ -286,10 +292,8 @@ trait MagicSql[T] extends SqlRowsParser.Parser[T]{
         .asSimple
         .as[Seq[T]](this*)
         
-  def count:Int={
-      val rs = sql("select count(*) from "+name+"").resultSet()
-      rs.first()
-      rs.getInt(1)
+  def count:Long={
+      sql("select count(*) from "+name+"").as(scalar[Long])
   }
         
   def find(stmt:String):Seq[T]=
