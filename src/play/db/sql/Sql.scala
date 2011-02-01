@@ -407,6 +407,7 @@ trait Row{
           result <- v match {
             case b if(nullable && !nullableAlreadyHandled ) =>
               Left(UnexpectedNullableFound(qualified))
+            case null if(!nullable ) => Left( ColumnNotFound(qualified))
             case b if(requiredDataType >:>  TypeWrangler.javaType(getType(clazz))) =>
               Right(b.asInstanceOf[B])
             case b => Left(TypeDoesNotMatch(requiredDataType + " - " + clazz))} )
