@@ -5,13 +5,6 @@ import java.lang.reflect.{ Type => JType, Array => _, _ }
 import scala.reflect.Manifest
 import scala.reflect.Manifest.{ classType, intersectionType, arrayType, wildcardType }
 
-//import tools.scalap.scalax.rules.scalasig.{ScalaSig, ScalaSigParser}
-
-
-/**
- * Negotiates between Spring's TypeDescriptor and Scala's Manifest mechanisms
- */
-
 object TypeWrangler {
 
   val ByteClass = classOf[scala.Byte]
