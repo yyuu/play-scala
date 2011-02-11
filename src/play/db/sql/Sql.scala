@@ -226,12 +226,9 @@ case class MagicSql[T] ( override val tableName:Option[String]=None)(implicit va
 
 }
 trait MSql[T]{
-  println("in msql")
     val m:ClassManifest[T]
     val tableName:Option[String]=None
-println("initializing analyser")
     lazy val analyser= new Analyse[T](tableName,m)
-println("initialized analyser in Msql")
     import Sql._
     import java.lang.reflect._
      def find(stmt:String=""):SimpleSql[Seq[Row]]=
@@ -252,16 +249,13 @@ case class MagicParser[T] ( override val tableName:Option[String]=None)(implicit
 }
 
 trait MParser[T] extends SqlRowsParser.Parser[T]{
- println("in mparser")   
     val m:ClassManifest[T]
     val tableName:Option[String]=None
-print("initializing mparser analyser")
     val analyser= new Analyse[T](tableName,m){
       import java.lang.reflect._
       override def isConstructorSupported(c:Constructor[_]):Boolean =
             c.getGenericParameterTypes().forall(t => getExtractor(manifestFor(t)).isDefined)
     }
-print("initialized mparser analyser")
     import java.lang.reflect._
     import scala.reflect.Manifest
     import scala.reflect.ClassManifest
@@ -310,10 +304,8 @@ trait Analyser[T]{
   import java.lang.reflect._
   import scala.reflect.Manifest
   import scala.reflect.ClassManifest
-println("inside analyser")
   val m:ClassManifest[T]
   val tableName:Option[String]=None
-println("m is "+m)
   def clean(fieldName:String)=fieldName.split('$').last
   val name=tableName.getOrElse(clean(m.erasure.getSimpleName).toUpperCase())
   def getQualifiedColumnName(column:String)= name+"."+column
