@@ -137,9 +137,16 @@ object Magic{
       {case c ~ p => (c,p)}
   }
 }
-abstract class Pk[+ID]
+abstract class Pk[+ID]{
+  def isAssigned:Boolean = this match{
+    case Id(_) => true
+    case TODO => false
+  } 
+
+}
 case class Id[ID](id:ID) extends Pk[ID]
 case object TODO extends Pk[Nothing]
+
 
 case class Magic[T]  ( override val tableName:Option[String]=None)(implicit val m:ClassManifest[T])  extends  M[T]  {
 
@@ -159,12 +166,15 @@ trait M[T] extends MParser[T]{
 
     import SqlRowsParser._
     import Sql._
-    def find(stmt:String=""):SimpleSql[Seq[T]]= msql.find(stmt).using(self*) 
-    def findSingle(stmt:String):SimpleSql[Option[T]]=msql.find(stmt).using(phrase(self?))
+    def find(stmt:String=""):SimpleSql[T]= msql.find(stmt).using(self) 
     def count(stmt:String=""):SimpleSql[Long]= msql.count(stmt).using(scalar[Long])
     import scala.util.control.Exception._
     import java.sql.SQLIntegrityConstraintViolationException
     
+    def delete(where:String):BatchSql={
+      sql("delete from "+analyser.name+" where "+where)
+    }
+
     def update(v:T){
       val names_attributes = analyser.names_methods.map(nm => (nm._1.split('.').last.toLowerCase, nm._2.invoke(v) ))
       val (ids,toSet) = 
@@ -481,7 +491,9 @@ case class SimpleSql[T](sql:SqlQuery,params:Seq[(String,Any)], defaultParser:Par
   def onParams(args:Any*):SimpleSql[T] = 
     this.copy(params=(this.params) ++ sql.argsInitialOrder.zip(args))
   
-  def result(conn:java.sql.Connection=connection) = as(defaultParser)
+  def list(conn:java.sql.Connection=connection) = as(defaultParser*)
+  def single(conn:java.sql.Connection=connection) = as(phrase(defaultParser))
+  def first(conn:java.sql.Connection=connection) = as(defaultParser)
 
   def getFilledStatement(connection:java.sql.Connection)={
     val s =connection.prepareStatement(sql.query,java.sql.Statement.RETURN_GENERATED_KEYS)
@@ -494,12 +506,12 @@ case class SimpleSql[T](sql:SqlQuery,params:Seq[(String,Any)], defaultParser:Par
   def using[U](p:Parser[U]):SimpleSql[U]=SimpleSql(sql,params,p)
 }
 
-case class BatchSql[T](sql:SqlQuery,params:Seq[Seq[(String,Any)]], defaultParser:Parser[T] ) extends Sql{
+case class BatchSql(sql:SqlQuery,params:Seq[Seq[(String,Any)]] ) extends Sql{
 
-  def addBatch(args:(String,Any)*):BatchSql[T] = 
+  def addBatch(args:(String,Any)*):BatchSql = 
     this.copy(params=(this.params) :+ args)
 
-  def addBatchParams(args:Any*):BatchSql[T] =
+  def addBatchParams(args:Any*):BatchSql =
      this.copy(params=(this.params) :+ sql.argsInitialOrder.zip(args))
 
   def getFilledStatement(connection:java.sql.Connection)={
@@ -544,12 +556,11 @@ case class SqlQuery(query:String,argsInitialOrder:List[String]=List.empty) exten
   private def defaultParser : Parser[Seq[Row]] = acceptMatch("not end.", { case Right(r) => r } )*
   def asSimple:SimpleSql[Seq[Row]]=SimpleSql(this,Nil,defaultParser)
   def asSimple[T](parser:Parser[T]=defaultParser):SimpleSql[T]=SimpleSql(this,Nil,parser)
-  def asBatch:BatchSql[Seq[Row]]=BatchSql(this,Nil,defaultParser)  
-  def asBatch[T](parser:Parser[T]=defaultParser):BatchSql[T]=BatchSql(this,Nil,parser)  
+  def asBatch[T]():BatchSql = BatchSql(this,Nil)  
 }
 object Sql{
   implicit def sqlToSimple(sql:SqlQuery):SimpleSql[Seq[Row]]=sql.asSimple()
-  implicit def sqlToBatch(sql:SqlQuery):BatchSql[Seq[Row]]=sql.asBatch()
+  implicit def sqlToBatch(sql:SqlQuery):BatchSql=sql.asBatch()
 
 
   def sql(inSql:String):SqlQuery={val (sql,paramsNames)= SqlParser.parse(inSql);SqlQuery(sql,paramsNames)}
