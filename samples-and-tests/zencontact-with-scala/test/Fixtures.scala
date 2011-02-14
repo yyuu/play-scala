@@ -10,7 +10,7 @@ class FreshDatabase {
     
     Fixtures.deleteDatabase()
     
-    Yaml[List[Contact]]("data.yml").foreach {
+    Yaml[List[Contact]]("test-data.yml").foreach {
         Contact.create(_)
     }
     

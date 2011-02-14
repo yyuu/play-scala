@@ -6,7 +6,7 @@ import models._
 @OnApplicationStart class Bootstrap extends Job {
 
     override def doJob {
-        if (Contact.count == 0) {
+        if (Contact.count().single() == 0) {
             Yaml[List[Contact]]("data.yml").foreach {
                 Contact.create(_)
             }

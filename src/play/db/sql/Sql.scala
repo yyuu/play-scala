@@ -1,4 +1,16 @@
-package play.db.sql
+package play.db
+
+package object sql {
+    
+    implicit def sqlToSimple(sql:SqlQuery):SimpleSql[Row]=sql.asSimple
+    implicit def sqlToBatch(sql:SqlQuery):BatchSql=sql.asBatch
+    
+    def SQL(stmt:String) = Sql.sql(stmt)
+    
+}
+
+package sql {
+
 /*
  * sample usage:
  *  val sql=Sql("select * from tasks where id={id}") on "id"->1
@@ -39,10 +51,9 @@ case class StreamReader[T](s: Stream[T]) extends scala.util.parsing.input.Reader
 
 case class EndOfStream()
 
-object SqlRowsParser extends SqlRowsParser
+object SqlParser extends SqlParser 
 
-trait SqlRowsParser extends scala.util.parsing.combinator.PackratParsers{
-  import Row._
+trait SqlParser extends scala.util.parsing.combinator.PackratParsers{
   type Elem=Either[EndOfStream,Row]
   import scala.collection.generic.CanBuildFrom
   import scala.collection.mutable.Builder
@@ -74,9 +85,18 @@ trait SqlRowsParser extends scala.util.parsing.combinator.PackratParsers{
   def str(columnName:String):RowParser[String] =
     get[String](columnName)(implicitly[ColumnTo[String]])
 
+  def bool(columnName:String): RowParser[Boolean] =
+    get[Boolean](columnName)(implicitly[ColumnTo[Boolean]])
+
   def int(columnName:String): RowParser[Int] =
     get[Int](columnName)(implicitly[ColumnTo[Int]])
 
+  def long(columnName:String): RowParser[Long] =
+    get[Long](columnName)(implicitly[ColumnTo[Long]])
+
+  def date(columnName:String): RowParser[Date] =
+    get[Date](columnName)(implicitly[ColumnTo[Date]])
+      
   def get[T](columnName:String)(implicit extractor:ColumnTo[T]):RowParser[T] =
     RowParser( extractor.transform(_,columnName))
 
@@ -95,7 +115,7 @@ trait SqlRowsParser extends scala.util.parsing.combinator.PackratParsers{
     in => if(in.atEnd) Failure("end",in) else Success(Unit,in.rest) 
   }
   def scalar[T](implicit m:Manifest[T])=
-    SqlRowsParser.RowParser(row => 
+    SqlParser.RowParser(row => 
       row.asList
          .headOption.toRight(NoColumnsInReturnedResult)
                     .flatMap(a=>
@@ -125,15 +145,52 @@ trait SqlRowsParser extends scala.util.parsing.combinator.PackratParsers{
     def is[T](t:T)(implicit extractor:ColumnTo[T] ):Parser[Unit]=
       contains[T](name.name,t)(extractor)
   }
+  
+  implicit def rowToString :ColumnTo[String]= 
+   new ColumnTo[String]{
+     def transform(row:Row,columnName:String) = row.get1[String](columnName,false) 
+   }
+  implicit def rowToInt :ColumnTo[Int]= 
+    new ColumnTo[Int]{
+      def transform(row:Row,columnName:String) = row.get1[Int](columnName,false) 
+    }
+  implicit def rowToBoolean :ColumnTo[Boolean]= 
+    new ColumnTo[Boolean]{
+      def transform(row:Row,columnName:String) = row.get1[Boolean](columnName,false) 
+    }
+  implicit def rowToLong :ColumnTo[Long]= 
+    new ColumnTo[Long]{
+      def transform(row:Row,columnName:String) = row.get1[Long](columnName,false) 
+    } 
+  implicit def rowToDate[A >: Date] :ColumnTo[A]= 
+    new ColumnTo[A]{
+      def transform(row:Row,columnName:String) = row.get1[Date](columnName,false)
+    }
+  implicit def rowToPk[T](implicit c:ColumnTo[T]) :ColumnTo[Pk[T]]= 
+    new ColumnTo[Pk[T]]{
+      def transform(row:Row,columnName:String) = c.transform(row,columnName).map(a => Id(a))  
+    }
+   
+  //TODO better to require an implicit of ColumnTo[T] can be useful for extensiblity
+  implicit def rowToOption1[T](implicit m:ClassManifest[T]) :ColumnTo[Option[T]]= 
+   new ColumnTo[Option[T]]{
+     def transform(row:Row,columnName:String) = {
+       for(meta <- row.metaData.dictionary.get(columnName).toRight(ColumnNotFound(columnName));
+            val (nullable,_)=meta;
+           result <- (if(!nullable)   Left(UnexpectedNullableFound(columnName)):MayErr[SqlRequestError,T]
+                      else  row.get1[T](columnName,true)(m))) yield Option(result)
+     }  
+   }
+  
 }
 
 
 
 object Magic{
-  import  SqlRowsParser._
+  import  SqlParser._
   def group[B <: {val id:Any},D](by: Parser[B],p:Parser[D])(implicit m:ClassManifest[B])={
       val name=(m.erasure.getSimpleName.toUpperCase()+".ID")
-      by ~< SqlRowsParser.group(by=(row=>row.get1[Any](name,true)),p) ^^
+      by ~< SqlParser.group(by=(row=>row.get1[Any](name,true)),p) ^^
       {case c ~ p => (c,p)}
   }
 }
@@ -149,14 +206,13 @@ case class Id[ID](id:ID) extends Pk[ID]{
     override def toString() = id.toString
 }
 case object TODO extends Pk[Nothing]{
-    override def toString() = ""
+    override def toString() = "NotAssignedId"
 }
 
-case class Magic[T]  ( override val tableName:Option[String]=None)(implicit val m:ClassManifest[T])  extends  M[T]  {
-
-    def apply(tableName:Symbol)= this.copy(tableName=Some(tableName.name))
-
+case class Magic[T]  ( override val tableName:Option[String]=None)(implicit val m:ClassManifest[T])  extends M[T]  {
+    def using(tableName:Symbol)= this.copy(tableName=Some(tableName.name))
 }
+
 trait M[T] extends MParser[T]{
   self =>
 
@@ -165,18 +221,22 @@ trait M[T] extends MParser[T]{
       override val m = self.m
     }
 
-    val idParser:SqlRowsParser.Parser[_]=
-    SqlRowsParser.RowParser(row => row.asList.headOption.flatMap(a => (if (a.isInstanceOf[Option[_]]) a else Option(a)).asInstanceOf[Option[_]]).toRight(NoColumnsInReturnedResult))
+    val idParser:SqlParser.Parser[_]=
+    SqlParser.RowParser(row => row.asList.headOption.flatMap(a => (if (a.isInstanceOf[Option[_]]) a else Option(a)).asInstanceOf[Option[_]]).toRight(NoColumnsInReturnedResult))
 
-    import SqlRowsParser._
+    import SqlParser._
     import Sql._
     def find(stmt:String=""):SimpleSql[T]= msql.find(stmt).using(self) 
     def count(stmt:String=""):SimpleSql[Long]= msql.count(stmt).using(scalar[Long])
     import scala.util.control.Exception._
     import java.sql.SQLIntegrityConstraintViolationException
     
-    def delete(where:String):BatchSql={
-      sql("delete from "+analyser.name+" where "+where)
+    def delete(stmt:String):SqlQuery={
+        sql(stmt match {
+            case s if s.startsWith("delete") => s
+            case s if s.startsWith("where") => "delete from " + analyser.name + " " + s
+            case s => "delete from " + analyser.name + " where " + s
+        })
     }
 
     def update(v:T){
@@ -236,7 +296,7 @@ trait M[T] extends MParser[T]{
   }    
 }
 case class MagicSql[T] ( override val tableName:Option[String]=None)(implicit val m:ClassManifest[T]) extends  MSql[T] {
-  def apply(tableName:Symbol)= this.copy(tableName=Some(tableName.name))
+  def using(tableName:Symbol)= this.copy(tableName=Some(tableName.name))
 
 }
 trait MSql[T]{
@@ -245,7 +305,7 @@ trait MSql[T]{
     lazy val analyser= new Analyse[T](tableName,m)
     import Sql._
     import java.lang.reflect._
-     def find(stmt:String=""):SimpleSql[Seq[Row]]=
+     def find(stmt:String=""):SimpleSql[Row]=
      sql(stmt match {
          case s if s.startsWith("select") => s
          case s if s.startsWith("where") => "select * from " + analyser.name + " " + s
@@ -254,15 +314,21 @@ trait MSql[T]{
          case s => "select * from " + analyser.name + " where " + s
      }).asSimple
    
-
-    def count(stmt:String=""):SimpleSql[Seq[Row]]=sql("select count(*) from "+analyser.name+" "+stmt).asSimple
+    def count(stmt:String=""):SimpleSql[Row] = {
+        sql(stmt match {
+            case s if s.startsWith("select") => s
+            case s if s.startsWith("where") => "select count(*) from " + analyser.name + " " + s
+            case "" => "select count(*) from " + analyser.name
+            case s => "select count(*) from " + analyser.name + " where " + s
+        }).asSimple
+    }
 }
 
 case class MagicParser[T] ( override val tableName:Option[String]=None)(implicit val m:ClassManifest[T]) extends  MParser[T] with Analyser[T]{
-  def apply(tableName:Symbol)= this.copy(tableName=Some(tableName.name))
+  def using(tableName:Symbol)= this.copy(tableName=Some(tableName.name))
 }
 
-trait MParser[T] extends SqlRowsParser.Parser[T]{
+trait MParser[T] extends SqlParser.Parser[T]{
     val m:ClassManifest[T]
     val tableName:Option[String]=None
     val analyser= new Analyse[T](tableName,m){
@@ -276,10 +342,11 @@ trait MParser[T] extends SqlRowsParser.Parser[T]{
 
     def getExtractor[C](m:Manifest[C]):Option[ColumnTo[C]]= 
         (m match {
-          case m if m == Manifest.classType(classOf[String])   => Some(Row.rowToString)
-          case m if m == Manifest.Int => Some(Row.rowToInt)
-          case m if m == Manifest.Long => Some(Row.rowToLong)
-          case m if m >:> Manifest.classType(classOf[Date]) => Some(Row.rowToDate)
+          case m if m == Manifest.classType(classOf[String])   => Some(SqlParser.rowToString)
+          case m if m == Manifest.Int => Some(SqlParser.rowToInt)
+          case m if m == Manifest.Long => Some(SqlParser.rowToLong)
+          case m if m == Manifest.Boolean => Some(SqlParser.rowToBoolean)
+          case m if m >:> Manifest.classType(classOf[Date]) => Some(SqlParser.rowToDate)
           //TODO for Option you need to call recursively, this makes it applicable to future extensions (Option[List[Int]])
           case m if m.erasure==classOf[Option[_]] =>{
             val typeParam=m.typeArguments
@@ -287,21 +354,21 @@ trait MParser[T] extends SqlRowsParser.Parser[T]{
                             .collect { case m:ClassManifest[_] => m}
                             .getOrElse( implicitly[Manifest[Any]] )
             getExtractor(typeParam).flatMap( _ =>
-              Some(Row.rowToOption1(typeParam)):Option[_] ) 
+              Some(SqlParser.rowToOption1(typeParam)):Option[_] ) 
           }
           case m if m >:> Manifest.classType(classOf[Id[_]]) =>{
              val typeParam=m.typeArguments
                             .headOption
                             .collect { case m:ClassManifest[_] => m}
                             .getOrElse( implicitly[Manifest[Any]] )
-             getExtractor(typeParam).map( mapper => Row.rowToPk(mapper) )
+             getExtractor(typeParam).map( mapper => SqlParser.rowToPk(mapper) )
           }
           case _ => None
         }).asInstanceOf[Option[ColumnTo[C]]]
 
 
 
-    import SqlRowsParser._
+    import SqlParser._
     def apply(input:Input):ParseResult[T] = {
         val paramParser=eatRow( sequence(analyser.names_types.map(i => 
           guard[Any](current(i._1)(getExtractor(i._2).get)))) )
@@ -374,38 +441,6 @@ trait Analyser[T]{
 
 object Row{
   def unapplySeq(row:Row):Option[List[Any]]=Some(row.asList)
-  
-  implicit def rowToString :ColumnTo[String]= 
-   new ColumnTo[String]{
-     def transform(row:Row,columnName:String) = row.get1[String](columnName,false) 
-   }
-  implicit def rowToInt :ColumnTo[Int]= 
-    new ColumnTo[Int]{
-      def transform(row:Row,columnName:String) = row.get1[Int](columnName,false) 
-    }
-  implicit def rowToLong :ColumnTo[Long]= 
-    new ColumnTo[Long]{
-      def transform(row:Row,columnName:String) = row.get1[Long](columnName,false) 
-    } 
-  implicit def rowToDate[A >: Date] :ColumnTo[A]= 
-    new ColumnTo[A]{
-      def transform(row:Row,columnName:String) = row.get1[Date](columnName,false)
-    }
-  implicit def rowToPk[T](implicit c:ColumnTo[T]) :ColumnTo[Pk[T]]= 
-    new ColumnTo[Pk[T]]{
-      def transform(row:Row,columnName:String) = c.transform(row,columnName).map(a => Id(a))  
-    }
-   
-  //TODO better to require an implicit of ColumnTo[T] can be useful for extensiblity
-  implicit def rowToOption1[T](implicit m:ClassManifest[T]) :ColumnTo[Option[T]]= 
-   new ColumnTo[Option[T]]{
-     def transform(row:Row,columnName:String) = {
-       for(meta <- row.metaData.dictionary.get(columnName).toRight(ColumnNotFound(columnName));
-            val (nullable,_)=meta;
-           result <- (if(!nullable)   Left(UnexpectedNullableFound(columnName)):MayErr[SqlRequestError,T]
-                      else  row.get1[T](columnName,true)(m))) yield Option(result)
-     }  
-   }
 }
 
 case class MetaDataItem(column:String,nullable:Boolean,clazz:String)
@@ -488,16 +523,16 @@ object Useful{
      case Some((r, v)) => Stream.cons(r,unfold(v)(f))
    }
 }
-import  SqlRowsParser._
-case class SimpleSql[T](sql:SqlQuery,params:Seq[(String,Any)], defaultParser:Parser[T]) extends Sql{
+import  SqlParser._
+case class SimpleSql[T](sql:SqlQuery,params:Seq[(String,Any)], defaultParser:SqlParser.Parser[T]) extends Sql{
   def on(args:(String,Any)*):SimpleSql[T] = 
     this.copy(params=(this.params) ++ args)
   def onParams(args:Any*):SimpleSql[T] = 
     this.copy(params=(this.params) ++ sql.argsInitialOrder.zip(args))
   
-  def list(conn:java.sql.Connection=connection) = as(defaultParser*)
-  def single(conn:java.sql.Connection=connection) = as(phrase(defaultParser))
-  def first(conn:java.sql.Connection=connection) = as(defaultParser)
+  def list(conn:java.sql.Connection=connection):Seq[T] = as(defaultParser*)
+  def single(conn:java.sql.Connection=connection):T = as(phrase(defaultParser))
+  def first(conn:java.sql.Connection=connection):Option[T] = as(defaultParser?)
 
   def getFilledStatement(connection:java.sql.Connection)={
     val s =connection.prepareStatement(sql.query,java.sql.Statement.RETURN_GENERATED_KEYS)
@@ -532,7 +567,7 @@ case class BatchSql(sql:SqlQuery,params:Seq[Seq[(String,Any)]] ) extends Sql{
   }
 }
 trait Sql{
-  import  SqlRowsParser._
+  import  SqlParser._
   def connection=play.db.DB.getConnection
   def getFilledStatement(connection:java.sql.Connection):java.sql.PreparedStatement
   def filledStatement=getFilledStatement(connection)
@@ -540,7 +575,7 @@ trait Sql{
 
   def resultSet (conn:java.sql.Connection=connection)= 
     (getFilledStatement(connection).executeQuery())
-  import SqlRowsParser._
+  import SqlParser._
   def as[T](parser:Parser[T], conn:java.sql.Connection=connection):T =
     Sql.as[T](parser,resultSet(connection))
 
@@ -557,17 +592,14 @@ trait Sql{
 case class SqlQuery(query:String,argsInitialOrder:List[String]=List.empty) extends Sql{
   def getFilledStatement(connection:java.sql.Connection):java.sql.PreparedStatement =
     asSimple().getFilledStatement(connection)
-  private def defaultParser : Parser[Seq[Row]] = acceptMatch("not end.", { case Right(r) => r } )*
-  def asSimple:SimpleSql[Seq[Row]]=SimpleSql(this,Nil,defaultParser)
+  private def defaultParser : Parser[Row] = acceptMatch("not end.", { case Right(r) => r } )
+  def asSimple:SimpleSql[Row]=SimpleSql(this,Nil,defaultParser)
   def asSimple[T](parser:Parser[T]=defaultParser):SimpleSql[T]=SimpleSql(this,Nil,parser)
-  def asBatch[T]():BatchSql = BatchSql(this,Nil)  
+  def asBatch[T]:BatchSql = BatchSql(this,Nil)  
 }
 object Sql{
-  implicit def sqlToSimple(sql:SqlQuery):SimpleSql[Seq[Row]]=sql.asSimple()
-  implicit def sqlToBatch(sql:SqlQuery):BatchSql=sql.asBatch()
 
-
-  def sql(inSql:String):SqlQuery={val (sql,paramsNames)= SqlParser.parse(inSql);SqlQuery(sql,paramsNames)}
+  def sql(inSql:String):SqlQuery={val (sql,paramsNames)= SqlStatementParser.parse(inSql);SqlQuery(sql,paramsNames)}
   import java.sql._
   import java.sql.ResultSetMetaData._
   def metaData(rs:java.sql.ResultSet)={
@@ -588,10 +620,12 @@ object Sql{
   def resultSetToStream(rs:java.sql.ResultSet):Stream[SqlRow]={
     Useful.unfold(rs)(rs => if(!rs.next()) {rs.close();None} else Some ((new SqlRow(metaData(rs),data(rs)),rs)))
   }
-  import SqlRowsParser._
+  import SqlParser._
   def as[T](parser:Parser[T],rs:java.sql.ResultSet):T =
     parser(StreamReader(resultSetToStream(rs))) match{
             case Success(a,_)=>a
             case Failure(e,_)  => error(e)
             case Error(e,_) => error(e) }
+}
+
 }

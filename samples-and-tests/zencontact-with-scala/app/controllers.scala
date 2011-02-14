@@ -9,7 +9,6 @@ import java.util.Date
 import models._
 
 import play.db.sql._
-import play.db.sql.Sql._
 
 object Application extends Controller {
     
@@ -18,33 +17,33 @@ object Application extends Controller {
     }
     
     def list = {
-        Template("contacts" -> Contact.find("order by name, firstname ASC"))
+        Template("contacts" -> Contact.find("order by name, firstname ASC").list())
     }
        
     def form(id: Long) = {
-        Template("contact" -> Contact.findById(id))
+        Template("contact" -> Contact.find("id={id}").onParams(id).first())
     }
     
-    def save(id: Long, @Valid contact: Contact) = {
+    def save(@Valid contact: Contact) = {
         if(Validation.hasErrors()) {
-            "@form".asTemplate("contact" -> Entity(id, contact) )
+            "@form".asTemplate("contact" -> contact)
         } else {
-            Contact.update(Entity(id, contact))        
+            Contact.update(contact)        
             Action(list)
         }        
     }
     
     def create(@Valid contact: Contact) = {
         if(Validation.hasErrors()) {
-            "@form".asTemplate("contact" -> Entity(null,contact) )
+            "@form".asTemplate("contact" -> contact )
         } else {
-            val newContact = Contact.create(contact)
-            Action(form(newContact.id))
+            Contact.create(contact)
+            Action(list)
         }
     }
     
     def delete(id: Long) = {
-        Contact.delete(id)
+        Contact.delete("id={id}").onParams(id).executeUpdate()
         Action(list)
     }
     

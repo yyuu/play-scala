@@ -1,6 +1,11 @@
 #{extends 'main.html' /}
 #{set title:'List' /}
 
+*{%{
+  scala.Option.metaClass.toString = { -> 'YOP'} 
+  scala.Some.metaClass.toString = { -> 'YOP'}  
+}%}*
+
 <table id="list">
     <thead>
         <tr>
@@ -15,10 +20,10 @@
     <tbody>
         #{list contacts, as:'contact'}
             <tr class="contact" contactId="${contact.id}" draggable="true">
-                <td id="name-${contact.id}">${contact.v.name}</td>
-                <td id="firstname-${contact.id}">${contact.v.firstname}</td>
-                <td id="birthdate-${contact.id}">${contact.v.birthdate?.format('yyyy-MM-dd')}</td>
-                <td id="email-${contact.id}">${contact.v.email}</td>
+                <td id="name-${contact.id}">${contact.name}</td>
+                <td id="firstname-${contact.id}">${contact.firstname}</td>
+                <td id="birthdate-${contact.id}">${contact.birthdate?.format('yyyy-MM-dd')}</td>
+                <td id="email-${contact.id}">${contact.email}</td>
                 <td><a href="@{form(contact.id)}">edit</a></td>
                 <td>#{a @delete(contact.id)}delete#{/a}</td>
             </tr>

@@ -1,9 +1,6 @@
 package models
 
 import play.db.sql._
-import SqlRowsParser._
-import Row._
-
 import play.data.validation.Annotations._
 
 import java.util._
@@ -11,10 +8,11 @@ import java.util._
 // ~~~ Contact
 
 case class Contact(
+    id: Pk[Long],
     @Required firstname: String,
     @Required name: String,
     @Required birthdate: Date,
-    @Required @Email email: String
+    @Email email: Option[String]
 )
 
-object Contact extends MEntity[Long, Contact]
+object Contact extends Magic[Contact]
