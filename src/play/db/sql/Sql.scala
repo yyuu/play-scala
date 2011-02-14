@@ -137,6 +137,7 @@ object Magic{
       {case c ~ p => (c,p)}
   }
 }
+
 abstract class Pk[+ID]{
   def isAssigned:Boolean = this match{
     case Id(_) => true
@@ -144,9 +145,12 @@ abstract class Pk[+ID]{
   } 
 
 }
-case class Id[ID](id:ID) extends Pk[ID]
-case object TODO extends Pk[Nothing]
-
+case class Id[ID](id:ID) extends Pk[ID]{
+    override def toString() = id.toString
+}
+case object TODO extends Pk[Nothing]{
+    override def toString() = ""
+}
 
 case class Magic[T]  ( override val tableName:Option[String]=None)(implicit val m:ClassManifest[T])  extends  M[T]  {
 
@@ -178,7 +182,7 @@ trait M[T] extends MParser[T]{
     def update(v:T){
       val names_attributes = analyser.names_methods.map(nm => (nm._1.split('.').last.toLowerCase, nm._2.invoke(v) ))
       val (ids,toSet) = 
-          names_attributes.partition(na => na._2.isInstanceOf[Pk[_]])
+          names_attributes.map(na => (na._1, na._2 match {case v:Option[_]=>v.getOrElse(null);case v=>v})).partition(na => na._2.isInstanceOf[Pk[_]])
       if(ids==Nil) throw new Exception("cannot update without Ids, no Ids found on "+analyser.name)
       val toUpdate=toSet.map(_._1).map(n => n+" = "+"{"+n+"}").mkString(", ")
       sql("update "+analyser.name+" set "+toUpdate+" where "+ ids.map(_._1).map( n => n+" = "+"{"+n+"}").mkString(" and "))
@@ -193,7 +197,7 @@ trait M[T] extends MParser[T]{
       val names_attributes = analyser.names_methods.map(nm => (nm._1, nm._2.invoke(v) ))
       val (notSetIds,toSet) = 
           names_attributes.map(na => ( na._1,
-                                       na._2 match {case Id(id)=>id;case v=>v}))
+                                       na._2 match {case Id(id)=>id;case v:Option[_]=>v.getOrElse(null);case v=>v}))
                           .partition(na => na._2 == TODO)
       if(notSetIds.length>1) throw new Exception("multi ids not supported")
       val toInsert = toSet.map(_._1.split('.').last.toLowerCase)
@@ -217,7 +221,7 @@ trait M[T] extends MParser[T]{
       val names_attributes = analyser.names_methods.map(nm => (nm._1, nm._2.invoke(v) ))
       val (notSetIds,toSet) = 
           names_attributes.map(na => ( na._1,
-                                       na._2 match {case Id(id)=>id;case v=>v}))
+                                       na._2 match {case Id(id)=>id;case v:Option[_]=>v.getOrElse(null);case v=>v}))
                           .partition(na => na._2 == TODO)
 
       val toInsert = toSet.map(_._1.split('.').last.toLowerCase)

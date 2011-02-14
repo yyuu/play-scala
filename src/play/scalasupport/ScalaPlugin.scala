@@ -15,7 +15,7 @@ import scala.collection.mutable.HashMap
 
 import scala.tools.nsc.io._
 
-import java.util.{List => JList}
+import java.util.{List => JList, Map => JMap}
 import java.net.URLClassLoader
 import java.io.{PrintStream, ByteArrayOutputStream}
 
@@ -39,7 +39,9 @@ import javax.print.attribute.standard.Severity
 class ScalaPlugin extends PlayPlugin {
     
     override def onLoad {
-      play.templates.CustomGroovy()
+        play.templates.CustomGroovy()
+        play.data.binding.Binder.register(classOf[play.db.sql.Pk[_]], new PkBinder())
+        play.data.binding.Binder.register(classOf[Option[_]], new OptionBinder())
     }
   
     override def overrideTemplateSource(template: play.templates.BaseTemplate, source: String) = {
@@ -51,6 +53,13 @@ class ScalaPlugin extends PlayPlugin {
     }
     
     override def addTemplateExtensions(): JList[String] = List("play.templates.TemplateScalaExtensions")
+    
+    override def willBeValidated(o: Any) = {
+        o match {
+            case Some(v) => v.asInstanceOf[AnyRef]
+            case _ => null
+        }
+    }
 
     /**
      * Custom binders for Scala
@@ -63,8 +72,28 @@ class ScalaPlugin extends PlayPlugin {
                 val result = play.data.binding.Binder.bind(name, parameterClass.asInstanceOf[Class[_]], parameterClass, annotations, params)
                 Option(result)
             }
+            case c if c == classOf[play.db.sql.Pk[_]] => {
+                val parameterClass = t.asInstanceOf[java.lang.reflect.ParameterizedType].getActualTypeArguments()(0)
+                val result = play.data.binding.Binder.bind(name, parameterClass.asInstanceOf[Class[_]], parameterClass, annotations, params)
+                play.db.sql.Id(result)
+            }
+            case c if c == classOf[play.db.sql.Id[_]] => {
+                val parameterClass = t.asInstanceOf[java.lang.reflect.ParameterizedType].getActualTypeArguments()(0)
+                val result = play.data.binding.Binder.bind(name, parameterClass.asInstanceOf[Class[_]], parameterClass, annotations, params)
+                play.db.sql.Id(result)
+            }
             case _ => null
        }
+    }
+    
+    override def unBind(o:Any, name:String) = {
+        o match {
+            case play.db.sql.Id(id) => Map(name -> id).asInstanceOf[Map[String,AnyRef]]
+            case play.db.sql.TODO => null
+            case Some(v) => Map(name -> v).asInstanceOf[Map[String,AnyRef]]
+            case None => null
+            case _ => null
+        }
     }
 
     // ---------------- COMPILATION

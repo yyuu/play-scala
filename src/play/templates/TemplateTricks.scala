@@ -27,6 +27,30 @@ object CustomGroovy {
                 }
             }
             
+            scala.Option.metaClass.toString = { -> 
+                if(delegate.isDefined()) {
+                    delegate.get().toString()
+                } else {
+                    null
+                }
+            }
+            
+            scala.Some.metaClass.toString = { -> 
+                delegate.get().toString()
+            }
+            
+            scala.None.metaClass.toString = { -> 
+                null
+            }
+            
+            scala.Option.metaClass.asBoolean = {
+                delegate.isDefined()
+            }
+            
+            play.db.sql.Pk.metaClass.asBoolean = {
+                delegate.isAssigned()
+            }
+            
         """)
     }
     
