@@ -5,6 +5,8 @@ package object sql {
     implicit def sqlToSimple(sql:SqlQuery):SimpleSql[Row]=sql.asSimple
     implicit def sqlToBatch(sql:SqlQuery):BatchSql=sql.asBatch
     
+    implicit def implicitID[ID](id:Id[ID]):ID=id.id
+    
     def SQL(stmt:String) = Sql.sql(stmt)
     
 }
@@ -38,10 +40,38 @@ case class ColumnNotFound(columnName:String) extends SqlRequestError
 case class TypeDoesNotMatch(message:String) extends SqlRequestError
 case class UnexpectedNullableFound(on:String) extends SqlRequestError
 case object NoColumnsInReturnedResult extends SqlRequestError
+case class IntegrityConstraintViolation(message:String) extends SqlRequestError
 
 trait ColumnTo[A]{
   def transform(row:Row,columnName:String):MayErr[SqlRequestError,A]
 }
+
+case class Column[A](
+    
+    nullHandler: Function2[Any,MetaDataItem,Option[SqlRequestError]] = (value, meta) => {
+        val MetaDataItem(qualified,nullable,clazz) = meta
+        if(nullable || value == null) 
+            Some(UnexpectedNullableFound(qualified)) 
+            else None
+    },
+    
+    transformer: Function2[Any,MetaDataItem,play.utils.Scala.MayErr[SqlRequestError,A]] = (value:Any, meta:MetaDataItem) => {
+        Left(TypeDoesNotMatch("Default matcher doesn't match anything"))        
+    }
+    
+) extends ColumnTo[A] {
+    
+    def transform(row:Row,columnName:String):MayErr[SqlRequestError,A] = {
+        for(
+            meta <- row.metaData.dictionary2.get(columnName).map( m => (m._1 + "." + columnName, m._2, m._3)).orElse(row.metaData.dictionary.get(columnName).map(m=> (columnName,m._1,m._2))).toRight(ColumnNotFound(columnName));
+            value <- row.get1(columnName);
+            _ <- nullHandler(value, MetaDataItem(meta._1, meta._2, meta._3)).toLeft(value);
+            result <- transformer(value, MetaDataItem(meta._1, meta._2, meta._3))
+        ) yield result
+    }
+    
+} 
+
 case class StreamReader[T](s: Stream[T]) extends scala.util.parsing.input.Reader[Either[EndOfStream,T]]{
   def first = s.headOption.toRight(EndOfStream())
   def rest = new StreamReader(s.drop(1))
@@ -146,41 +176,67 @@ trait SqlParser extends scala.util.parsing.combinator.PackratParsers{
       contains[T](name.name,t)(extractor)
   }
   
-  implicit def rowToString :ColumnTo[String]= 
-   new ColumnTo[String]{
-     def transform(row:Row,columnName:String) = row.get1[String](columnName,false) 
-   }
-  implicit def rowToInt :ColumnTo[Int]= 
-    new ColumnTo[Int]{
-      def transform(row:Row,columnName:String) = row.get1[Int](columnName,false) 
-    }
-  implicit def rowToBoolean :ColumnTo[Boolean]= 
-    new ColumnTo[Boolean]{
-      def transform(row:Row,columnName:String) = row.get1[Boolean](columnName,false) 
-    }
-  implicit def rowToLong :ColumnTo[Long]= 
-    new ColumnTo[Long]{
-      def transform(row:Row,columnName:String) = row.get1[Long](columnName,false) 
-    } 
-  implicit def rowToDate[A >: Date] :ColumnTo[A]= 
-    new ColumnTo[A]{
-      def transform(row:Row,columnName:String) = row.get1[Date](columnName,false)
-    }
+  implicit def rowToString: Column[String]= 
+    Column[String](transformer = { (value, meta) =>
+        val MetaDataItem(qualified,nullable,clazz) = meta
+        value match {
+            case string:String => Right(string)
+            case clob:java.sql.Clob => Right(clob.getSubString(1,clob.length.asInstanceOf[Int]))
+            case _ => Left(TypeDoesNotMatch("Cannot convert " + value + " to String for column " + qualified))
+        }        
+    })          
+    
+  implicit def rowToInt: Column[Int]= 
+      Column[Int](transformer = { (value, meta) =>
+          val MetaDataItem(qualified,nullable,clazz) = meta
+          value match {
+              case int:Int => Right(int)
+              case _ => Left(TypeDoesNotMatch("Cannot convert " + value + " to Int for column " + qualified))
+          }            
+      })
+      
+  implicit def rowToBoolean: Column[Boolean]= 
+      Column[Boolean](transformer = { (value, meta) =>
+          val MetaDataItem(qualified,nullable,clazz) = meta
+          value match {
+               case bool:Boolean => Right(bool)
+               case _ => Left(TypeDoesNotMatch("Cannot convert " + value + " to Boolean for column " + qualified))
+          }            
+      })
+      
+  implicit def rowToLong: Column[Long]= 
+        Column[Long](transformer = { (value, meta) =>
+            val MetaDataItem(qualified,nullable,clazz) = meta
+            value match {
+                case int:Int => Right(int:Long)
+                case long:Long => Right(long)
+                case _ => Left(TypeDoesNotMatch("Cannot convert " + value + " to Long for column " + qualified))
+            }            
+        })
+      
+  implicit def rowToDate: Column[Date]= 
+          Column[Date](transformer = { (value, meta) =>
+              val MetaDataItem(qualified,nullable,clazz) = meta
+              value match {
+                   case date:Date => Right(date)
+                   case _ => Left(TypeDoesNotMatch("Cannot convert " + value + " to Date for column " + qualified))
+               }            
+          })
+          
   implicit def rowToPk[T](implicit c:ColumnTo[T]) :ColumnTo[Pk[T]]= 
     new ColumnTo[Pk[T]]{
-      def transform(row:Row,columnName:String) = c.transform(row,columnName).map(a => Id(a))  
+      override def transform(row:Row,columnName:String) = c.transform(row,columnName).map(a => Id(a))  
     }
    
-  //TODO better to require an implicit of ColumnTo[T] can be useful for extensiblity
-  implicit def rowToOption1[T](implicit m:ClassManifest[T]) :ColumnTo[Option[T]]= 
-   new ColumnTo[Option[T]]{
-     def transform(row:Row,columnName:String) = {
-       for(meta <- row.metaData.dictionary.get(columnName).toRight(ColumnNotFound(columnName));
-            val (nullable,_)=meta;
-           result <- (if(!nullable)   Left(UnexpectedNullableFound(columnName)):MayErr[SqlRequestError,T]
-                      else  row.get1[T](columnName,true)(m))) yield Option(result)
-     }  
-   }
+  implicit def rowToOption1[T](implicit c:Column[T]): ColumnTo[Option[T]]= {
+    Column[Option[T]](
+        nullHandler = (v, meta) => {
+            val MetaDataItem(qualified,nullable,clazz) = meta
+            if(!nullable) Some(UnexpectedNullableFound(qualified)) else None
+        },
+        transformer = (v, meta) => if(v == null) Right(None) else c.transformer(v, meta).map( x => Some(x) )
+    )
+  }
   
 }
 
@@ -190,7 +246,7 @@ object Magic{
   import  SqlParser._
   def group[B <: {val id:Any},D](by: Parser[B],p:Parser[D])(implicit m:ClassManifest[B])={
       val name=(m.erasure.getSimpleName.toUpperCase()+".ID")
-      by ~< SqlParser.group(by=(row=>row.get1[Any](name,true)),p) ^^
+      by ~< SqlParser.group(by=(row=>row.get1(name)),p) ^^
       {case c ~ p => (c,p)}
   }
 }
@@ -198,15 +254,22 @@ object Magic{
 abstract class Pk[+ID]{
   def isAssigned:Boolean = this match{
     case Id(_) => true
-    case TODO => false
+    case NotAssigned => false
   } 
+  
+  def apply() = get.get
+  
+  def get = this match{
+      case Id(id) => Some(id)
+      case NotAssigned => None
+  }
 
 }
 case class Id[ID](id:ID) extends Pk[ID]{
     override def toString() = id.toString
 }
-case object TODO extends Pk[Nothing]{
-    override def toString() = "NotAssignedId"
+case object NotAssigned extends Pk[Nothing]{
+    override def toString() = "NotAssigned"
 }
 
 case class Magic[T]  ( override val tableName:Option[String]=None)(implicit val m:ClassManifest[T])  extends M[T]  {
@@ -229,7 +292,6 @@ trait M[T] extends MParser[T]{
     def find(stmt:String=""):SimpleSql[T]= msql.find(stmt).using(self) 
     def count(stmt:String=""):SimpleSql[Long]= msql.count(stmt).using(scalar[Long])
     import scala.util.control.Exception._
-    import java.sql.SQLIntegrityConstraintViolationException
     
     def delete(stmt:String):SqlQuery={
         sql(stmt match {
@@ -253,45 +315,45 @@ trait M[T] extends MParser[T]{
       .executeUpdate()
     }
 
-    def create(v:T):MayErr[SQLIntegrityConstraintViolationException,T]={
+    def create(v:T):MayErr[IntegrityConstraintViolation,T]={
       val names_attributes = analyser.names_methods.map(nm => (nm._1, nm._2.invoke(v) ))
       val (notSetIds,toSet) = 
           names_attributes.map(na => ( na._1,
                                        na._2 match {case Id(id)=>id;case v:Option[_]=>v.getOrElse(null);case v=>v}))
-                          .partition(na => na._2 == TODO)
+                          .partition(na => na._2 == NotAssigned)
       if(notSetIds.length>1) throw new Exception("multi ids not supported")
       val toInsert = toSet.map(_._1.split('.').last.toLowerCase)
      
       val query=sql("insert into "+analyser.name+" ( "+toInsert.mkString(", ")+" ) values ( "+toInsert.map("{"+_+"}").mkString(", ")+")")
                     .onParams(toSet.map(_._2):_*)
       
-      val result = catching(classOf[SQLIntegrityConstraintViolationException])
+      val result = catching(classOf[java.sql.SQLException])
                     .either(query.execute1())
-                    .left.map(_.asInstanceOf[SQLIntegrityConstraintViolationException])
+                    .left.map( e => IntegrityConstraintViolation(e.asInstanceOf[java.sql.SQLException].getMessage))
 
       for{ r <- result;
            val (statement,ok) = r;
            val rs = statement.getGeneratedKeys();
           val id=idParser(StreamReader(Sql.resultSetToStream(rs))).get
-           val params = names_attributes.map(_._2).map({case TODO => Id(id); case other => other})
+           val params = names_attributes.map(_._2).map({case NotAssigned => Id(id); case other => other})
         } yield analyser.c.newInstance(params:_*).asInstanceOf[T]//StreamReader(Sql.resultSetToStream(rs))
     }
 
-  def insert(v:T):MayErr[SQLIntegrityConstraintViolationException,Boolean]={
+  def insert(v:T):MayErr[IntegrityConstraintViolation,Boolean]={
       val names_attributes = analyser.names_methods.map(nm => (nm._1, nm._2.invoke(v) ))
       val (notSetIds,toSet) = 
           names_attributes.map(na => ( na._1,
                                        na._2 match {case Id(id)=>id;case v:Option[_]=>v.getOrElse(null);case v=>v}))
-                          .partition(na => na._2 == TODO)
+                          .partition(na => na._2 == NotAssigned)
 
       val toInsert = toSet.map(_._1.split('.').last.toLowerCase)
      
       val query=sql("insert into "+analyser.name+" ( "+toInsert.mkString(", ")+" ) values ( "+toInsert.map("{"+_+"}").mkString(", ")+")")
                     .onParams(toSet.map(_._2):_*)
       
-      catching(classOf[SQLIntegrityConstraintViolationException])
+      catching(classOf[java.sql.SQLException])
             .either(query.execute())
-            .left.map(_.asInstanceOf[SQLIntegrityConstraintViolationException])
+            .left.map(e => IntegrityConstraintViolation(e.asInstanceOf[java.sql.SQLException].getMessage))
 
   }    
 }
@@ -347,14 +409,14 @@ trait MParser[T] extends SqlParser.Parser[T]{
           case m if m == Manifest.Long => Some(SqlParser.rowToLong)
           case m if m == Manifest.Boolean => Some(SqlParser.rowToBoolean)
           case m if m >:> Manifest.classType(classOf[Date]) => Some(SqlParser.rowToDate)
-          //TODO for Option you need to call recursively, this makes it applicable to future extensions (Option[List[Int]])
           case m if m.erasure==classOf[Option[_]] =>{
             val typeParam=m.typeArguments
                             .headOption
                             .collect { case m:ClassManifest[_] => m}
                             .getOrElse( implicitly[Manifest[Any]] )
-            getExtractor(typeParam).flatMap( _ =>
-              Some(SqlParser.rowToOption1(typeParam)):Option[_] ) 
+            getExtractor(typeParam).collect {
+                case e:Column[_] => SqlParser.rowToOption1(e)
+            } 
           }
           case m if m >:> Manifest.classType(classOf[Id[_]]) =>{
              val typeParam=m.typeArguments
@@ -476,25 +538,13 @@ trait Row{
       case _ => Class.forName(t)
   }
  
-  private[sql] def get1[B](a:String,nullableAlreadyHandled:Boolean)(implicit m : ClassManifest[B]):MayErr[SqlRequestError,B]=
+  private[sql] def get1(a:String):MayErr[SqlRequestError,Any]=
    {for(  meta <- metaData.dictionary2.get(a).map(m=>(m._1+"."+a,m._2,m._3))
                           .orElse(metaData.dictionary.get(a).map(m=> (a,m._1,m._2)))
                           .toRight(ColumnNotFound(a));
-          val (qualified,nullable,clazz)=meta;
-          val requiredDataType =
-            if(m.erasure==classOf[Option[_]]) 
-              m.typeArguments.headOption.collect { case m:ClassManifest[_] => m}
-               .getOrElse(implicitly[ClassManifest[Any]])
-            else m;
-          v <- ColumnsDictionary.get(qualified).toRight(ColumnNotFound(qualified));
-          result <- v match {
-            case b if(nullable && !nullableAlreadyHandled ) =>
-              Left(UnexpectedNullableFound(qualified))
-            case null if(!nullable ) => Left( ColumnNotFound(qualified))
-            case b if(requiredDataType >:>  TypeWrangler.javaType(getType(clazz))) =>
-              Right(b.asInstanceOf[B])
-            case b => Left(TypeDoesNotMatch(requiredDataType + " - " + clazz))} )
-    yield result
+          val (qualified,nullable,clazz) = meta;
+          result <- ColumnsDictionary.get(qualified).toRight(ColumnNotFound(qualified))
+    ) yield result    
   }
 
   def apply[B](a:String)(implicit c:ColumnTo[B]):B=get[B](a)(c).get
@@ -567,7 +617,9 @@ case class BatchSql(sql:SqlQuery,params:Seq[Seq[(String,Any)]] ) extends Sql{
   }
 }
 trait Sql{
-  import  SqlParser._
+  import SqlParser._
+  import scala.util.control.Exception._
+  
   def connection=play.db.DB.getConnection
   def getFilledStatement(connection:java.sql.Connection):java.sql.PreparedStatement
   def filledStatement=getFilledStatement(connection)
@@ -585,8 +637,11 @@ trait Sql{
    def execute1(conn:java.sql.Connection=connection):(java.sql.PreparedStatement,Int) =
     {val statement=getFilledStatement(connection);(statement,{statement.executeUpdate()})}
 
-  def executeUpdate(conn:java.sql.Connection=connection):Int =
-    getFilledStatement(connection).executeUpdate()
+  def executeUpdate(conn:java.sql.Connection=connection):MayErr[IntegrityConstraintViolation,Int] = {
+      catching(classOf[java.sql.SQLException])
+            .either(getFilledStatement(connection).executeUpdate())
+            .left.map(e => IntegrityConstraintViolation(e.asInstanceOf[java.sql.SQLException].getMessage))
+  }
 } 
 
 case class SqlQuery(query:String,argsInitialOrder:List[String]=List.empty) extends Sql{

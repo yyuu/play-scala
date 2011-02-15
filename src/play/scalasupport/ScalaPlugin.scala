@@ -89,7 +89,7 @@ class ScalaPlugin extends PlayPlugin {
     override def unBind(o:Any, name:String) = {
         o match {
             case play.db.sql.Id(id) => Map(name -> id).asInstanceOf[Map[String,AnyRef]]
-            case play.db.sql.TODO => null
+            case play.db.sql.NotAssigned => null
             case Some(v) => Map(name -> v).asInstanceOf[Map[String,AnyRef]]
             case None => null
             case _ => null

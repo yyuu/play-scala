@@ -16,7 +16,7 @@ package play {
                         case n: ScalarNode if n.getTag.getClassName == "Some[String]" => Some(n.getValue)
                         case n: ScalarNode if n.getTag.getClassName == "Some[Long]" => Some(java.lang.Long.parseLong(n.getValue, 10))
                         case n: ScalarNode if n.getTag.getClassName == "Some[Int]" => Some(java.lang.Integer.parseInt(n.getValue, 10))
-                        case n: ScalarNode if n.getTag.getClassName == "TODO" => play.db.sql.TODO
+                        case n: ScalarNode if n.getTag.getClassName == "NotAssigned" => play.db.sql.NotAssigned
                         case n: ScalarNode if n.getTag.getClassName == "Id[String]" => play.db.sql.Id(n.getValue)
                         case n: ScalarNode if n.getTag.getClassName == "Id[Long]" => play.db.sql.Id(java.lang.Long.parseLong(n.getValue, 10))
                         case n: ScalarNode if n.getTag.getClassName == "Id[Int]" => play.db.sql.Id(java.lang.Integer.parseInt(n.getValue, 10))
