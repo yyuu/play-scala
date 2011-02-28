@@ -96,8 +96,8 @@ trait Scala {
     }
     
     object MayErr{
-        implicit def eitherToError[E,A](e:Either[E,A]):MayErr[E,A] = MayErr[E,A](e) 
-        implicit def errorToEither[E,A](e:MayErr[E,A]):Either[E,A] = e.e 
+        implicit def eitherToError[E,EE >: E, A, AA >:A ](e:Either[E,A]):MayErr[EE,AA] = MayErr[E,A](e) 
+        implicit def errorToEither[E,EE >: E, A, AA >:A ](e:MayErr[E,A]):Either[EE,AA] = e.e 
     }
 
 }
