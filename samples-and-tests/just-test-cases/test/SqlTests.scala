@@ -79,13 +79,13 @@ class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
                              MockRow(List(i, "person"+i, 13, j, "comment"+j),metaData)))
     // manual groupBy
    
-    val groupByPerson=spansM(by=int("PERSON.ID"),(str("COMMENT.TEXT")))* ;
+    val groupByPerson=spanM(by=int("PERSON.ID"),(str("COMMENT.TEXT")))* ;
     groupByPerson(StreamReader(in)).get should be (
       List.fill(99)(List.range(1,100).map("comment"+_)))
     
     // "magical" groupBy
     import Magic._
-    val parsePeople = (Person spansM Comment) ^^ 
+    val parsePeople = (Person spanM Comment) ^^ 
                       {case  p ~ cs  => p.copy(comments=cs) } *;
 
     ( parsePeople (StreamReader(in)) get ) should be (

@@ -36,7 +36,7 @@ class ModelTests extends UnitFlatSpec with ShouldMatchers with BeforeAndAfterEac
     
     it should "create a Post" in {
         
-        User.create(User(Id(1), "bob@gmail.com", "secret", "Bob")).right.get        
+        User.create(User(Id(1), "bob@gmail.com", "secret", "Bob"))     
         Post.create(Post(NotAssigned, "My first post", "Hello world", 1))
         
         Post.count().single() should be (1)
@@ -56,7 +56,7 @@ class ModelTests extends UnitFlatSpec with ShouldMatchers with BeforeAndAfterEac
     
     it should "retrieve Posts with author" in {
         
-        User.create(User(Id(1), "bob@gmail.com", "secret", "Bob")).right.get        
+        User.create(User(Id(1), "bob@gmail.com", "secret", "Bob")) 
         Post.create(Post(NotAssigned, "My first post", "Hello world", 1))
         
         val posts = Post.allWithAuthor
@@ -71,7 +71,7 @@ class ModelTests extends UnitFlatSpec with ShouldMatchers with BeforeAndAfterEac
     
     it should "support Comments" in {
         
-        User.create(User(Id(1), "bob@gmail.com", "secret", "Bob")).right.get        
+        User.create(User(Id(1), "bob@gmail.com", "secret", "Bob"))  
         Post.create(Post(Id(1), "My first post", "Hello world", 1))
         Comment.create(Comment(NotAssigned, "Jeff", "Nice post", 1))
         Comment.create(Comment(NotAssigned, "Tom", "I knew that !", 1))
@@ -92,7 +92,7 @@ class ModelTests extends UnitFlatSpec with ShouldMatchers with BeforeAndAfterEac
     
     it should "works with cascade delete" in {
         
-        User.create(User(Id(1), "bob@gmail.com", "secret", "Bob")).right.get        
+        User.create(User(Id(1), "bob@gmail.com", "secret", "Bob"))
         Post.create(Post(Id(1), "My first post", "Hello world", 1))
         Comment.create(Comment(NotAssigned, "Jeff", "Nice post", 1))
         Comment.create(Comment(NotAssigned, "Tom", "I knew that !", 1))
@@ -129,32 +129,32 @@ class ModelTests extends UnitFlatSpec with ShouldMatchers with BeforeAndAfterEac
         User.connect("tom@gmail.com", "secret") should be (None)
         
         val allPostsWithAuthorAndComments = SQL("select * from Post p join User u on p.author_id = u.id left join Comment c on c.post_id = p.id")
-            .as( Magic.group(by=User, Magic.group(by=Post, Comment))* )
+            .as( User spanM( Post spanM Comment ) * )
         
         allPostsWithAuthorAndComments.length should be (2) 
         
-        val (bob, bobPosts) = allPostsWithAuthorAndComments(0)
+        val (bob ~ bobPosts) = allPostsWithAuthorAndComments(0)
         bob.fullname should be ("Bob")
         bobPosts.length should be (2)
         
-        val (firstBobPost, firstBobPostComments) = bobPosts(0)
+        val (firstBobPost ~ firstBobPostComments) = bobPosts(0)
         
-        firstBobPost.title should be("About the model layer")
+        firstBobPost.title should be ("About the model layer")
         firstBobPostComments.length should be (2)
         firstBobPostComments(1).author should be ("Mike")
         
-        val (secondBobPost, secondBobPostComments) = bobPosts(1)
+        val (secondBobPost ~ secondBobPostComments) = bobPosts(1)
         
-        secondBobPost.title should be("Just a test of YABE")
+        secondBobPost.title should be ("Just a test of YABE")
         secondBobPostComments.length should be (1)
         
-        val (jeff, jeffPosts) = allPostsWithAuthorAndComments(1)
+        val (jeff ~ jeffPosts) = allPostsWithAuthorAndComments(1)
         jeff.fullname should be ("Jeff")
         jeffPosts.length should be (1)
         
-        val (firstJeffPost, firstJeffPostComments) = jeffPosts(0)
+        val (firstJeffPost ~ firstJeffPostComments) = jeffPosts(0)
         
-        firstJeffPost.title should be("The MVC application")
+        firstJeffPost.title should be ("The MVC application")
         firstJeffPostComments.length should be (0)
         
         User.delete("email={email}").on("email" -> "bob@gmail.com").executeUpdate().isLeft should be (true)

@@ -4,6 +4,8 @@ import java.util.{Date}
 
 import play.db.sql._
 
+// User
+
 case class User(id: Pk[Long], email: String, password: String, fullname: String)
 
 object User extends Magic[User] {
@@ -16,12 +18,13 @@ object User extends Magic[User] {
     
 }
 
+// Post
+
 case class Post(id: Pk[Long], title: String, content: String, author_id: Long)
-case class Comment(id: Pk[Long], author: String, content: String, post_id: Long)
 
 object Post extends Magic[Post] {
     
-    val postWithAuthor = Post ~< User
+    private val postWithAuthor = Post ~< User
     
     def allWithAuthor = SQL("select * from Post p join User u on p.author_id = u.id").as(postWithAuthor*) 
     
@@ -32,6 +35,10 @@ object Post extends Magic[Post] {
     }
     
 }
+
+// Comment
+
+case class Comment(id: Pk[Long], author: String, content: String, post_id: Long)
 
 object Comment extends Magic[Comment]
 

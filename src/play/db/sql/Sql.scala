@@ -390,9 +390,11 @@ trait ParserWithId[T]  extends SqlParser.Parser[T]{
       val uniqueId : (Row=> MayErr[SqlRequestError,Any]) = 
         row => for (a <- (parent.uniqueId(row)) ; b <- other.uniqueId(row))
                yield (a,b)
-   }
+  }
+   
+  def ~<[B](other: Parser[B]):Parser[T ~ B] = (this:Parser[T]).~<(other)
 
-  def spans[B](p:Parser[B]) : Parser[T ~ B] = {
+  def span[B](p:Parser[B]) : Parser[T ~ B] = {
     val d=guard(uniqueId)
     guard(this) ~ ( d >> (first => Parser[B] {in =>
         //instead of cast it'd be much better to override type Reader
@@ -406,7 +408,7 @@ trait ParserWithId[T]  extends SqlParser.Parser[T]{
          }}) )
   }
 
-  def spansM[B](b:Parser[B]) : Parser[T ~ Seq[B]] = spans(b *)
+  def spanM[B](b:Parser[B]) : Parser[T ~ Seq[B]] = span(b *)
 }
 
 trait MParser[T] extends  ParserWithId[T]{
