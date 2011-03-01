@@ -6,7 +6,7 @@ import play.db.sql._
 
 // User
 
-case class User(id: Pk[Long], email: String, password: String, fullname: String)
+case class User(id: Pk[Long], email: String, password: String, fullname: String, isAdmin: Boolean)
 
 object User extends Magic[User] {
     
@@ -20,7 +20,7 @@ object User extends Magic[User] {
 
 // Post
 
-case class Post(id: Pk[Long], title: String, content: String, author_id: Long)
+case class Post(id: Pk[Long], title: String, content: String, postedAt: Date, author_id: Long)
 
 object Post extends Magic[Post] {
     
@@ -38,7 +38,7 @@ object Post extends Magic[Post] {
 
 // Comment
 
-case class Comment(id: Pk[Long], author: String, content: String, post_id: Long)
+case class Comment(id: Pk[Long], author: String, content: String, postedAt: Date, post_id: Long)
 
 object Comment extends Magic[Comment]
 

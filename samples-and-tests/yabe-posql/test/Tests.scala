@@ -2,6 +2,8 @@ import play.test._
 import play.db.sql._
 import play.db.sql.SqlParser._
 
+import java.util.{Date}
+
 import models._
 
 import org.scalatest.{FlatSpec,BeforeAndAfterEach}
@@ -15,7 +17,7 @@ class ModelTests extends UnitFlatSpec with ShouldMatchers with BeforeAndAfterEac
  
     it should "create and retrieve a User" in {
         
-       User.create(User(NotAssigned, "bob@gmail.com", "secret", "Bob"))
+       User.create(User(NotAssigned, "bob@gmail.com", "secret", "Bob", false))
        
        val bob = User.find("email={email}").on("email" -> "bob@gmail.com").first()
        
@@ -26,7 +28,7 @@ class ModelTests extends UnitFlatSpec with ShouldMatchers with BeforeAndAfterEac
     
     it should "connect a User" in {
         
-        User.create(User(NotAssigned, "bob@gmail.com", "secret", "Bob"))
+        User.create(User(NotAssigned, "bob@gmail.com", "secret", "Bob", false))
         
         User.connect("bob@gmail.com", "secret") should not be (None)
         User.connect("bob@gmail.com", "badpassword") should be (None)
@@ -36,8 +38,8 @@ class ModelTests extends UnitFlatSpec with ShouldMatchers with BeforeAndAfterEac
     
     it should "create a Post" in {
         
-        User.create(User(Id(1), "bob@gmail.com", "secret", "Bob"))     
-        Post.create(Post(NotAssigned, "My first post", "Hello world", 1))
+        User.create(User(Id(1), "bob@gmail.com", "secret", "Bob", false))     
+        Post.create(Post(NotAssigned, "My first post", "Hello world", new Date, 1))
         
         Post.count().single() should be (1)
         
@@ -56,8 +58,8 @@ class ModelTests extends UnitFlatSpec with ShouldMatchers with BeforeAndAfterEac
     
     it should "retrieve Posts with author" in {
         
-        User.create(User(Id(1), "bob@gmail.com", "secret", "Bob")) 
-        Post.create(Post(NotAssigned, "My first post", "Hello world", 1))
+        User.create(User(Id(1), "bob@gmail.com", "secret", "Bob", false)) 
+        Post.create(Post(NotAssigned, "My first post", "Hello world", new Date, 1))
         
         val posts = Post.allWithAuthor
         
@@ -71,10 +73,10 @@ class ModelTests extends UnitFlatSpec with ShouldMatchers with BeforeAndAfterEac
     
     it should "support Comments" in {
         
-        User.create(User(Id(1), "bob@gmail.com", "secret", "Bob"))  
-        Post.create(Post(Id(1), "My first post", "Hello world", 1))
-        Comment.create(Comment(NotAssigned, "Jeff", "Nice post", 1))
-        Comment.create(Comment(NotAssigned, "Tom", "I knew that !", 1))
+        User.create(User(Id(1), "bob@gmail.com", "secret", "Bob", false))  
+        Post.create(Post(Id(1), "My first post", "Hello world", new Date, 1))
+        Comment.create(Comment(NotAssigned, "Jeff", "Nice post", new Date, 1))
+        Comment.create(Comment(NotAssigned, "Tom", "I knew that !", new Date, 1))
         
         User.count().single() should be (1)
         Post.count().single() should be (1)
@@ -92,10 +94,10 @@ class ModelTests extends UnitFlatSpec with ShouldMatchers with BeforeAndAfterEac
     
     it should "works with cascade delete" in {
         
-        User.create(User(Id(1), "bob@gmail.com", "secret", "Bob"))
-        Post.create(Post(Id(1), "My first post", "Hello world", 1))
-        Comment.create(Comment(NotAssigned, "Jeff", "Nice post", 1))
-        Comment.create(Comment(NotAssigned, "Tom", "I knew that !", 1))
+        User.create(User(Id(1), "bob@gmail.com", "secret", "Bob", false))
+        Post.create(Post(Id(1), "My first post", "Hello world", new Date, 1))
+        Comment.create(Comment(NotAssigned, "Jeff", "Nice post", new Date, 1))
+        Comment.create(Comment(NotAssigned, "Tom", "I knew that !", new Date, 1))
         
         User.count().single() should be (1)
         Post.count().single() should be (1)

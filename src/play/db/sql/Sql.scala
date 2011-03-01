@@ -291,7 +291,7 @@ trait M[T] extends MParser[T]{
   }
 
   def update(v:T){
-    val names_attributes = analyser.names_methods.map(nm => (nm._1.split('.').last.toLowerCase, nm._2.invoke(v) ))
+    val names_attributes = analyser.names_methods.map(nm => (nm._1, nm._2.invoke(v) ))
     val (ids,toSet) = 
       names_attributes.map(na => (na._1, na._2 match {case v:Option[_]=>v.getOrElse(null);case v=>v})).partition(na => na._2.isInstanceOf[Pk[_]])
     if(ids==Nil) throw new Exception("cannot update without Ids, no Ids found on "+analyser.name)
@@ -311,7 +311,7 @@ trait M[T] extends MParser[T]{
                                   na._2 match {case Id(id)=>id;case v:Option[_]=>v.getOrElse(null);case v=>v}))
     .partition(na => na._2 == NotAssigned)
     if(notSetIds.length>1) throw new Exception("multi ids not supported")
-    val toInsert = toSet.map(_._1.split('.').last.toLowerCase)
+    val toInsert = toSet.map(_._1)
     
     val query=sql("insert into "+analyser.name+" ( "+toInsert.mkString(", ")+" ) values ( "+toInsert.map("{"+_+"}").mkString(", ")+")")
     .onParams(toSet.map(_._2):_*)
@@ -335,7 +335,7 @@ trait M[T] extends MParser[T]{
                                   na._2 match {case Id(id)=>id;case v:Option[_]=>v.getOrElse(null);case v=>v}))
     .partition(na => na._2 == NotAssigned)
 
-    val toInsert = toSet.map(_._1.split('.').last.toLowerCase)
+    val toInsert = toSet.map(_._1)
     
     val query=sql("insert into "+analyser.name+" ( "+toInsert.mkString(", ")+" ) values ( "+toInsert.map("{"+_+"}").mkString(", ")+")")
     .onParams(toSet.map(_._2):_*)
@@ -489,7 +489,7 @@ trait Analyser[T]{
 
   def isConstructorSupported(c:Constructor[_]):Boolean = true
 
-  val electConstructorAndGetInfo:(Constructor[_],Seq[(String,Manifest[_])]) = {
+  val electConstructorAndGetInfo:(Constructor[_],Seq[(String,Manifest[_])],Seq[(String,java.lang.reflect.Method)]) = {
 
     def getParametersNames(c:Constructor[_]):Seq[String]={
         import scala.collection.JavaConversions._
@@ -513,17 +513,16 @@ trait Analyser[T]{
          throw new java.lang.Error("It seems that your class uses a closure to an outer instance. For MagicParser, please use only top level classes.")
 
       if(!coherent) throw new java.lang.Error("not coherent to me!")
+      
+      val names_methods = 
+          handling(classOf[NoSuchMethodException])
+              .by(e =>throw new RuntimeException( "The elected constructor doesn't have corresponding methods for all its parameters. "+e.toString))
+              .apply(paramNames.map(name=>(name,m.erasure.getDeclaredMethod(name))))
 
-      (cons,names_types)
+      (cons,names_types,names_methods)
   }
 
-  val (c,names_types)=electConstructorAndGetInfo
-
-  val names_methods = 
-    handling(classOf[NoSuchMethodException])
-        .by(e =>throw new Exception( "The elected constructor doesn't have corresponding methods for all its parameters. "+e.toString))
-        .apply(names_types.map(nt=>(nt._1,m.erasure.getDeclaredMethod(nt._1.split('.').last.toLowerCase))))
-
+  val (c,names_types,names_methods)=electConstructorAndGetInfo
 
   def manifestFor(t: Type): Manifest[_] = t match {
     case c: Class[_] => TypeWrangler.manifestOf(c) : Manifest[_]
