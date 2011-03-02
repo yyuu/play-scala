@@ -3,6 +3,7 @@ package models
 import java.util.{Date}
 
 import play.db.sql._
+import play.db.sql.SqlParser._
 
 // User
 
@@ -26,7 +27,10 @@ object Post extends Magic[Post] {
     
     private val postWithAuthor = Post ~< User
     
-    def allWithAuthor = SQL("select * from Post p join User u on p.author_id = u.id").as(postWithAuthor*) 
+    def allWithAuthor = SQL("select * from Post p join User u on p.author_id = u.id order by p.postedAt desc").as(postWithAuthor*) 
+    
+    def allWithAuthorAndComments = SQL("select * from Post p join User u on p.author_id = u.id left join Comment c on c.post_id = p.id order by p.postedAt desc")
+                                        .as( ( Post ~< User spanM( Comment ) ).flatten * )
     
     def byIdWithAuthorAndComments(id: Long) = {
         SQL("select * from Post p join User u on p.author_id = u.id left join Comment c on c.post_id = p.id where p.id = {id}")

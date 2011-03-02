@@ -81,7 +81,21 @@ case class StreamReader[T](s: Stream[T]) extends scala.util.parsing.input.Reader
 
 case class EndOfStream()
 
-object SqlParser extends SqlParser 
+case class RichTildeParser[T1,T2,T3](p:SqlParser.Parser[SqlParser.~[SqlParser.~[T1,T2],T3]]) {
+    
+    import SqlParser.~
+    
+    val flatten = {
+        p ^^ {case (t1 ~ t2 ~ t3) => (t1, t2, t3)}
+    }
+    
+}
+
+object SqlParser extends SqlParser {
+    
+    implicit def tildeToRich[T1,T2,T3](p:SqlParser.Parser[SqlParser.~[SqlParser.~[T1,T2],T3]]):RichTildeParser[T1,T2,T3] = RichTildeParser(p)
+    
+}
 
 trait SqlParser extends scala.util.parsing.combinator.PackratParsers{
   type Elem=Either[EndOfStream,Row]

@@ -1,4 +1,6 @@
 #{extends 'main.html' /}
 #{set title:'Home' /}
 
-#{welcome /}
+<h1>"${frontPost._1.title}" by ${frontPost._2.fullname} with ${frontPost._3.size()} comments</h1>
+
+<h2>${olderPosts}</h2>
