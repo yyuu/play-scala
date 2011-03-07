@@ -81,20 +81,29 @@ case class StreamReader[T](s: Stream[T]) extends scala.util.parsing.input.Reader
 
 case class EndOfStream()
 
-case class RichTildeParser[T1,T2,T3](p:SqlParser.Parser[SqlParser.~[SqlParser.~[T1,T2],T3]]) {
-    
-    import SqlParser.~
-    
-    val flatten = {
-        p ^^ {case (t1 ~ t2 ~ t3) => (t1, t2, t3)}
-    }
-    
+import SqlParser.~
+ import SqlParser.Parser
+case class TupleFlattener[F](f :F) 
+trait PriorityOne {
+ implicit def flattenerTo2[T1,T2] =
+      TupleFlattener[(T1 ~ T2) => (T1,T2)]{case (t1 ~ t2 ) => (t1,t2) }
+
 }
+trait PriorityTwo extends PriorityOne{
+ implicit def flattenerTo3[T1,T2,T3] =
+      TupleFlattener[(T1 ~ T2 ~ T3) =>(T1,T2,T3)]{case (t1 ~ t2 ~ t3) => (t1,t2,t3) }
+}
+trait PriorityThree extends PriorityTwo{
+    implicit def flattenerTo4[T1,T2,T3,T4] :TupleFlattener[(T1 ~ T2 ~T3 ~ T4) =>(T1,T2,T3,T4)]= 
+      TupleFlattener[(T1 ~ T2 ~ T3 ~ T4) =>(T1,T2,T3,T4)]{ case (t1~t2~t3~t4) => (t1,t2,t3,t4) }
+}
+object TupleFlattener extends PriorityThree{
+    implicit def flattenerTo5[T1,T2,T3,T4,T5] = 
+      TupleFlattener[(T1 ~ T2 ~ T3 ~ T4 ~ T5) => (T1,T2,T3,T4,T5)]{ case (t1~t2~t3~t4~t5) => (t1,t2,t3,t4,t5) }
+  }
 
 object SqlParser extends SqlParser {
-    
-    implicit def tildeToRich[T1,T2,T3](p:SqlParser.Parser[SqlParser.~[SqlParser.~[T1,T2],T3]]):RichTildeParser[T1,T2,T3] = RichTildeParser(p)
-    
+    def flatten[T1,T2,R](implicit f:  TupleFlattener[(T1~T2) => R] ):((T1~T2) => R)=f.f   
 }
 
 trait SqlParser extends scala.util.parsing.combinator.PackratParsers{
