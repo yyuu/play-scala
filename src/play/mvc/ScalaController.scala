@@ -3,7 +3,7 @@ package play.mvc
 import results._
 import scala.xml.NodeSeq
 import scala.io.Source
-import scala.collection.JavaConversions._
+//import scala.collection.JavaConversions._
 
 import java.io.InputStream
 import java.util.concurrent.Future
@@ -25,6 +25,11 @@ private[mvc] abstract class ScalaController extends ControllerDelegate with Loca
      * implicit def to provider an easier way to render arguments 
      */
     implicit def richRenderArgs(x: RenderArgs) = new RichRenderArgs(x)
+    
+    /**
+     * implicit def to provider an easier way to flash arguments 
+     */
+    implicit def richFlash(x: Flash) = new RichFlash(x)
 
     /**
      * implicit def to provide some extra syntatic sugar while dealing with Response objects 
@@ -35,16 +40,16 @@ private[mvc] abstract class ScalaController extends ControllerDelegate with Loca
      * implicit def to to provide some extra syntatic sugar while dealing with a sessions 
      */
     implicit def richSession(x: Session) = new RichSession(x)
+    
+    /**
+     * implicit def to to provide some extra syntatic sugar while dealing with validation 
+     */
+    implicit def richValidation(x: Validation) = new RichValidation(x)
 
     /**
      * implicit def to wrap a String as template name 
      */
     implicit def stringAsTemplateName(x: String) = new StringAsTemplate(x)
-
-    /**
-     * implicit def to wrap response into an Option
-     */
-    implicit def optionToResults[T](x: Option[T]) = new OptionWithResults[T](x)
 
     // -- Responses
 
@@ -73,18 +78,13 @@ private[mvc] abstract class ScalaController extends ControllerDelegate with Loca
     def Text(content: Any)                          = new RenderText(if(content != null) content.toString else "")
     def Redirect(url: String)                       = new Redirect(url)
     def Redirect(url: String, permanent: Boolean)   = new Redirect(url, permanent)
-    def Template                                    = new ScalaRenderTemplate()
-    def Template(args: Any*)                        = new ScalaRenderTemplate(args =  ScalaController.argsToParams(args: _*))
+    def Template                                    = new Template()
+    def Template(args: (Symbol, Any)*)              = new Template(args =  ScalaControllerCompatibility.argsToParams(args: _*))
     def Action(action: => Any)                      = new ScalaAction(action)
     def Continue                                    = new NoResult()
     def Suspend(s: String)                          = new ScalaSuspend(s)
     def Suspend(t: Int)                             = new ScalaSuspend(t)
     def WaitFor(tasks: Future[_])                   = new ScalaWaitFor(tasks)
-
-    // -- Shortcuts
-    def @@(action: => Any)                          = Action(action)
-    def ^                                           = new ScalaRenderTemplate()
-    def ^(args: Any*)                               = new ScalaRenderTemplate(args = ScalaController.argsToParams(args: _*))
 
     /**
      * @returns a play request object
@@ -126,39 +126,16 @@ private[mvc] abstract class ScalaController extends ControllerDelegate with Loca
         action
         actionDefinition
     }
+    
+    def templateExists(name: String) = ControllerDelegate.templateExists(name)
   
 }
 
-object ScalaController {
+object ScalaControllerCompatibility {
 
-    def argsToParams(args: Any*) = {
-        
-        val params = new java.util.HashMap[String,AnyRef]
-        
-        def addIt(name: String, o: Any) {
-            val names = LocalVariablesNamesTracer.getAllLocalVariableNames(o)
-            o match {
-                case None => // ignore it
-                case Some(value) => params.put(name, value.asInstanceOf[AnyRef])
-                case _ => params.put(name, o.asInstanceOf[AnyRef])
-            }
-        }
-        
-        for(o <- args) {
-            o match {
-                case (name: String, value: Any) => addIt(name, value)
-                case _ => val names = LocalVariablesNamesTracer.getAllLocalVariableNames(o)
-                          if(names.isEmpty) {
-                              val simpleName = o.asInstanceOf[AnyRef].getClass.getSimpleName
-                              addIt(simpleName(0).toLower + simpleName.substring(1), o)
-                          } else {
-                              for (name <- names) addIt(name, o)
-                          }
-            }
-        }
-        
-        params
-        
+    def argsToParams(args: (Symbol,Any)*): Map[String,Any] = Map(args:_*).collect {
+        case (key, Some(value)) => (key.name, value)
+        case (key, value) if value != None => (key.name, value)
     }
     
 }

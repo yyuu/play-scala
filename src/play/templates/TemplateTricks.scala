@@ -7,6 +7,8 @@ object CustomGroovy {
         import groovy.lang._
         
         new GroovyShell().evaluate("""
+        
+            ExpandoMetaClass.enableGlobally()
             
             java.lang.Object.metaClass.propertyMissing = { name ->
                 try {
@@ -43,12 +45,20 @@ object CustomGroovy {
                 null
             }
             
-            scala.Option.metaClass.asBoolean = {
+            scala.Option.metaClass.asBoolean = { -> 
                 delegate.isDefined()
             }
             
-            play.db.sql.Pk.metaClass.asBoolean = {
+            play.db.sql.Pk.metaClass.asBoolean = { -> 
                 delegate.isAssigned()
+            }        
+            
+            scala.collection.Seq.metaClass.asBoolean = { ->
+                delegate.size() > 0
+            }
+            
+            scala.collection.Seq.metaClass.getAt = { i ->
+                delegate.apply(i)
             }
             
         """)

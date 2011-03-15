@@ -1,5 +1,5 @@
 import scala.collection.mutable._
-import play.scalasupport.core.OnTheFly
+import play.scalasupport.OnTheFly
 
 package object play_with_scala {
     
@@ -10,6 +10,8 @@ package object play_with_scala {
     def print(v: Any) {
         println(v)
     }
+    
+    lazy val scrapbookFile = play.Play.applicationPath.getAbsolutePath() + "app/scrapbook.scala"
     
 }
 
@@ -40,36 +42,14 @@ package controllers {
     import play_with_scala._
 
     object Application extends Controller {
-    
-        def interactive(script: String = "println(\"hello scala!\")") = {
-              env.Env.out set ListBuffer[String]()
-              if(request.method == "POST" && script != null) {
-                try {
-                synchronized{
-                 OnTheFly.eval(script) 
-                 }
-                } catch { 
-                  case e: Exception => "interactive_results.html".render("error" -> e, "trace" -> getStackTrace(e), "script" -> script) 
-                }
-              }
-            "interactive_results.html".asTemplate("results" -> env.Env.out.get, "script"->script)
-        } 
 
-        def index {
+        def index = {
             env.Env.out set ListBuffer[String]()
             val c = Class.forName("play_with_scala.Scrapbook")
             c.newInstance()
-            "results.html".asTemplate("results" -> env.Env.out.get)
+            "results.html".asTemplate('results -> env.Env.out.get)
         } 
   
-
-        private def getStackTrace(aThrowable: Throwable ) = {
-          import java.io._
-          val result = new StringWriter
-          val printWriter = new PrintWriter(result)
-          aThrowable.printStackTrace(printWriter)
-          result.toString
-        }
     }
 
     

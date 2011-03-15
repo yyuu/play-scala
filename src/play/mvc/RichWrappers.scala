@@ -13,11 +13,38 @@ import play.classloading.enhancers.LocalvariablesNamesEnhancer.LocalVariablesSup
 import play.classloading.enhancers.ControllersEnhancer.ControllerSupport
 
 /**
- * utility class to provider an easier way to render argumetns
+ * utility class to provider an easier way to render arguments
  */
 private[mvc] class RichRenderArgs(val renderArgs: RenderArgs) {
-    def +=(variable: Tuple2[String, Any]) {
+    
+    def +=(variable: Tuple2[String, Any]) = {
         renderArgs.put(variable._1, variable._2)
+        this
+    }
+    
+    def apply(key: String) = {
+        renderArgs.data.containsKey(key) match {
+            case true => Some(renderArgs.get(key))
+            case false => None
+        }
+    }
+}
+
+/**
+ * utility class to provider an easier way to flash arguments
+ */
+private[mvc] class RichFlash(val flash: Flash) {
+    
+    def +=(variable: Tuple2[String, String]) = {
+        flash.put(variable._1, variable._2)
+        this
+    }
+    
+    def apply(key: String) = {
+        flash.contains(key) match {
+            case true => Some(flash.get(key))
+            case false => None
+        }
     }
 }
 
@@ -25,6 +52,12 @@ private[mvc] class RichRenderArgs(val renderArgs: RenderArgs) {
  * utility class to provide some extra syntatic sugar while dealing with a session
  */
 private[mvc] class RichSession(val session: Session) {
+    
+    def +=(variable: Tuple2[String, String]) = {
+        session.put(variable._1, variable._2)
+        this
+    }
+    
     def apply(key: String) = {
         session.contains(key) match {
             case true => Some(session.get(key))
@@ -33,21 +66,21 @@ private[mvc] class RichSession(val session: Session) {
     }
 }
 
+private[mvc] class RichValidation(val validation: Validation) {
+    
+    def hasErrors = Validation.hasErrors()
+    
+}
+
 /**
  * Wrap a String as template name
  */
 private[mvc] class StringAsTemplate(val name: String) {
-    def asTemplate(args: Any*) = new results.ScalaRenderTemplate(name,ScalaController.argsToParams(args: _*))
-    def asTemplate = new results.ScalaRenderTemplate(name)
-}
-
-private[mvc] class OptionWithResults[T](val o: Option[T]) {
-    def getOrNotFound: T = {
-        o match {
-            case Some(x) => o.get.asInstanceOf[T]
-            case None => throw new results.NotFound("Not found")
-        }
-    }
+    
+    def asTemplate(args: (Symbol,Any)*) = results.Template(Some(name), ScalaControllerCompatibility.argsToParams(args: _*))
+    
+    def asTemplate = results.Template(Some(name))
+    
 }
 
 /**

@@ -19,6 +19,10 @@ public abstract class ControllerDelegate {
 
     // ~~~~ 
     
+    public static boolean templateExists(String name) {
+        return Controller.templateExists(name);
+    }
+    
     public static ActionDefinition reverseForScala() {
         return Controller.reverse();
     }

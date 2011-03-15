@@ -2,11 +2,15 @@ package play.mvc.results
 
 import play.mvc.ControllerDelegate
 import play.mvc.Http
-import play.mvc.Http
 
-class ScalaRenderTemplate(template: String = null, args: java.util.Map[String, Object] = new java.util.HashMap[String,Object]) extends Result {
+case class Template(template: Option[String] = None, args: Map[String,Any] = Map()) extends Result {
 
-    val delegate = ControllerDelegate.renderTemplateForScala(template,args)
+    val delegate = {
+        
+        import scala.collection.JavaConversions._
+        
+        ControllerDelegate.renderTemplateForScala(template.orNull, args.asInstanceOf[Map[String,AnyRef]])
+    }
 
     def apply(request: Http.Request , response:Http.Response) {
         delegate.apply(request, response) 

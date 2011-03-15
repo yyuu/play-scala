@@ -26,8 +26,19 @@ def execute(**kargs):
         java_cmd.insert(2, '-Xmx512M')
         subprocess.call(java_cmd, env=os.environ)
         print
+        
+def before(**kargs):
+    command = kargs.get("command")
+    app = kargs.get("app")
+    args = kargs.get("args")
+    env = kargs.get("env")
+    
+    if command == 'run' or command == 'test' or command == 'auto-test':
+        args.append('-Xms512m')
+        args.append('-Xmx1024m')
 
 def after(**kargs):
+    
     command = kargs.get("command")
     app = kargs.get("app")
     args = kargs.get("args")
@@ -41,7 +52,6 @@ def after(**kargs):
         shutil.copyfile(os.path.join(module_dir, 'resources', 'controllers.scala'), os.path.join(app.path, 'app', 'controllers.scala'))
         ac = open(os.path.join(app.path, 'conf/application.conf'), 'r')
         conf = ac.read()
-        conf = conf + '\n# Disable auto-redirect for scala. It will be the default in the 1.0 version of the scala module\nscala.enableAutoRedirect=false\n'
         ac = open(os.path.join(app.path, 'conf/application.conf'), 'w')
         ac.write(conf)
 

@@ -38,18 +38,18 @@ object Urls extends Defaults {
      map.put("url", code)
      renderArgs += "urlsite" -> Router.reverse("Pages.show", map).url
    }
-   Template(code)
+   Template('code -> code)
  }
 
  def list = {
    //val pages: Collection[Page] = user.pages
    val pages = "Page.all.fetch"
-   Template(pages)
+   Template('pages -> pages)
  }
 
  def show(id: String) = {
    val code = "Code findByCode id"
-   Template(code)
+   Template('code -> code)
  }
 
  /*
@@ -57,7 +57,7 @@ object Urls extends Defaults {
  */
  def save(id: Long, @Required url: String) = {
    Validation.hasErrors match {
-     case true => if (request isAjax) Error("Invalid Value") else Template("@Application.index", url)
+     case true => if (request isAjax) Error("Invalid Value") else "@Application.index".asTemplate('url -> url)
      case false =>
        var code = null
        if (id != 0) {

@@ -74,8 +74,7 @@ object Application extends Controller with Secure {
     }
     
     def simpleNameBinding = {
-        val name = "Yop"
-        "Application/displayName.html".asTemplate(name)
+        "Application/displayName.html".asTemplate('name -> "Yop")
     }
     
     def complexNameBinding = {
@@ -83,7 +82,7 @@ object Application extends Controller with Secure {
         for (i <- 1 to 10) {
             name
         }
-        "Application/displayName.html".asTemplate(name)
+        "Application/displayName.html".asTemplate('name -> name)
     }
     
     def test {        
@@ -117,7 +116,7 @@ object Application extends Controller with Secure {
         response <<< "YOUHOUxxx" 
         response <<< "X-Yop" -> "hope"
         
-        Template(name, age, yop, users)
+        Template('name -> name, 'age-> age, 'yop -> yop, 'users -> users)
     }
     
     def addOne() = {
