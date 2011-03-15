@@ -2,7 +2,7 @@ h1. HTTP to Scala data binding
 
 Like in Java, you can retrieve HTTP parameters directly from the action method signature. The method parameter’s name must be the same as the HTTP parameter’s. This section explain the difference related to specific Scala types.
 
-h2. Binding Option[T] types
+h2. Binding @Option@ types
 
 Sometimes you are not sure that a specific parameter will be present in the HTTP request. In this case, you want probably bind this value to an @Option@ type:
 
@@ -40,3 +40,7 @@ The same convention apply than for binding JavaBean in Java, ie:
 bc. /hello?user.name=Guillaume&user.email=gbo@zenexity.com
 
 p(note). Note that Play will automatically generate a default constructor for your case class if you don't define it yourself. However this constructor will be completely empty, and your cass class body will not been executed at object instantiation.
+
+<hr>
+
+Next, there is some special features when %(next)"using Scala types in Play templates":templates%

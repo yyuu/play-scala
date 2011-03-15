@@ -134,8 +134,7 @@ private[mvc] abstract class ScalaController extends ControllerDelegate with Loca
 object ScalaControllerCompatibility {
 
     def argsToParams(args: (Symbol,Any)*): Map[String,Any] = Map(args:_*).collect {
-        case (key, Some(value)) => (key.name, value)
-        case (key, value) if value != None => (key.name, value)
+        case (key, value) => (key.name, value)
     }
     
 }

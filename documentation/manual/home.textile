@@ -20,7 +20,7 @@ The Scala version of Play framework share the same philosophy and concepts than 
 
 # "Writing Play controllers in Scala":controllers
 # "HTTP to Scala data binding":dataBinding
-# "Dealing with Scala types in Play templates":#
+# "Dealing with Scala types in Play templates":templates
 # "Database access options":#
 # "Testing your application":#
 
