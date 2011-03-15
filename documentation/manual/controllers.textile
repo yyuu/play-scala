@@ -60,9 +60,9 @@ bc. def index = "Commons/home.html".asTemplate
 
 In this case the **app/views/Commons/home.html** template will be rendered.
 
-You can also pass values to be included during the template evaluation. Values are passed in form of @(String,Any)@ tuples, where the first member will be used as variable name in the template, and the second member as variable value.
+You can also pass values to be included during the template evaluation. Values are passed in form of @(Symbol,Any)@ tuples, where the first member will be used as variable name in the template, and the second member as variable value.
 
-bc. def index = Template("now" -> new Date(), "numbers" -> List(1,2,3))
+bc. def index = Template('now -> new Date(), 'numbers -> List(1,2,3))
 
 p(note). In a Java controller you never specify the template variable name, and Play automatically determine it by extracting the Java variable local name. 
  
@@ -254,7 +254,7 @@ bc. @Before def logRequests {
     println("New request…")
 }
 
-You see that here, the @beforeEachAction@ method does not return any value. So the request execution will continue by invoking the next interceptors and eventually the action method.
+You see that here, the @logRequests@ method does not return any value. So the request execution will continue by invoking the next interceptors and eventually the action method.
 
 But you can also write some interceptor that return a value:
 
@@ -281,6 +281,7 @@ Scala Traits can be used to compose controller more effeciently by mixing severa
 For example the following **Secure** trait add a seucrity interceptor to any controller applying the Trait:
 
 bc. trait Secure {
+    self:Controller =>
     
     @Before checkSecurity = {
         session("username") match {
@@ -294,6 +295,8 @@ bc. trait Secure {
     
 }
 
+p(note). Note that here we use the @self:Controller =>@ notation to indicate that this Trait can only be mixed with a @Controller@ type.
+
 And you can use it to create a secured controller:
 
 bc. object Application extends Controller with Secure {
@@ -301,3 +304,7 @@ bc. object Application extends Controller with Secure {
     def index = <h1>Hello {connectedUser.name}!</h1>
     
 }
+
+<hr>
+
+There is also small differences about %(next)"Data binding":dataBinding%

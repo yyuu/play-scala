@@ -169,13 +169,13 @@ object Application extends Controller {
  
     def index = Template
     
-    def sayHello(myName:String) = Template("myName" -> myName)
+    def sayHello(myName:String) = Template('myName -> myName)
  
 }
 
 We have declared the **myName** parameter in the action method signature, so it will automatically be filled with the value of the HTTP **myName** parameter, coming from the form submission. 
 
-This new action also returns a @Template@ value, but this time it specify a value to be included in the template. You can specify as many values you want to send to the template, and for each you need to specify the template variable name. So each value is specified as a @(String, Any)@ tuple, where the first String value will be used a template variable name.
+This new action also returns a @Template@ value, but this time it specify a value to be included in the template. You can specify as many values you want to send to the template, and for each you need to specify the template variable name. So each value is specified as a @(Symbol, Any)@ tuple, where the first Symbol value will be used a template variable name.
 
 !images/guide1-page!
 

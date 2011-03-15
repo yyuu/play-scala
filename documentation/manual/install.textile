@@ -10,7 +10,7 @@ The included Scala version is **2.8.1**.
 
 h2. Installing the Scala module locally
 
-The simpler way to work with Play and Scala is to download and install the Scala module locally. You can use the @play scala@ command to do that:
+The simpler way to work with Play and Scala is to download and install the Scala module locally. You can use the @play install scala@ command to do that:
 
 bc. $ play install scala
 ~        _            _ 

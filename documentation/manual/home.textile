@@ -19,7 +19,7 @@ h2. ‘Play Scala’ for Play Java developers
 The Scala version of Play framework share the same philosophy and concepts than the Java version. Here are listed the most important changes.
 
 # "Writing Play controllers in Scala":controllers
-# "HTTP to Scala data binding":#
+# "HTTP to Scala data binding":dataBinding
 # "Dealing with Scala types in Play templates":#
 # "Database access options":#
 # "Testing your application":#
