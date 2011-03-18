@@ -630,7 +630,7 @@ package sql {
 
         private lazy val ColumnsDictionary:Map[String,Any] = metaData.ms.map(_.column).zip(data).toMap
 
-        def get[A](a:String)(implicit c:ColumnTo[A]):MayErr[SqlRequestError,A] = c.transform(this,a)
+        def get[A](a:String)(implicit c:ColumnTo[A]):MayErr[SqlRequestError,A] = c.transform(this,a.toUpperCase)
 
         private def getType(t:String) = t match {
             case "long" => Class.forName("java.lang.Long")

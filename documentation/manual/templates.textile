@@ -11,50 +11,9 @@ You can safely use @Option@ and @Seq@ types in every boolean operations:
 # An empty @Seq@ is evaluated as @false@
 # A non empty @Seq@ is evaluated as @true@
 
-So this example:
+So you can for example safely use the @?:@ operator with an @Option@ type:
 
-bc. def index = {
-    Template(
-        'user -> Some("Guillaume"),
-        'email -> None,
-        'phones -> List("06xxxxx", "09xxxxx")
-    )
-}
- 
----- index.html
- 
-<h1>${user ?: 'Guest'}</h1>
- 
-<p>
-#{if email}
-    Email: <a href="mailto:${email}">${email}</a>
-#{/}
-#{else}
-    (no email specified)
-#{/}
-</p>
- 
-<ul>
-#{list phones}
-    <li>${_}</li>
-#{/}
-</ul>
-#{else}
-    <p>(empty phones list)</p>
-#{/}
-
-Will render as:
-
-bc. <h1>Guillaume</h1>
- 
-<p>
-    (no email specified)
-</p>
- 
-<ul>
-    <li>06xxxxx</li>
-    <li>09xxxxx</li>
-</ul>
+bc. Hello ${name ?: 'Guest'} 
 
 h2. Safe navigation for @Option@ types
 

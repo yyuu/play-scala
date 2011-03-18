@@ -14,28 +14,43 @@ Add Scala support to your existing Play installation.
 # "‘Hello World’ tutorial — Your first Play Scala application":hello-world
 # "Learning Scala with Play":learnscala
 
-h2. ‘Play Scala’ for Play Java developers
-
-The Scala version of Play framework share the same philosophy and concepts than the Java version. Here are listed the most important changes.
-
-# "Writing Play controllers in Scala":controllers
-# "HTTP to Scala data binding":dataBinding
-# "Dealing with Scala types in Play templates":templates
-# "Database access options":#
-# "Testing your application":#
-
 h2. Manual
 
-Play Scala specific features deeply explained.
+The Scala version of Play framework share the same philosophy and concepts than the Java version. Here are the Scala specific features deeply explained.
 
-# "SQL data access with Play Scala":#
-## "Overview":#
-## "The Stream API":#
-## "ResultSet as a dictionnary":#
-## "Using Pattern Matching":#
-## "The Parser combinator API":#
-## "Adding some Magic":#
-## "Object relational mapping":#
+# "‘Play Scala’ for Play Java developers":controllers
+## "Writing Play controllers in Scala":controllers
+### "Scala controllers are Objects":controllers#ScalacontrollersareObjects
+### "Action methods return values":controllers#Actionmethodsreturnvalues
+### "Return type inference":controllers#Returntypeinference
+### "Controller interceptors":controllers#Controllerinterceptors
+### "Mixing controllers using Traits":controllers#MixingcontrollersusingTraits
+## "HTTP to Scala data binding":dataBinding
+### "Binding Option types":dataBinding#BindingOptiontypes
+### "Using Scala default parameter values":dataBinding#UsingScaladefaultparametervalues
+### "Binding case classes":dataBinding#Bindingcaseclasses
+## "Dealing with Scala types in Play templates":templates
+### "Boolean operations on Option and Seq types":templates#BooleanoperationsonOptionandSeqtypes
+### "Safe navigation for Option types":templates#SafenavigationforOptiontypes
+### "Litteral access to elements of a Seq":templates#LitteralaccesstoelementsofaSeq
+## "Database access options":database
+### "Using plain old SQL requests":database#UsingplainoldSQLrequests
+### "Using JPA":database#UsingJPA
+### "Integrating other existing Database access librairies":database#IntegratingotherexistingDatabaseaccesslibrairies
+## "Testing your application":test
+### "JUnit Style":test#JUnitStyle
+### "JUnit Style with Should matchers":test#JUnitStylewithShouldmatchers
+### "Functional suite Style":test#FunctionalsuiteStyle
+### "Specification Style":test#SpecificationStyle
+### "Features list Style":test#FeatureslistStyle
+# "SQL data access with Play Scala":sql
+## "Overview":sql#Overview
+## "Executing SQL requests":sql#ExecutingSQLrequests
+## "Retrieving data using the Stream API":sql#RetrievingdatausingtheStreamAPI
+## "Using Pattern Matching":sql#UsingPatternMatching
+## "Dealing with Nullable columns":sql#DealingwithNullablecolumns
+## "Using the Parser combinator API":sql#UsingtheParsercombinatorAPI
+## "Adding some Magic[T]":sql#AddingsomeMagicT
 
 h2. Tutorial — Play Scala guide, a real world app step-by-step
 
