@@ -4,7 +4,7 @@ Play Scala comes with "ScalaTest":http://www.scalatest.org/, that natively provi
 
 As in Play Java, you must place your test dedicated Scala sources into the **test** directory, and run the application using @play test@ to enable the integrated Test runner.
 
-Please check the complete "ScalaTest reference":http://www.scalatest.org/user_guide for more informations.
+Please check the complete "ScalaTest reference":http://www.scalatest.org/user_guide for more information.
 
 h2. JUnit Style
 

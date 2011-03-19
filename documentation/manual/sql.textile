@@ -1,6 +1,6 @@
 h1. SQL data access with Play Scala
 
-The Scala module includes a brand new data access layer the use plain SQL to make your database request and provides several API to parse and transform the resulting dataset. 
+The Scala module includes a brand new data access layer that uses plain SQL to make your database request and provides several API to parse and transform the resulting dataset. 
 
 p(note). In the following documentation, we will use the "MySQL world sample database":http://dev.mysql.com/doc/world-setup/en/world-setup.html. 
  
@@ -10,33 +10,33 @@ If you want to enable it for your application, follow the MySQL website instruct
 
 h2. Overview
 
-It can feel strange to back to plain old SQL to access an SQL Database these days. In particular for Java developers that are accustomed to use high level Object Relational Mapper like Hibernate to completely hide this aspect. 
+It can feel strange to fallback to plain old SQL to access an SQL Database these days. In particular for Java developers that are accustomed to use high level Object Relational Mapper like Hibernate to completely hide this aspect. 
 
-Now if we agree that these tools are almost required in Java, we think that they are not needed at all we you have the power of an higher level programming language like Scala, and in the contrary they will quickly become counter productive.
+Now if we agree that these tools are almost required in Java, we think that they are not needed at all wehen you have the power of a higher level programming language like Scala, and in the contrary they will quickly become counter productive.
 
 h3. Using JDBC is a pain, but we provide a better API
 
 bq. We agree, using directly the JDBC API is tedious. Particularly in Java. You have to deal everywhere with checked exceptions and iterate over and over around the ResultSet to transform this raw dataset into your own data structure.
  
-But we provide a simpler API for JDBC, using Scala you don't need to bother with exceptions, and transforming data is really easy with Scala; in fact it is the point of the Play Scala SQL access layer to provide several API to effectively transform JDBC data into other Scala structures.
+But we provide a simpler API for JDBC, using Scala you don't need to bother with exceptions, and transforming data is really easy with a functional language; in fact it is the point of the Play Scala SQL access layer to provide several API to effectively transform JDBC data into other Scala structures.
 
 h3. You don't need another DSL to access relational Database
 
 bq. SQL is already the best DSL to access relational Databases. We don't need to invent something new. Moreover the SQL syntax and features can differ from one database vendor to another. 
     
-If you try to abstract this point with another proprietary SQL like DSL you will have to deal with several 'dialect' dedicated for each vendor (like Hibernate ones), and limit yourself of using interesting features of a particular Database.
+If you try to abstract this point with another proprietary SQL like DSL you will have to deal with several 'dialects' dedicated for each vendor (like Hibernate ones), and limit yourself of using interesting features of a particular Database.
     
-Sometimes we will provide you with prefilled SQL statements. But the idea is not to hide you the fact that we use SQL under the hood. Just save a bunch of characters to type for trivial queries, and you can always back to plain old SQL.
+Sometimes we will provide you with prefilled SQL statements. But the idea is not to hide you the fact that we use SQL under the hood. Just save a bunch of characters to type for trivial queries, and you can always fallback to plain old SQL.
 
 h3. A type safe DSL to generate SQL is a mistake
 
 bq. Some argue that a type safe DSL is better since all your queries are checked by the compiler. Unfortunately the compiler check your queries based on a MetaModel definition that you often write yourself by 'mapping' your data structure to the database schema. 
     
-And there are no guarantees at all that this MetaModel is correct. Even is the compiler says that you code and your queries are ok, it can still miserably fail at runtime because of a mismatch in your actual database definition.
+And there are no guarantees at all that this MetaModel is correct. Even if the compiler says that you code and your queries are correctly typed, it can still miserably fail at runtime because of a mismatch in your actual database definition.
 
 h3. Take Control of your SQL code
 
-bq. Object Relationnal Mapper work well for trivial cases. But when you have to deal with complex schema or existing database, you will spend most of your time to fight with your ORM to make it generate the SQL queries you want.
+bq. Object Relationnal Mapper work well for trivial cases. But when you have to deal with complex schemas or existing databases, you will spend most of your time to fighting with your ORM to make it generate the SQL queries you want.
     
 Writing yourself SQL queries can be tedious for a simple 'Hello World' application, but for any real life application, you will eventually save time and simplify your code by taking the full control of your SQL code.
 
@@ -52,7 +52,7 @@ bc. import play.db.sql._
  
 val result:Boolean = SQL("Select 1").execute()
 
-The @execute()@ method returns a @Boolean@ value indicating the execution was succesful. 
+The @execute()@ method returns a @Boolean@ value indicating if the execution was succesful. 
 
 To execute an update query, you can use @executeUpdate()@ that returns a @MayErr[IntegrityConstraintViolation,Int]@ value: 
 
@@ -159,7 +159,7 @@ h2. Using the Parser combinator API
 
 The "Scala Parsers API":http://www.scala-lang.org/api/current/scala/util/parsing/combinator/Parsers.html provides generic parser combinators. Play Scala can use them to parse the result of any Select query.
 
-Use the @as(…)@ method of the SQL statement to specify the parser you want to use. For example @scalar[Long]@ is a simple parser that know how to parse a single column row as @Long@:
+Use the @as(…)@ method of the SQL statement to specify the parser you want to use. For example @scalar[Long]@ is a simple parser that knows how to parse a single column row as @Long@:
 
 bc. val count:Long = SQL("select count(*) from Country").as(scalar[Long])
 
@@ -193,11 +193,11 @@ bc. select c.name, c.code, l.language from Country c
     join CountryLanguage l on l.CountryCode = c.Code 
     where c.code = 'FRA'
 
-As this query use a **join**, our parser will need to span several rows of the ResultSet to generate a single item. We will use the @spanM@ combinator to construct this parser:
+As this query uses a **join**, our parser will need to span several rows of the ResultSet to generate a single item. We will use the @spanM@ combinator to construct this parser:
 
 bc. str("name") ~< spanM(by=str("code"), str("language"))
 
-Now let's use this parser to create a function that give us all languages spoken in a country:
+Now let's use this parser to create a function that gives us all languages spoken in a country:
 
 bc. case class SpokenLanguages(country:String, languages:Seq[String])
  
@@ -261,13 +261,13 @@ h2. Adding some Magic[T]
 
 Finally, based on all these concepts, Play provides a **Magic** helper that will help you to write parsers. The idea is that if you define a @case class@ that match a database table, Play Scala will generate a parser for you.
 
-Let's try by defining a first @Country@ case class that describe the **Country** table:
+Let's try by defining a first @Country@ case class that describes the **Country** table:
 
 bc. case class Country(
     code:Id[String], name:String, population:Int, headOfState:Option[String]
 )
 
-Note that we are not required to specify every existing table column in the case class. Only a subset is ok.
+Note that we are not required to specify every existing table column in the case class. Only a subset is enough.
 
 Now let's create an object that extends @Magic@ to automatically get a parser of @Country@:
 
@@ -277,7 +277,7 @@ And we can simply use **Country** as @Country@ parser:
 
 bc. val countries:List[Country] = SQL("select * from Country").as(Country*)
 
-Also, @Magic@ provides automatically a set of methods that can generate basic SQL queries:
+@Magic@ provides automatically a set of methods that can generate basic SQL queries:
 
 bc. val c:Long = Country.count().single()
 val c:Long = Country.count("population > 1000000").single()
@@ -321,6 +321,7 @@ val Some(country~languages~capital) = SQL(
 val countryName = country.name
 val capitalName = capital.name
 val headOfState = country.headOfState.getOrElse("No one?")
+ 
 val officialLanguage = languages.collect { 
                            case CountryLanguage(lang, "T") => lang 
                        }.headOption.getOrElse("No language?")
