@@ -114,7 +114,31 @@ class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
     Task.find("where id={id}").on("id" -> 3).first() should be (None)
     SQL("select * from Task join Student on Task.id=Student.Task_Id").as(Task ~< Student) should be (SqlParser.~(new Task("some comment"),Student("1")))
   }
-  
+
+  @Test def trySomeMagicSqlFailure{
+    
+     play.db.DB.execute("DROP TABLE IF EXISTS Task")
+      play.db.DB.execute("DROP TABLE IF EXISTS Student") 
+     play.db.DB.execute("""CREATE TABLE Task 
+                           (Id char(60) NOT NULL,
+                            Comment1 char(60) NOT NULL) """)
+         play.db.DB.execute("""CREATE TABLE Student 
+                           (Id char(60) NOT NULL,
+                            Task_Id char(60) NOT NULL) """)
+
+    play.db.DB.execute("""insert into Task Values('1','some comment')""")
+    play.db.DB.execute("""insert into Student Values('1','1')""")
+   
+    val thrown = evaluating { Task.find().list() } should produce [RuntimeException]
+    thrown.getMessage should equal ("ColumnNotFound(TASK.COMMENT)")
+
+    val thrown1 = evaluating {
+      SQL("select * from Task join Student on Task.id=Student.Task_Id")
+        .as(Task ~< Student)
+      }  should produce [RuntimeException]
+    thrown1.getMessage should equal ("ColumnNotFound(TASK.COMMENT)")
+  }  
+
   @Test def testAlternate(){
     play.db.DB.execute("DROP TABLE IF EXISTS Post")
 
