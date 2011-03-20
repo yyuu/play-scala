@@ -695,7 +695,7 @@ package sql {
   
         def single(conn:java.sql.Connection=connection):T = as(phrase(defaultParser))
   
-        def first(conn:java.sql.Connection=connection):Option[T] = as(defaultParser?)
+        def first(conn:java.sql.Connection=connection):Option[T] = as((defaultParser?),false)
 
         def getFilledStatement(connection:java.sql.Connection) = {
             val s =connection.prepareStatement(sql.query,java.sql.Statement.RETURN_GENERATED_KEYS)
@@ -747,7 +747,7 @@ package sql {
   
         import SqlParser._
   
-        def as[T](parser:Parser[T], conn:java.sql.Connection=connection):T = Sql.as[T](parser,resultSet(connection))
+        def as[T](parser:Parser[T],consumeAllInput:Boolean=true, conn:java.sql.Connection=connection):T = Sql.as[T](parser,consumeAllInput,resultSet(connection))
 
         def execute(conn:java.sql.Connection=connection):Boolean = getFilledStatement(connection).execute()
 
@@ -807,7 +807,9 @@ package sql {
         
         import SqlParser._
   
-        def as[T](parser:Parser[T],rs:java.sql.ResultSet):T = parser(StreamReader(resultSetToStream(rs))) match {
+        def as[T](parser:Parser[T],consumeAllInput:Boolean=true,rs:java.sql.ResultSet):T =
+          (if(consumeAllInput) phrase(parser)
+           else parser)(StreamReader(resultSetToStream(rs))) match {
             case Success(a,_)=>a
             case Failure(e,_)  => error(e)
             case Error(e,_) => error(e) 
