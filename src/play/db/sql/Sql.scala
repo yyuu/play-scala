@@ -24,6 +24,29 @@ package sql {
     case object NoColumnsInReturnedResult extends SqlRequestError
     case class IntegrityConstraintViolation(message:String) extends SqlRequestError
     
+    abstract class Pk[+ID] {
+        def isAssigned:Boolean = this match {
+            case Id(_) => true
+            case NotAssigned => false
+        } 
+  
+        def apply() = get.get
+  
+        def get = this match{
+            case Id(id) => Some(id)
+            case NotAssigned => None
+        }
+
+    }
+    
+    case class Id[ID](id:ID) extends Pk[ID] {
+        override def toString() = id.toString
+    }
+    
+    case object NotAssigned extends Pk[Nothing] {
+        override def toString() = "NotAssigned"
+    }
+
     trait ColumnTo[A] {
         def transform(row: Row, columnName: String): MayErr[SqlRequestError,A]
     }
@@ -53,7 +76,80 @@ package sql {
             ) yield result
         }
     
-    } 
+    }
+    
+    object ColumnTo {
+        implicit def rowToString: Column[String] = {
+            Column[String](transformer = { (value, meta) =>
+                val MetaDataItem(qualified,nullable,clazz) = meta
+                value match {
+                    case string:String => Right(string)
+                    case clob:java.sql.Clob => Right(clob.getSubString(1,clob.length.asInstanceOf[Int]))
+                    case _ => Left(TypeDoesNotMatch("Cannot convert " + value + " to String for column " + qualified))
+                }        
+            })
+        }  
+    
+        implicit def rowToInt: Column[Int] = {
+            Column[Int](transformer = { (value, meta) =>
+                val MetaDataItem(qualified,nullable,clazz) = meta
+                value match {
+                    case int:Int => Right(int)
+                    case _ => Left(TypeDoesNotMatch("Cannot convert " + value + " to Int for column " + qualified))
+                }            
+            })
+        } 
+
+        implicit def rowToBoolean: Column[Boolean] = {
+            Column[Boolean](transformer = { (value, meta) =>
+                val MetaDataItem(qualified,nullable,clazz) = meta
+                value match {
+                     case bool:Boolean => Right(bool)
+                     case _ => Left(TypeDoesNotMatch("Cannot convert " + value + " to Boolean for column " + qualified))
+                }            
+            })
+        } 
+
+        implicit def rowToLong: Column[Long] = {
+            Column[Long](transformer = { (value, meta) =>
+                val MetaDataItem(qualified,nullable,clazz) = meta
+                value match {
+                    case int:Int => Right(int:Long)
+                    case long:Long => Right(long)
+                    case _ => Left(TypeDoesNotMatch("Cannot convert " + value + " to Long for column " + qualified))
+                }            
+            })
+        } 
+      
+        implicit def rowToDate: Column[Date] = {
+            Column[Date](transformer = { (value, meta) =>
+                val MetaDataItem(qualified,nullable,clazz) = meta
+                value match {
+                     case date:Date => Right(date)
+                     case _ => Left(TypeDoesNotMatch("Cannot convert " + value + " to Date for column " + qualified))
+                 }            
+            })
+        } 
+
+        implicit def rowToPk[T](implicit c:ColumnTo[T]) :ColumnTo[Pk[T]] = {
+            new ColumnTo[Pk[T]]{
+              override def transform(row:Row,columnName:String) = c.transform(row,columnName).map(a => Id(a))  
+            }
+        } 
+   
+        implicit def rowToOption1[T](implicit c:Column[T]): ColumnTo[Option[T]] = {
+            Column[Option[T]](
+                nullHandler = (v, meta) => {
+                    val MetaDataItem(qualified,nullable,clazz) = meta
+                    if(!nullable) Some(UnexpectedNullableFound(qualified)) else None
+                },
+                transformer = (v, meta) => {
+                    if(v == null) Right(None) else c.transformer(v, meta).map( x => Some(x) )
+                }
+            )
+        }
+
+    }
 
     case class StreamReader[T](s: Stream[T]) extends scala.util.parsing.input.Reader[Either[EndOfStream,T]] {
   
@@ -189,100 +285,11 @@ package sql {
   
         }
   
-        implicit def rowToString: Column[String] = {
-            Column[String](transformer = { (value, meta) =>
-                val MetaDataItem(qualified,nullable,clazz) = meta
-                value match {
-                    case string:String => Right(string)
-                    case clob:java.sql.Clob => Right(clob.getSubString(1,clob.length.asInstanceOf[Int]))
-                    case _ => Left(TypeDoesNotMatch("Cannot convert " + value + " to String for column " + qualified))
-                }        
-            })
-        }  
-    
-        implicit def rowToInt: Column[Int] = {
-            Column[Int](transformer = { (value, meta) =>
-                val MetaDataItem(qualified,nullable,clazz) = meta
-                value match {
-                    case int:Int => Right(int)
-                    case _ => Left(TypeDoesNotMatch("Cannot convert " + value + " to Int for column " + qualified))
-                }            
-            })
-        } 
 
-        implicit def rowToBoolean: Column[Boolean] = {
-            Column[Boolean](transformer = { (value, meta) =>
-                val MetaDataItem(qualified,nullable,clazz) = meta
-                value match {
-                     case bool:Boolean => Right(bool)
-                     case _ => Left(TypeDoesNotMatch("Cannot convert " + value + " to Boolean for column " + qualified))
-                }            
-            })
-        } 
-
-        implicit def rowToLong: Column[Long] = {
-            Column[Long](transformer = { (value, meta) =>
-                val MetaDataItem(qualified,nullable,clazz) = meta
-                value match {
-                    case int:Int => Right(int:Long)
-                    case long:Long => Right(long)
-                    case _ => Left(TypeDoesNotMatch("Cannot convert " + value + " to Long for column " + qualified))
-                }            
-            })
-        } 
-      
-        implicit def rowToDate: Column[Date] = {
-            Column[Date](transformer = { (value, meta) =>
-                val MetaDataItem(qualified,nullable,clazz) = meta
-                value match {
-                     case date:Date => Right(date)
-                     case _ => Left(TypeDoesNotMatch("Cannot convert " + value + " to Date for column " + qualified))
-                 }            
-            })
-        } 
-
-        implicit def rowToPk[T](implicit c:ColumnTo[T]) :ColumnTo[Pk[T]] = {
-            new ColumnTo[Pk[T]]{
-              override def transform(row:Row,columnName:String) = c.transform(row,columnName).map(a => Id(a))  
-            }
-        } 
-   
-        implicit def rowToOption1[T](implicit c:Column[T]): ColumnTo[Option[T]] = {
-            Column[Option[T]](
-                nullHandler = (v, meta) => {
-                    val MetaDataItem(qualified,nullable,clazz) = meta
-                    if(!nullable) Some(UnexpectedNullableFound(qualified)) else None
-                },
-                transformer = (v, meta) => {
-                    if(v == null) Right(None) else c.transformer(v, meta).map( x => Some(x) )
-                }
-            )
-        }
   
     }
 
-    abstract class Pk[+ID] {
-        def isAssigned:Boolean = this match {
-            case Id(_) => true
-            case NotAssigned => false
-        } 
-  
-        def apply() = get.get
-  
-        def get = this match{
-            case Id(id) => Some(id)
-            case NotAssigned => None
-        }
-
-    }
     
-    case class Id[ID](id:ID) extends Pk[ID] {
-        override def toString() = id.toString
-    }
-    
-    case object NotAssigned extends Pk[Nothing] {
-        override def toString() = "NotAssigned"
-    }
 
     case class Magic[T](override val tableName:Option[String]=None)(implicit val m:ClassManifest[T]) extends M[T] {
         def using(tableName:Symbol) = this.copy(tableName=Some(tableName.name))
@@ -481,11 +488,11 @@ package sql {
         import scala.reflect.ClassManifest
 
         def getExtractor[C](m:Manifest[C]):Option[ColumnTo[C]] = (m match {
-            case m if m == Manifest.classType(classOf[String])   => Some(SqlParser.rowToString)
-            case m if m == Manifest.Int => Some(SqlParser.rowToInt)
-            case m if m == Manifest.Long => Some(SqlParser.rowToLong)
-            case m if m == Manifest.Boolean => Some(SqlParser.rowToBoolean)
-            case m if m >:> Manifest.classType(classOf[Date]) => Some(SqlParser.rowToDate)
+            case m if m == Manifest.classType(classOf[String])   => Some(implicitly[ColumnTo[String]])
+            case m if m == Manifest.Int =>Some(implicitly[ColumnTo[Int]])
+            case m if m == Manifest.Long => Some(implicitly[ColumnTo[Long]])
+            case m if m == Manifest.Boolean => Some(implicitly[ColumnTo[Boolean]])
+            case m if m >:> Manifest.classType(classOf[Date]) => Some(implicitly[ColumnTo[Date]])
             case m if m.erasure == classOf[Option[_]] => {
                 val typeParam=m.typeArguments
                                 .headOption
@@ -493,7 +500,7 @@ package sql {
                                 .getOrElse( implicitly[Manifest[Any]] )
                     
                 getExtractor(typeParam).collect {
-                    case e:Column[_] => SqlParser.rowToOption1(e)
+                    case e:Column[_] => ColumnTo.rowToOption1(e)
                 } 
             }
             case m if m >:> Manifest.classType(classOf[Id[_]]) => {
@@ -501,7 +508,7 @@ package sql {
                                 .headOption
                                 .collect { case m:ClassManifest[_] => m}
                                 .getOrElse( implicitly[Manifest[Any]] )
-                getExtractor(typeParam).map( mapper => SqlParser.rowToPk(mapper) )
+                getExtractor(typeParam).map( mapper => ColumnTo.rowToPk(mapper) )
             }
             case _ => None
         }).asInstanceOf[Option[ColumnTo[C]]]
