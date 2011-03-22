@@ -129,6 +129,9 @@ class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
     play.db.DB.execute("""insert into Task Values('1','some comment')""")
     play.db.DB.execute("""insert into Student Values('1','1')""")
    
+    val t = evaluating { Task.find("where id={id}").on("id" -> 1).first() } should produce [RuntimeException] 
+    t.getMessage should equal ("ColumnNotFound(TASK.COMMENT)")
+
     val thrown = evaluating { Task.find().list() } should produce [RuntimeException]
     thrown.getMessage should equal ("ColumnNotFound(TASK.COMMENT)")
 

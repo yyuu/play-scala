@@ -701,8 +701,10 @@ package sql {
         def list(conn:java.sql.Connection=connection):Seq[T] = as(defaultParser*)
   
         def single(conn:java.sql.Connection=connection):T = as((defaultParser))
+
+        def singleOption(conn:java.sql.Connection=connection):Option[T] = as((defaultParser)?)
   
-        def first(conn:java.sql.Connection=connection):Option[T] = as((defaultParser?),false)
+        def first(conn:java.sql.Connection=connection):Option[T] = as((guard(acceptMatch("not at end",{case Right(_) => Unit})) ~> commit(defaultParser) )?,false)
 
         def getFilledStatement(connection:java.sql.Connection) = {
             val s =connection.prepareStatement(sql.query,java.sql.Statement.RETURN_GENERATED_KEYS)
