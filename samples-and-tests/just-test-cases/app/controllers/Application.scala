@@ -53,6 +53,10 @@ object Application extends Controller with Secure {
         numbers foreach { println _ }
         <h1>"Yep! ; " {Apple.name}</h1>  
     }
+    
+    def uploadForm = Template("Application/index.html")
+    
+    def upload(f: java.io.File, t: String) = f + " -> " + t
   
     def suspender() = {
      if (counter == 0) {
@@ -74,7 +78,7 @@ object Application extends Controller with Secure {
     }
     
     def simpleNameBinding = {
-        "Application/displayName.html".asTemplate('name -> "Yop")
+        Template("Application/displayName.html", 'name -> "Yop")
     }
     
     def complexNameBinding = {
@@ -82,7 +86,7 @@ object Application extends Controller with Secure {
         for (i <- 1 to 10) {
             name
         }
-        "Application/displayName.html".asTemplate('name -> name)
+        Template("Application/displayName.html", 'name -> name)
     }
     
     def test {        
@@ -131,7 +135,7 @@ object Application extends Controller with Secure {
     
     def api = Xml(<items><item id="3">Yop</item></items>) 
     
-    def yop = "@index".asTemplate
+    def yop = Template("@index")
     
     def helloWorld = Html(<h1>Hello world</h1>)
     

@@ -259,7 +259,7 @@ bc. > spokenLanguages("FRA")
 
 h2. Adding some Magic[T]
 
-Finally, based on all these concepts, Play provides a **Magic** helper that will help you to write parsers. The idea is that if you define a @case class@ that match a database table, Play Scala will generate a parser for you.
+Based on all these concepts, Play provides a **Magic** helper that will help you to write parsers. The idea is that if you define a @case class@ that match a database table, Play Scala will generate a parser for you.
 
 Let's try by defining a first @Country@ case class that describes the **Country** table:
 

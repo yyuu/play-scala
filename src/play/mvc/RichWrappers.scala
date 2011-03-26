@@ -73,17 +73,6 @@ private[mvc] class RichValidation(val validation: Validation) {
 }
 
 /**
- * Wrap a String as template name
- */
-private[mvc] class StringAsTemplate(val name: String) {
-    
-    def asTemplate(args: (Symbol,Any)*) = results.Template(Some(name), ScalaControllerCompatibility.argsToParams(args: _*))
-    
-    def asTemplate = results.Template(Some(name))
-    
-}
-
-/**
 * utility class to provide some extra syntatic sugar while dealing with Response objects
 */
 private[mvc] class RichResponse(val response: Response) {

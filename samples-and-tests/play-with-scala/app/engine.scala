@@ -47,7 +47,7 @@ package controllers {
             env.Env.out set ListBuffer[String]()
             val c = Class.forName("play_with_scala.Scrapbook")
             c.newInstance()
-            "results.html".asTemplate('results -> env.Env.out.get)
+            Template("results.html", 'results -> env.Env.out.get)
         } 
   
     }

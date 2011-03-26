@@ -56,7 +56,7 @@ By default the template name will be resolved from the action method name. So if
 
 You can of course specify another template name:
 
-bc. def index = "Commons/home.html".asTemplate
+bc. def index = Template("Commons/home.html")
 
 In this case the **app/views/Commons/home.html** template will be rendered.
 

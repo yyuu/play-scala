@@ -45,7 +45,7 @@ object Application extends Controller with Defaults {
     ) = {
         validation.equals(code, Cache.get(randomID).orNull).message("Invalid code. Please type it again")
         if (validation.hasErrors) {
-            "Application/show.html".asTemplate('post -> Post.byIdWithAuthorAndComments(postId), 'randomID -> randomID)
+            Template("Application/show.html", 'post -> Post.byIdWithAuthorAndComments(postId), 'randomID -> randomID)
         } else {
             Cache.delete(randomID)
             Comment.create( Comment(postId, author, content) )

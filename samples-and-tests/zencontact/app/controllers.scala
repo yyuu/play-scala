@@ -26,7 +26,7 @@ object Application extends Controller {
     
     def save(@Valid contact: Contact) = {
         if(Validation.hasErrors()) {
-            "@form".asTemplate('contact -> contact)
+            Template("@form", 'contact -> contact)
         } else {
             Contact.update(contact)        
             Action(list)
@@ -35,7 +35,7 @@ object Application extends Controller {
     
     def create(@Valid contact: Contact) = {
         if(Validation.hasErrors()) {
-            "@form".asTemplate('contact -> contact )
+            Template("@form", 'contact -> contact )
         } else {
             Contact.create(contact)
             Action(list)

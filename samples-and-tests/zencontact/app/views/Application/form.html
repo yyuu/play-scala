@@ -1,7 +1,7 @@
 #{extends 'main.html' /}
 #{set title:'Form' /}
 
-#{form contact?.id ? @save(id: contact.id) : @create()}
+#{form contact?.id ? @save(id: contact?.id) : @create()}
 
     <input type="hidden" name="contact.id" value="${contact?.id}">
     

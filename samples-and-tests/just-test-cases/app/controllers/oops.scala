@@ -57,7 +57,7 @@ object Urls extends Defaults {
  */
  def save(id: Long, @Required url: String) = {
    Validation.hasErrors match {
-     case true => if (request isAjax) Error("Invalid Value") else "@Application.index".asTemplate('url -> url)
+     case true => if (request isAjax) Error("Invalid Value") else Template("@Application.index", 'url -> url)
      case false =>
        var code = null
        if (id != 0) {
