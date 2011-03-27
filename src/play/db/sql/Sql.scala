@@ -553,11 +553,11 @@ package sql {
         val m:ClassManifest[T]
         val tableName:Option[String] = None
         
-        def clean(fieldName:String) = fieldName.split('$').last
+        def clean(fieldName:String) = fieldName.split('$').last.toUpperCase()
   
         val typeName = clean(m.erasure.getSimpleName)
 
-        val name = tableName.getOrElse(typeName)
+        val name = tableName.getOrElse(typeName).toUpperCase()
   
         def getQualifiedColumnName(column:String) = name+"."+column
 
@@ -590,7 +590,7 @@ package sql {
       
             val names_methods = handling(classOf[NoSuchMethodException])
                   .by(e =>throw new RuntimeException( "The elected constructor doesn't have corresponding methods for all its parameters. "+e.toString))
-                  .apply(paramNames.map(name=>(name,m.erasure.getDeclaredMethod(name))))
+                  .apply(paramNames.map(name=>(clean(name),m.erasure.getDeclaredMethod(name))))
 
             (cons,names_types,names_methods)
         }
@@ -641,7 +641,6 @@ package sql {
         lazy val asList = data.zip(metaData.ms.map(_.nullable)).map(i=> if(i._2) Option(i._1) else i._1)
  
         lazy val asMap :scala.collection.Map[String,Any]=  metaData.ms.map(_.column.toUpperCase()).zip(asList).toMap
-
 
         private lazy val ColumnsDictionary:Map[String,Any] = metaData.ms.map(_.column).zip(data).toMap
 

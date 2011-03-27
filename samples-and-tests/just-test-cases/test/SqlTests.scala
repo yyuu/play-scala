@@ -130,16 +130,16 @@ class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
     play.db.DB.execute("""insert into Student Values('1','1')""")
    
     val t = evaluating { Task.find("where id={id}").on("id" -> 1).first() } should produce [RuntimeException] 
-    t.getMessage should equal ("ColumnNotFound(Task.comment)")
+    t.getMessage should equal ("ColumnNotFound(TASK.COMMENT)")
 
     val thrown = evaluating { Task.find().list() } should produce [RuntimeException]
-    thrown.getMessage should equal ("ColumnNotFound(Task.comment)")
+    thrown.getMessage should equal ("ColumnNotFound(TASK.COMMENT)")
 
     val thrown1 = evaluating {
       SQL("select * from Task join Student on Task.id=Student.Task_Id")
         .as(Task ~< Student)
       }  should produce [RuntimeException]
-    thrown1.getMessage should equal ("ColumnNotFound(Task.comment)")
+    thrown1.getMessage should equal ("ColumnNotFound(TASK.COMMENT)")
   }  
 
   @Test def testAlternate(){
