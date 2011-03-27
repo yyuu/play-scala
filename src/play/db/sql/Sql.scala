@@ -69,7 +69,8 @@ package sql {
     
         def transform(row:Row, columnName:String): MayErr[SqlRequestError,A] = {
             for(
-                meta <- row.metaData.dictionary2.get(columnName).map( m => (m._1 + "." + columnName, m._2, m._3)).orElse(row.metaData.dictionary.get(columnName).map(m=> (columnName,m._1,m._2))).toRight(ColumnNotFound(columnName));
+                meta <- row.metaData.get(columnName)
+                                    .toRight(ColumnNotFound(columnName));
                 value <- row.get1(columnName);
                 _ <- nullHandler(value, MetaDataItem(meta._1, meta._2, meta._3)).toLeft(value);
                 result <- transformer(value, MetaDataItem(meta._1, meta._2, meta._3))
@@ -285,8 +286,6 @@ package sql {
   
         }
   
-
-  
     }
 
     
@@ -334,7 +333,7 @@ package sql {
                 case v=>v
             })).partition(na => na._2.isInstanceOf[Pk[_]])
     
-            if(ids == Nil) throw new Exception("cannot update without Ids, no Ids found on "+analyser.name)
+            if(ids == Nil) throw new Exception("cannot update without Ids, no Ids found on "+analyser.typeName)
     
             val toUpdate = toSet.map(_._1).map(n => n+" = "+"{"+n+"}").mkString(", ")
             
@@ -556,7 +555,9 @@ package sql {
         
         def clean(fieldName:String) = fieldName.split('$').last
   
-        val name = tableName.getOrElse(clean(m.erasure.getSimpleName).toUpperCase())
+        val typeName = clean(m.erasure.getSimpleName)
+
+        val name = tableName.getOrElse(typeName)
   
         def getQualifiedColumnName(column:String) = name+"."+column
 
@@ -579,7 +580,7 @@ package sql {
             val coherent = paramTypes.length == paramNames.length
       
             val names_types =  paramNames.zip(paramTypes).map( nt => 
-                (getQualifiedColumnName(clean(nt._1.toUpperCase())),nt._2)
+                (getQualifiedColumnName(clean(nt._1)),nt._2)
             )
 
             if(!coherent && names_types.map(_._1).exists(_.contains("outer")))
@@ -614,11 +615,17 @@ package sql {
     case class MetaDataItem(column:String,nullable:Boolean,clazz:String)
 
     case class MetaData(ms:List[MetaDataItem]) {
-        
-        lazy val dictionary= ms.map(m => (m.column,(m.nullable,m.clazz))).toMap
-        lazy val dictionary2:Map[String,(String,Boolean,String)] = {
+       def get(columnName:String) = {
+          val columnUpper = columnName.toUpperCase()
+          dictionary2.get(columnUpper)
+                     .orElse(dictionary.get(columnUpper))
+       }
+       private lazy val dictionary:Map[String,(String,Boolean,String)] =
+         ms.map(m => (m.column.toUpperCase(),(m.column,m.nullable,m.clazz))).toMap
+
+       private lazy val dictionary2:Map[String,(String,Boolean,String)] = {
             ms.map(m => {val Array(table,column)=m.column.split('.');
-            (column,(table,m.nullable,m.clazz))}).toMap
+            (column.toUpperCase(),(m.column,m.nullable,m.clazz))}).toMap
         }
 
     }
@@ -633,11 +640,12 @@ package sql {
   
         lazy val asList = data.zip(metaData.ms.map(_.nullable)).map(i=> if(i._2) Option(i._1) else i._1)
  
-        lazy val asMap = metaData.ms.map(_.column).zip(asList).toMap
+        lazy val asMap :scala.collection.Map[String,Any]=  metaData.ms.map(_.column.toUpperCase()).zip(asList).toMap
+
 
         private lazy val ColumnsDictionary:Map[String,Any] = metaData.ms.map(_.column).zip(data).toMap
 
-        def get[A](a:String)(implicit c:ColumnTo[A]):MayErr[SqlRequestError,A] = c.transform(this,a.toUpperCase)
+        def get[A](a:String)(implicit c:ColumnTo[A]):MayErr[SqlRequestError,A] = c.transform(this,a)
 
         private def getType(t:String) = t match {
             case "long" => Class.forName("java.lang.Long")
@@ -648,9 +656,7 @@ package sql {
  
         private[sql] def get1(a:String):MayErr[SqlRequestError,Any] = {
             for(
-                meta <- metaData.dictionary2.get(a).map(m=>(m._1+"."+a,m._2,m._3))
-                                .orElse(metaData.dictionary.get(a).map(m=> (a,m._1,m._2)))
-                                .toRight(ColumnNotFound(a));
+                meta <- metaData.get(a).toRight(ColumnNotFound(a));
                 val (qualified,nullable,clazz) = meta;
                 result <- ColumnsDictionary.get(qualified).toRight(ColumnNotFound(qualified))
             ) yield result    
@@ -797,7 +803,7 @@ package sql {
             val meta = rs.getMetaData()
             val nbColumns = meta.getColumnCount()
             MetaData(List.range(1,nbColumns+1).map(i =>
-                MetaDataItem(column = ( meta.getTableName(i) + "." + meta.getColumnName(i) ).toUpperCase,
+                MetaDataItem(column = ( meta.getTableName(i) + "." + meta.getColumnName(i) ),
                                 nullable = meta.isNullable(i)==columnNullable,
                                 clazz = meta.getColumnClassName(i)
                 )
