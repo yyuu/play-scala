@@ -89,7 +89,7 @@ private[cache] object ScalaCache extends CacheDelegate {
         }
         
     }
-
+    // Refactor this, you need to have a specific type to avoid implicits conflicts
     object Instances {
         implicit def isDesirable[A](o: Option[A]): Boolean = o.isDefined
         implicit def isDesirableSeq[A, B[X] <: Seq[X]](seq: B[A]): Boolean = seq.nonEmpty

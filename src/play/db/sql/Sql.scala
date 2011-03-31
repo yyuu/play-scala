@@ -152,17 +152,6 @@ package sql {
 
     }
 
-    case class StreamReader[T](s: Stream[T]) extends scala.util.parsing.input.Reader[Either[EndOfStream,T]] {
-  
-        def first = s.headOption.toRight(EndOfStream())
-        def rest = new StreamReader(s.drop(1))
-        def pos = scala.util.parsing.input.NoPosition
-        def atEnd = s.isEmpty
-
-    }
-
-    case class EndOfStream()
-
     import SqlParser.~
     import SqlParser.Parser
 
@@ -189,7 +178,19 @@ package sql {
     }
 
     trait SqlParser extends scala.util.parsing.combinator.PackratParsers {
-            
+          
+
+        case class StreamReader[T](s:Stream[T]) extends PackratReader[Either[EndOfStream,T]]( new scala.util.parsing.input.Reader[Either[EndOfStream,T]] {
+  
+          def first = s.headOption.toRight(EndOfStream())
+          def rest = new StreamReader(s.drop(1))
+          def pos = scala.util.parsing.input.NoPosition
+          def atEnd = s.isEmpty
+
+        })
+
+        case class EndOfStream()
+
         type Elem = Either[EndOfStream,Row]
   
         import scala.collection.generic.CanBuildFrom
