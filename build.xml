@@ -2,43 +2,41 @@
 
 <project name="Scala" default="build" basedir=".">
 
-	<property name="play.path" value="/opt/local/lib/play-core" />
-
     <path id="project.classpath">
         <pathelement path="${play.path}/framework/classes"/>
         <fileset dir="${play.path}/framework/lib">
             <include name="*.jar"/>
         </fileset> 
         <fileset dir="lib">
-		<include name="*.jar"/>
-		<exclude name="play-scala*.jar"/>
+        <include name="*.jar"/>
+        <exclude name="play-scala*.jar"/>
         </fileset>
         <pathelement path="tmp/classes"/>
     </path>
-
-    <target name="apidoc">
-
-	 <delete dir="documentation/api" />
-
-	 <mkdir dir="documentation/api" />
-	
-	<taskdef resource="scala/tools/ant/antlib.xml">
-            <classpath refid="project.classpath" />
-        </taskdef>
-	<scaladoc destdir="documentation/api" srcdir="src" doctitle="play scala API documentation">
-	    <include name="**/*.scala"   />
-            <classpath refid="project.classpath" />
-	</scaladoc>	
+    
+    <target name="check" unless="play.path">
+        <echo message="Please specify Play framework path using -Dplay.path=/path/to/framework/home" />
     </target>
 
-    <target name="build">
+    <target name="apidoc">
+        <delete dir="documentation/api" />
+        <mkdir dir="documentation/api" />    
         <taskdef resource="scala/tools/ant/antlib.xml">
             <classpath refid="project.classpath" />
         </taskdef>
+        <scaladoc destdir="documentation/api" srcdir="src" doctitle="play scala API documentation">
+            <include name="**/*.scala"   />
+            <classpath refid="project.classpath" />
+        </scaladoc> 
+    </target>
 
-        <delete dir="tmp" />
-	
-	<mkdir dir="tmp/classes" />
+    <target name="build" depends="check">
+        <echo message="ANT_OPTS='-Xms512m -Xmx1024m' is recommended" />
+        <taskdef resource="scala/tools/ant/antlib.xml">
+            <classpath refid="project.classpath" />
+        </taskdef>
+        <delete dir="tmp" />    
+        <mkdir dir="tmp/classes" />
 
         <javac srcdir="src" destdir="tmp/classes" debug="true">
             <classpath refid="project.classpath" />
@@ -112,6 +110,5 @@
             </condition>
         </fail>
     </target>
-
 
 </project>

@@ -9,6 +9,10 @@ class ScalaAction(action: => Any) extends Result {
     val actionDefinition = ControllerDelegate.reverseForScala 
   
     action 
+    
+    if(actionDefinition.url == null) {
+        throw new play.exceptions.NoRouteFoundException(action.toString(), null)
+    }
   
     val delegate = new Redirect(actionDefinition.url) 
 

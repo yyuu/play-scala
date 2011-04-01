@@ -114,13 +114,11 @@ object Application extends Controller with Secure {
         
         info("Yop %d", 9)
         
-        val users = asScala[User].find("byPassword", "88style").fetch
-        
         response <<< OK
         response <<< "YOUHOUxxx" 
         response <<< "X-Yop" -> "hope"
         
-        Template('name -> name, 'age-> age, 'yop -> yop, 'users -> users)
+        "OK " + name
     }
     
     def addOne() = {
@@ -129,8 +127,8 @@ object Application extends Controller with Secure {
         index()
     }
     
-    def goJojo() {
-        anotherIndex(name="Jojo") 
+    def goJojo() = {
+        Action(anotherIndex(name="Jojo"))
     }
     
     def api = Xml(<items><item id="3">Yop</item></items>) 
