@@ -27,8 +27,11 @@ class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
    
       val in= StreamReader(Stream.range(1,100).map(i => MockRow(List("comment no:"+i, "nameb"),metaData)))
       commit((str("COMMENT1")))* (in) should be (Error(ColumnNotFound("COMMENT1").toString,in))
+      
+      ((str("COMMENT1")) ?)(in).get should be (None)
 
       (str("COMMENT1"))+ (in) should be (Failure(ColumnNotFound("COMMENT1").toString,in))
+
       (str("COMMENT"))* (in) should be (Success(List(),in))
 
       str("TASK.COMMENT")+ (in) should be (
@@ -38,7 +41,7 @@ class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
         Failure(UnexpectedNullableFound("TASK.COMMENT").toString,in))
 
           import Magic._
-      (Task)* (in) should be(Success(List(),in))
+      Task* (in) should be(Success(List(),in))
       (Task)+ (in) should be(
         Failure(UnexpectedNullableFound("TASK.COMMENT").toString,in))
 

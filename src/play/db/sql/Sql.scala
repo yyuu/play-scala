@@ -710,7 +710,7 @@ package sql {
 
         def singleOption(conn:java.sql.Connection=connection):Option[T] = as((defaultParser)?)
   
-        def first(conn:java.sql.Connection=connection):Option[T] = as((guard(acceptMatch("not at end",{case Right(_) => Unit})) ~> commit(defaultParser) )?,false)
+        def first(conn:java.sql.Connection=connection):Option[T] = parse((guard(acceptMatch("not at end",{case Right(_) => Unit})) ~> commit(defaultParser) )?)
 
         def getFilledStatement(connection:java.sql.Connection) = {
             val s =connection.prepareStatement(sql.query,java.sql.Statement.RETURN_GENERATED_KEYS)
@@ -762,7 +762,9 @@ package sql {
   
         import SqlParser._
   
-        def as[T](parser:Parser[T],consumeAllInput:Boolean=true, conn:java.sql.Connection=connection):T = Sql.as[T](parser,consumeAllInput,resultSet(connection))
+        def as[T](parser:Parser[T], conn:java.sql.Connection=connection):T = Sql.as[T](parser,true,resultSet(connection))
+
+        def parse[T](parser:Parser[T], conn:java.sql.Connection=connection):T = Sql.as[T](parser,false,resultSet(connection))
 
         def execute(conn:java.sql.Connection=connection):Boolean = getFilledStatement(connection).execute()
 
@@ -823,8 +825,13 @@ package sql {
         import SqlParser._
   
         def as[T](parser:Parser[T],consumeAllInput:Boolean=true,rs:java.sql.ResultSet):T =
-          (if(consumeAllInput) phrase(parser)
-           else parser)(StreamReader(resultSetToStream(rs))) match {
+           phrase(parser)(StreamReader(resultSetToStream(rs))) match {
+            case Success(a,_)=>a
+            case Failure(e,_)  => error(e)
+            case Error(e,_) => error(e) 
+           }
+      def parse[T](parser:Parser[T],rs:java.sql.ResultSet):T =
+          parser(StreamReader(resultSetToStream(rs))) match {
             case Success(a,_)=>a
             case Failure(e,_)  => error(e)
             case Error(e,_) => error(e) 
