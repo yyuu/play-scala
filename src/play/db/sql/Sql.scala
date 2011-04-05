@@ -762,9 +762,9 @@ package sql {
   
         import SqlParser._
   
-        def as[T](parser:Parser[T], conn:java.sql.Connection=connection):T = Sql.as[T](parser,true,resultSet(connection))
+        def as[T](parser:Parser[T], conn:java.sql.Connection=connection):T = Sql.as[T](parser,resultSet(connection))
 
-        def parse[T](parser:Parser[T], conn:java.sql.Connection=connection):T = Sql.as[T](parser,false,resultSet(connection))
+        def parse[T](parser:Parser[T], conn:java.sql.Connection=connection):T = Sql.parse[T](parser,resultSet(connection))
 
         def execute(conn:java.sql.Connection=connection):Boolean = getFilledStatement(connection).execute()
 
@@ -824,13 +824,14 @@ package sql {
         
         import SqlParser._
   
-        def as[T](parser:Parser[T],consumeAllInput:Boolean=true,rs:java.sql.ResultSet):T =
+        def as[T](parser:Parser[T], rs:java.sql.ResultSet):T =
            phrase(parser)(StreamReader(resultSetToStream(rs))) match {
             case Success(a,_)=>a
             case Failure(e,_)  => error(e)
             case Error(e,_) => error(e) 
-           }
-      def parse[T](parser:Parser[T],rs:java.sql.ResultSet):T =
+        }
+        
+        def parse[T](parser:Parser[T], rs:java.sql.ResultSet):T =
           parser(StreamReader(resultSetToStream(rs))) match {
             case Success(a,_)=>a
             case Failure(e,_)  => error(e)

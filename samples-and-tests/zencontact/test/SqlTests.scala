@@ -59,7 +59,7 @@ class SqlTests extends UnitFlatSpec with ShouldMatchers with BeforeAndAfterEach 
         
         import SqlParser._
         
-        val firstname ~ lastname = SQL("select * from Contact").as( 'FIRSTNAME.of[String] ~< 'NAME.of[String] )        
+        val firstname ~ lastname = SQL("select * from Contact").parse( 'FIRSTNAME.of[String] ~< 'NAME.of[String] )        
         firstname should be ("Maxime")
         lastname should be ("Dantec")
         

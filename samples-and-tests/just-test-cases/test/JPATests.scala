@@ -12,15 +12,6 @@ class JPATests extends UnitFlatSpec with ShouldMatchers {
     
     Fixtures.deleteAll()
     
-    "Java model" should "behave semi-normal" in {
-      val u = new JUser("peter@gmail.com","secret","peter").asScala[JUser].save()
-      u.email should be ("peter@gmail.com")
-      u.email = "nopeter@gmail.com"
-      u.asScala.save()
-      u.email should be ("nopeter@gmail.com")
-      asScala[JUser].findAll.size should be (1)
-    }
-    
     "Hibernate" should "save the new User" in {    
         
         new User("guillaume@toto.com", "secret", "Guillaume").save()

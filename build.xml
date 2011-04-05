@@ -15,7 +15,7 @@
     </path>
     
     <target name="check" unless="play.path">
-        <echo message="Please specify Play framework path using -Dplay.path=/path/to/framework/home" />
+        <fail message="Please specify Play framework path using -Dplay.path=/path/to/framework/home" />
     </target>
 
     <target name="apidoc">
