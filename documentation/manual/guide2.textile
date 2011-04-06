@@ -10,7 +10,7 @@ Because most model objects need to survive between application restarts, we have
 
 The Scala module includes a brand new data access layer called "Anorm":anorm that uses plain SQL to make your database request and provides several API to parse and transform the resulting dataset. 
 
-There is several way to use *Anorm*, depending of your need. In this tutorial we will use the most advanced one where we will automatically map the result of our SQL queries to a set of *case class* representing our data.
+There are several way to use *Anorm*, depending of your need. In this tutorial we will use the most advanced one where we will automatically map the result of our SQL queries to a set of *case class* representing our data.
 
 h2. <a>The User model</a>
 
@@ -329,17 +329,7 @@ bc. def byIdWithAuthorAndComments(id: Long):Option[(Post,User,List[Comment])] =
         """
     ).on("id" -> id).as( Post ~< User ~< Post.spanM( Comment ) ^^ flatten ? )
 
-We will also add an utility method to the *Comment* object to create a comment related to a Post:
-
-bc. object Comment extends Magic[Comment] {
-    
-    def apply(post_id: Long, author: String, content: String) = {
-        new Comment(NotAssigned, author, content, new Date(), post_id)
-    }
-    
-}
-
-Finally let's write our comments tests:
+Now it's time to test these new methods by writing a test case:
 
 bc. it should "support Comments" in {
     
@@ -362,106 +352,17 @@ bc. it should "support Comments" in {
     
 }
 
-bc. @Test
-public void postComments() {
-    // Create a new user and save it
-    User bob = new User("bob@gmail.com", "secret", "Bob").save();
- 
-    // Create a new post
-    Post bobPost = new Post(bob, "My first post", "Hello world").save();
- 
-    // Post a first comment
-    new Comment(bobPost, "Jeff", "Nice post").save();
-    new Comment(bobPost, "Tom", "I knew that !").save();
- 
-    // Retrieve all comments
-    List<Comment> bobPostComments = Comment.find("byPost", bobPost).fetch();
- 
-    // Tests
-    assertEquals(2, bobPostComments.size());
- 
-    Comment firstComment = bobPostComments.get(0);
-    assertNotNull(firstComment);
-    assertEquals("Jeff", firstComment.author);
-    assertEquals("Nice post", firstComment.content);
-    assertNotNull(firstComment.postedAt);
- 
-    Comment secondComment = bobPostComments.get(1);
-    assertNotNull(secondComment);
-    assertEquals("Tom", secondComment.author);
-    assertEquals("I knew that !", secondComment.content);
-    assertNotNull(secondComment.postedAt);
-}
-
-You can see that navigation between **Post** and **Comments** is not very easy: we need to use a query to retrieve all comments attached to a **Post**. We can do better by setting up the other side of the relationship with the **Post** class. 
-
-Add the **comments** field to the **Post** class:
-
-bc. ...
-@OneToMany(mappedBy="post", cascade=CascadeType.ALL)
-public List<Comment> comments;
- 
-public Post(User author, String title, String content) { 
-    this.comments = new ArrayList<Comment>();
-    this.author = author;
-    this.title = title;
-    this.content = content;
-    this.postedAt = new Date();
-}
-...
-
-Note how we have used the **mappedBy** attribute to tell JPA that the **Comment** class’s post field maintains the relationship. When you define a bi-directional relation with JPA it is very important to tell it which side will maintain the relationship. In this case, since the **Comments** belong to the **Post**, it’s better that the **Comment** class maintains the relationship.
-
-We have set the **cascade** property to tell JPA that we want **Post** deletion be cascaded to **comments**. This way, if you delete a post, all related comments will be deleted as well.
-
-With this new relationship, we will add a helper method to the **Post** class to simplify adding comments:
-
-bc. public Post addComment(String author, String content) {
-    Comment newComment = new Comment(this, author, content).save();
-    this.comments.add(newComment);
-    this.save();
-    return this;
-}
-
-Let’s write another test case to check that it works:
-
-bc. @Test
-public void useTheCommentsRelation() {
-    // Create a new user and save it
-    User bob = new User("bob@gmail.com", "secret", "Bob").save();
- 
-    // Create a new post
-    Post bobPost = new Post(bob, "My first post", "Hello world").save();
- 
-    // Post a first comment
-    bobPost.addComment("Jeff", "Nice post");
-    bobPost.addComment("Tom", "I knew that !");
- 
-    // Count things
-    assertEquals(1, User.count());
-    assertEquals(1, Post.count());
-    assertEquals(2, Comment.count());
- 
-    // Retrieve Bob's post
-    bobPost = Post.find("byAuthor", bob).first();
-    assertNotNull(bobPost);
- 
-    // Navigate to comments
-    assertEquals(2, bobPost.comments.size());
-    assertEquals("Jeff", bobPost.comments.get(0).author);
-    
-    // Delete the post
-    bobPost.delete();
-    
-    // Check that all comments have been deleted
-    assertEquals(1, User.count());
-    assertEquals(0, Post.count());
-    assertEquals(0, Comment.count());
-}
-
 Is it green?
 
-!images/guide2-2!
+Finally, we will add an helper method to the **Comment** object to simplify adding comments:
+
+bc. object Comment extends Magic[Comment] {
+    
+    def apply(post_id: Long, author: String, content: String) = {
+        new Comment(NotAssigned, author, content, new Date(), post_id)
+    }
+    
+}
 
 h2. <a>Using Fixtures to write more complicated tests</a>
 
@@ -470,75 +371,77 @@ When you start to write more complex tests, you often need a set of data to test
 Edit the **/yabe/test/data.yml** file and start to describe a User:
 
 bc. 
-User(bob):
-    email: bob@gmail.com
-    password: secret
-    fullname: Bob
+- !!models.User
+    id:             !!Id[Long] 1
+    email:          bob@gmail.com
+    password:       secret
+    fullname:       Bob
+    isAdmin:        true
  
 ...
- 
 
 Well, because the **data.yml** file is a litle big, you can "download it here":files/data.yml.
 
-Now we create a test case that loads this data and runs some assertions over it:
+Loading this Yaml file is pretty easy:
 
-bc. @Test
-public void fullTest() {
-    Fixtures.loadModels("data.yml");
- 
-    // Count things
-    assertEquals(2, User.count());
-    assertEquals(3, Post.count());
-    assertEquals(3, Comment.count());
- 
-    // Try to connect as users
-    assertNotNull(User.connect("bob@gmail.com", "secret"));
-    assertNotNull(User.connect("jeff@gmail.com", "secret"));
-    assertNull(User.connect("jeff@gmail.com", "badpassword"));
-    assertNull(User.connect("tom@gmail.com", "secret"));
- 
-    // Find all of Bob's posts
-    List<Post> bobPosts = Post.find("author.email", "bob@gmail.com").fetch();
-    assertEquals(2, bobPosts.size());
- 
-    // Find all comments related to Bob's posts
-    List<Comment> bobComments = Comment.find("post.author.email", "bob@gmail.com").fetch();
-    assertEquals(3, bobComments.size());
- 
-    // Find the most recent post
-    Post frontPost = Post.find("order by postedAt desc").first();
-    assertNotNull(frontPost);
-    assertEquals("About the model layer", frontPost.title);
- 
-    // Check that this post has two comments
-    assertEquals(2, frontPost.comments.size());
- 
-    // Post a new comment
-    frontPost.addComment("Jim", "Hello guys");
-    assertEquals(3, frontPost.comments.size());
-    assertEquals(4, Comment.count());
+bc. Yaml[List[Any]]("data.yml").foreach { 
+    _ match {
+        case u:User => User.create(u)
+        case p:Post => Post.create(p)
+        case c:Comment => Comment.create(c)
+    }
 }
 
-p(note). You can read more about Play and YAML in the "YAML manual page":yaml.
+The @Yaml@ helper transforms the Yaml data into class instances, and we use than the @Magic@ objects to insert these instances into the database.
 
-h2. <a>Save your work</a>
+Now we create a test case that loads these data and runs some assertions over it:
+
+bc. it should "load a complex graph from Yaml" in {
+    
+    Yaml[List[Any]]("data.yml").foreach { 
+        _ match {
+            case u:User => User.create(u)
+            case p:Post => Post.create(p)
+            case c:Comment => Comment.create(c)
+        }
+    }
+    
+    User.count().single() should be (2)
+    Post.count().single() should be (3)
+    Comment.count().single() should be (3)
+    
+    User.connect("bob@gmail.com", "secret") should not be (None)
+    User.connect("jeff@gmail.com", "secret") should not be (None)
+    User.connect("jeff@gmail.com", "badpassword") should be (None)
+    User.connect("tom@gmail.com", "secret") should be (None)
+    
+    val allPostsWithAuthorAndComments = Post.allWithAuthorAndComments
+    
+    allPostsWithAuthorAndComments.length should be (3) 
+    
+    val (post,author,comments) = allPostsWithAuthorAndComments(2)
+    post.title should be ("About the model layer")
+    author.fullname should be ("Bob")
+    comments.length should be (2)
+    
+    // We have a referential integrity error error
+    User.delete("email={email}")
+        .on("email"->"bob@gmail.com").executeUpdate().isLeft should be (true)
+    
+    Post.delete("author_id={id}")
+        .on("id"->1).executeUpdate().isRight should be (true)
+        
+    User.delete("email={email}")
+        .on("email"->"bob@gmail.com").executeUpdate().isRight should be (true)
+    
+    User.count().single() should be (1)
+    Post.count().single() should be (1)
+    Comment.count().single() should be (0)
+    
+}
+
+<hr>
 
 We have now finished a huge part of the blog engine. Now that we have created and tested all these things, we can start to develop the web application itself.
-
-But before continuing, it’s time to save your work using Bazaar. Open a command line and type **bzr st** to see the modifications made since the last commit:
-
-bc. $ bzr st
-
-As you can see, some new files are not under version control. The **test-result** folder doesn’t need to be versioned, so let’s ignore it.
-
-bc. $ bzr ignore test-result
-
-Add all the other files to version control using **bzr add**.
-
-bc. $ bzr add
-
-You can now commit your project.
-
-bc. $ bzr commit -m "The model layer is ready"
 
 p(note). Go to the %(next)"Building the first screen":guide3%. 

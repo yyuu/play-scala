@@ -66,15 +66,15 @@ It will prompt you for the application full name. Type **Yet Another Blog Engine
 
 The **play new** command creates a new directory **yabe/** and populates it with a series of files and directories, the most important being:
 
-**app/** contains the application’s core. This is the directory where **.scala** source files live.
+* **app/** contains the application’s core. This is the directory where **.scala** source files live.
 
-**conf/** contains all the configuration files for the application, especially the main **application.conf** file, the **routes** definition files, the **dependencies.yml** file, and the **messages** files used for internationalization.
+* **conf/** contains all the configuration files for the application, especially the main **application.conf** file, the **routes** definition files, the **dependencies.yml** file, and the **messages** files used for internationalization.
 
-**lib/** contains all optional Java or Scala libraries packaged as standard **.jar** files.
+* **lib/** contains all optional Java or Scala libraries packaged as standard **.jar** files.
 
-**public/** contains all the publicly available resources, which includes JavaScript files, stylesheets and images directories.
+* **public/** contains all the publicly available resources, which includes JavaScript files, stylesheets and images directories.
 
-**test/** contains all the application tests. Tests are either written either as ScalaTest tests or as Selenium tests.
+* **test/** contains all the application tests. Tests are either written either as ScalaTest tests or as Selenium tests.
 
 As you see, the **conf/dependencies.yml** dependencies configuration file is automatically configured with the Scala dependency:
 
@@ -210,6 +210,8 @@ As you can see in the comments, you can easily set-up any JDBC compliant databas
 Now, go back to your browser and refresh the welcome page. Play will automatically start the database. Check for this line in the application logs:
 
 bc. INFO  ~ Connected to jdbc:h2:mem:play
+
+<hr>
 
 p(note). Go to the %(next)"A first iteration of the data model":guide2%. 
 

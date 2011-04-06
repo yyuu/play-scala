@@ -272,9 +272,9 @@ package anorm {
                 )
         }
 
-        def spanM[A](by:(Row=> MayErr[SqlRequestError,Any]),a:Parser[A]):Parser[Seq[A]] = {
+        def spanM[A](by:(Row=> MayErr[SqlRequestError,Any]),a:Parser[A]):Parser[List[A]] = {
             val d=guard(by)
-            d >> (first => Parser[Seq[A]] { in =>
+            d >> (first => Parser[List[A]] { in =>
                 //instead of cast it'd be much better to override type Reader
                 {
                     val (groupy,rest) =in.asInstanceOf[StreamReader[Row]].s.span(by(_).right.toOption.exists(r=>r==first))
@@ -478,7 +478,7 @@ package anorm {
             }))
         }
 
-        def spanM[B](b:Parser[B]) : Parser[Seq[B]] = span(b *)
+        def spanM[B](b:Parser[B]) : Parser[List[B]] = span(b *)
         
     }
 
