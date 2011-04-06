@@ -135,22 +135,22 @@ h2. Dealing with Nullable columns
 
 If a column is defined as **Nullable** in the database schema, you need to manipulate it as an @Option@ type.
 
-For example, the **indepYear** of the **Country** table being nullable, you need to match it as @Option[Int]@:
+For example, the **indepYear** of the **Country** table being nullable, you need to match it as @Option[Short]@:
 
 bc. SQL("Select name,indepYear from Country")().collect {
-    case Row(name:String, Some(year:Int)) => name -> year
+    case Row(name:String, Some(year:Short)) => name -> year
 }
 
-If you try to match this column as @Int@ it won't match. If you try to retrieve the column content as @Int@ directly from the dictionnary:
+If you try to match this column as @Short@ it won't match. If you try to retrieve the column content as @Short@ directly from the dictionnary:
 
 bc. SQL("Select name,indepYear from Country")().map { row =>
-    row[String]("name") -> row[Int]("indepYear")
+    row[String]("name") -> row[Short]("indepYear")
 }
 
-It will produce an @UnexpectedNullableFound(COUNTRY.INDEPYEAR)@ exception. So you need to map it properly to an @Option[Int]@, as:
+It will produce an @UnexpectedNullableFound(COUNTRY.INDEPYEAR)@ exception. So you need to map it properly to an @Option[Short]@, as:
 
 bc. SQL("Select name,indepYear from Country")().map { row =>
-    row[String]("name") -> row[Option[Int]]("indepYear")
+    row[String]("name") -> row[Option[Short]]("indepYear")
 }
 
 This rule is also true for the parser API we will just see.
@@ -158,6 +158,8 @@ This rule is also true for the parser API we will just see.
 h2. Using the Parser combinator API
 
 The "Scala Parsers API":http://www.scala-lang.org/api/current/scala/util/parsing/combinator/Parsers.html provides generic parser combinators. Play Scala can use them to parse the result of any Select query.
+
+p(note). First you need to import @play.db.sql.SqlParser._@.
 
 Use the @as(…)@ method of the SQL statement to specify the parser you want to use. For example @scalar[Long]@ is a simple parser that knows how to parse a single column row as @Long@:
 
@@ -187,7 +189,17 @@ bc. val populations:List[String~Int] = {
     ) 
 }
 
-Let's try with a more complicated example. How to parse the result of the following query?
+When you parse a *ResultSet* using @as(…)@ it must consume all the input. If your parser doesn't consume all the available input, an error will be thrown. It avoids to have your parser fails silently.
+
+If you want to parse only a small part of the input, you can use @parse(…)@ instead of @as(…)@. However use it with caution, as it make it more difficult to detect errors in your code:
+
+bc. val onePopulation:String~Int = {
+    SQL("select * from Country").parse( 
+        str("name") ~< int("population")
+    )
+}
+
+Now let's try with a more complicated example. How to parse the result of the following query?
 
 bc. select c.name, c.code, l.language from Country c 
     join CountryLanguage l on l.CountryCode = c.Code 

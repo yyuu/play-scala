@@ -78,6 +78,10 @@
         </antcall>
         
         <antcall target="play-test">
+            <param name="testAppPath" value="${basedir}/samples-and-tests/play-with-scala"/>
+        </antcall>
+        
+        <antcall target="play-test">
             <param name="testAppPath" value="${basedir}/samples-and-tests/yabe"/>
         </antcall>
         

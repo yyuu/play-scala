@@ -92,7 +92,7 @@ trait Scala {
             e.left.map(m => {play.Logger.error(m.toString); m}).right.toOption
         }
         
-        def get = e.fold(e => throw new Error(e.toString), a=>a)
+        def get = e.fold(e => throw new RuntimeException(e.toString), a=>a)
     }
     
     object MayErr{

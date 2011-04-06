@@ -100,6 +100,16 @@ package sql {
                 }            
             })
         } 
+        
+        implicit def rowToShort: Column[Short] = {
+            Column[Short](transformer = { (value, meta) =>
+                val MetaDataItem(qualified,nullable,clazz) = meta
+                value match {
+                    case short:Short => Right(short)
+                    case _ => Left(TypeDoesNotMatch("Cannot convert " + value + " to Short for column " + qualified))
+                }            
+            })
+        }
 
         implicit def rowToBoolean: Column[Boolean] = {
             Column[Boolean](transformer = { (value, meta) =>
@@ -554,7 +564,10 @@ package sql {
         val m:ClassManifest[T]
         val tableName:Option[String] = None
         
-        def clean(fieldName:String) = fieldName.split('$').last.toUpperCase()
+        def clean(scalaName:String) =
+            scalaName.split('$').reverse.find( 
+                part => part.size > 0 && !part.matches("^[0-9]+$")
+            ).getOrElse(throw new RuntimeException("Unable to clean " + scalaName)).toUpperCase()
   
         val typeName = clean(m.erasure.getSimpleName)
 
@@ -573,10 +586,11 @@ package sql {
 
             val (cons,paramTypes,paramNames) = m.erasure
                                                 .getConstructors()
+                                                .filter( _.getGenericParameterTypes().length > 0 )
                                                 .sortBy(- _.getGenericParameterTypes().length)
                                                 .find(isConstructorSupported)
                                                 .map(c=>(c,c.getGenericParameterTypes().map(manifestFor),getParametersNames(c)))
-                                                .getOrElse(throw new java.lang.Error("no supported constructors for type " +m))
+                                                .getOrElse(throw new java.lang.RuntimeException("no supported constructors for type " +m))
 
             val coherent = paramTypes.length == paramNames.length
       
@@ -585,13 +599,15 @@ package sql {
             )
 
             if(!coherent && names_types.map(_._1).exists(_.contains("outer")))
-                throw new java.lang.Error("It seems that your class uses a closure to an outer instance. For MagicParser, please use only top level classes.")
+                throw new java.lang.RuntimeException("It seems that your class uses a closure to an outer instance. For MagicParser, please use only top level classes.")
 
-            if(!coherent) throw new java.lang.Error("not coherent to me!")
+            if(!coherent) throw new java.lang.RuntimeException("not coherent to me!")
       
             val names_methods = handling(classOf[NoSuchMethodException])
                   .by(e =>throw new RuntimeException( "The elected constructor doesn't have corresponding methods for all its parameters. "+e.toString))
                   .apply(paramNames.map(name=>(clean(name),m.erasure.getDeclaredMethod(name))))
+                  
+            play.Logger.trace("Constructor " + cons + " elected for " + typeName)
 
             (cons,names_types,names_methods)
         }
