@@ -233,7 +233,7 @@ class WorldTests extends UnitFlatSpec with ShouldMatchers {
                 join City v on v.id = c.capital 
                 where c.code = {code}
             """
-        ).on("code" -> "FRA").as( (City ~< Country).span(CountryLanguage*) ? )
+        ).on("code" -> "FRA").as( City ~< Country ~< Country.span(CountryLanguage*) ? )
         
         capital should be (City(Id(2974), "Paris"))
         country should be (Country(Id("FRA"), "France", 59225700, Some("Nicolas S.")))

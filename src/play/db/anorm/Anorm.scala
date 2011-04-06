@@ -462,9 +462,9 @@ package anorm {
    
         def ~<[B](other: Parser[B]):Parser[T ~ B] = (this:Parser[T]).~<(other)
 
-        def span[B](p:Parser[B]) : Parser[T ~ B] = {
+      def span[B](p:Parser[B]) : Parser[B] = {
             val d = guard(uniqueId)
-            guard(this) ~ ( d >> (first => Parser[B] {in =>
+           ( d >> (first => Parser[B] {in =>
                 //instead of cast it'd be much better to override type Reader
                 { 
                     val (groupy,rest) = in.asInstanceOf[StreamReader[Row]].s.span(uniqueId(_).right.toOption.exists(r=>r==first));
@@ -478,7 +478,7 @@ package anorm {
             }))
         }
 
-        def spanM[B](b:Parser[B]) : Parser[T ~ Seq[B]] = span(b *)
+        def spanM[B](b:Parser[B]) : Parser[Seq[B]] = span(b *)
         
     }
 

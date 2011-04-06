@@ -88,7 +88,7 @@ class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
     
     // "magical" groupBy
     import Magic._
-    val parsePeople = (Person spanM Comment) ^^ 
+    val parsePeople = Person ~< (Person spanM Comment) ^^ 
                       {case  p ~ cs  => p.copy(comments=cs) } *;
 
     ( parsePeople (StreamReader(in)) get ) should be (
