@@ -1,4 +1,4 @@
-package play.db.sql
+package play.db.anorm
 
 import java.{lang => jl}
 import java.lang.reflect.{ Type => JType, Array => _, _ }

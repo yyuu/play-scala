@@ -2,8 +2,8 @@ package models
 
 import java.util.{Date}
 
-import play.db.sql._
-import play.db.sql.SqlParser._
+import play.db.anorm._
+import play.db.anorm.SqlParser._
 
 // User
 

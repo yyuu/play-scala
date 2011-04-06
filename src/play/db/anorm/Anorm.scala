@@ -1,6 +1,6 @@
 package play.db
 
-package object sql {
+package object anorm {
     
     implicit def sqlToSimple(sql:SqlQuery): SimpleSql[Row] = sql.asSimple
     implicit def sqlToBatch(sql:SqlQuery): BatchSql = sql.asBatch
@@ -11,7 +11,7 @@ package object sql {
     
 }
 
-package sql {
+package anorm {
 
     import play.utils.Scala.MayErr
     import play.utils.Scala.MayErr._
@@ -653,7 +653,7 @@ package sql {
   
         import scala.reflect.Manifest
   
-        protected[sql] val data:List[Any]
+        protected[anorm] val data:List[Any]
   
         lazy val asList = data.zip(metaData.ms.map(_.nullable)).map(i=> if(i._2) Option(i._1) else i._1)
  
@@ -670,7 +670,7 @@ package sql {
             case _ => Class.forName(t)
         }
  
-        private[sql] def get1(a:String):MayErr[SqlRequestError,Any] = {
+        private[anorm] def get1(a:String):MayErr[SqlRequestError,Any] = {
             for(
                 meta <- metaData.get(a).toRight(ColumnNotFound(a));
                 val (qualified,nullable,clazz) = meta;

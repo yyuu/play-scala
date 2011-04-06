@@ -34,7 +34,7 @@ The Scala version of Play framework share the same philosophy and concepts than 
 ### "Safe navigation for Option types":templates#SafenavigationforOptiontypes
 ### "Litteral access to elements of a Seq":templates#LitteralaccesstoelementsofaSeq
 ## "Database access options":database
-### "Using plain old SQL requests":database#UsingplainoldSQLrequests
+### "Using Anorm":database#UsingAnorm
 ### "Using JPA":database#UsingJPA
 ### "Integrating other existing Database access librairies":database#IntegratingotherexistingDatabaseaccesslibrairies
 ## "Testing your application":test
@@ -43,14 +43,14 @@ The Scala version of Play framework share the same philosophy and concepts than 
 ### "Functional suite Style":test#FunctionalsuiteStyle
 ### "Specification Style":test#SpecificationStyle
 ### "Features list Style":test#FeatureslistStyle
-# "SQL data access with Play Scala":sql
-## "Overview":sql#Overview
-## "Executing SQL requests":sql#ExecutingSQLrequests
-## "Retrieving data using the Stream API":sql#RetrievingdatausingtheStreamAPI
-## "Using Pattern Matching":sql#UsingPatternMatching
-## "Dealing with Nullable columns":sql#DealingwithNullablecolumns
-## "Using the Parser combinator API":sql#UsingtheParsercombinatorAPI
-## "Adding some Magic[T]":sql#AddingsomeMagicT
+# "Anorm, SQL data access with Play Scala":anorm
+## "Overview":anorm#Overview
+## "Executing SQL requests":anorm#ExecutingSQLrequests
+## "Retrieving data using the Stream API":anorm#RetrievingdatausingtheStreamAPI
+## "Using Pattern Matching":anorm#UsingPatternMatching
+## "Dealing with Nullable columns":anorm#DealingwithNullablecolumns
+## "Using the Parser combinator API":anorm#UsingtheParsercombinatorAPI
+## "Adding some Magic[T]":anorm#AddingsomeMagicT
 
 h2. Tutorial — Play Scala guide, a real world app step-by-step
 

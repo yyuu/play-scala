@@ -1,5 +1,5 @@
 import play.test._
-import play.db.sql._
+import play.db.anorm._
 
 import models._
 

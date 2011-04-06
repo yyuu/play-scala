@@ -1,6 +1,6 @@
 package models
 
-import play.db.sql._
+import play.db.anorm._
 import play.data.validation.Annotations._
 
 import java.util._

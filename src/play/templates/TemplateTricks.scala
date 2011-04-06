@@ -49,7 +49,7 @@ object CustomGroovy {
                 delegate.isDefined()
             }
             
-            play.db.sql.Pk.metaClass.asBoolean = { -> 
+            play.db.anorm.Pk.metaClass.asBoolean = { -> 
                 delegate.isAssigned()
             }        
             

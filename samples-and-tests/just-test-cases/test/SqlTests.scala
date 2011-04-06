@@ -5,7 +5,7 @@ import org.scalatest.junit._
 import org.scalatest._
 import org.scalatest.matchers._
 
-import play.db.sql._
+import play.db.anorm._
 import SqlParser._ 
 
 // Constructors with unspported type of parameter won't be picked
@@ -57,13 +57,13 @@ class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
         List.range(1,100).map(i=>new Task("comment no:"+i)))
   }
   @Test def testNullables {
-    import play.db.sql.Row._
+    import play.db.anorm.Row._
      val metaData=meta("PERSON.ID"->(true,classOf[java.lang.Integer]))
      val in= StreamReader(Stream.range(1,100).map(i=>MockRow(List( if(i % 2 ==0) i else null),metaData)))
      println(commit((get[Option[Int]]("PERSON.ID")) +)(in) )
   } 
   @Test def testNullInNonNullable {
-    import play.db.sql.Row._
+    import play.db.anorm.Row._
      val metaData=meta("PERSON.ID"->(false,classOf[java.lang.Integer]))
      val in= StreamReader(Stream.range(1,2).map(i=>MockRow(List(null),metaData)))
      println(commit((get[Int]("PERSON.ID")) +)(in) )
@@ -159,7 +159,7 @@ class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
     play.db.DB.execute("""insert into Post Values('1','Text','Functional Web','non','It rocks!')""")
     play.db.DB.execute("""insert into Post Values('1','Text','Functional Web','non','It rocks!')""")
     import Row._
-     play.db.sql.Sql.sql("select * from Post")
+     play.db.anorm.Sql.sql("select * from Post")
               .as( 'TYPE.is("Text") ~> Text |
                    'TYPE.is("Link") ~> Link +) should be (
                      List(Link("1","zengularity","http://www.zengularity.com"),

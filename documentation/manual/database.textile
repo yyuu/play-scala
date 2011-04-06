@@ -2,13 +2,13 @@ h1. Database access options
 
 Most of your applications will need to access to a database. This page describe options you have to manage an SQL database from a Play Scala application.
 
-h2. Using plain old SQL requests
+h2. Using Anorm
 
-The Scala module includes a brand new data access layer that uses plain SQL to make your database request and provides several API to parse and transform the resulting dataset. 
+The Scala module includes a brand new data access layer called *Anorm* that uses plain SQL to make your database request and provides several API to parse and transform the resulting dataset. 
 
 We believe that it is the best way to access your relational databases from Scala and this component will be encouraged and fully integrated with the rest of the Play Scala stack.
 
-Please check the "complete manual":sql for more information.
+Please check the "complete manual":anorm for more information.
 
 h2. Using JPA
 

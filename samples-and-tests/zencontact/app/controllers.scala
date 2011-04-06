@@ -8,7 +8,7 @@ import java.util.Date
 
 import models._
 
-import play.db.sql._
+import play.db.anorm._
 
 object Application extends Controller {
     

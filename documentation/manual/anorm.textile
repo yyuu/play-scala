@@ -1,6 +1,8 @@
-h1. SQL data access with Play Scala
+h1. Anorm, SQL data access with Play Scala
 
-The Scala module includes a brand new data access layer that uses plain SQL to make your database request and provides several API to parse and transform the resulting dataset. 
+The Scala module includes a brand new data access layer called *Anorm* that uses plain SQL to make your database request and provides several API to parse and transform the resulting dataset. 
+
+bq. *Anorm is Not a Object Relational Mapper*
 
 p(note). In the following documentation, we will use the "MySQL world sample database":http://dev.mysql.com/doc/world-setup/en/world-setup.html. 
  
@@ -46,9 +48,9 @@ h2. Executing SQL requests
 
 To start you need to learn how to execute SQL requests. 
 
-Well, import @play.db.sql._@, and then simply use the @SQL@ object to create queries.
+Well, import @play.db.anorm._@, and then simply use the @SQL@ object to create queries.
 
-bc. import play.db.sql._ 
+bc. import play.db.anorm._ 
  
 val result:Boolean = SQL("Select 1").execute()
 
@@ -159,7 +161,7 @@ h2. Using the Parser combinator API
 
 The "Scala Parsers API":http://www.scala-lang.org/api/current/scala/util/parsing/combinator/Parsers.html provides generic parser combinators. Play Scala can use them to parse the result of any Select query.
 
-p(note). First you need to import @play.db.sql.SqlParser._@.
+p(note). First you need to import @play.db.anorm.SqlParser._@.
 
 Use the @as(…)@ method of the SQL statement to specify the parser you want to use. For example @scalar[Long]@ is a simple parser that knows how to parse a single column row as @Long@:
 

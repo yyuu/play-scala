@@ -209,15 +209,21 @@ def waitFor(process, pattern):
     timer.start()
     while True:
         line = process.stdout.readline().strip()
+        if timeoutOccured:
+            return False
         if line == '@KILLED':
             return False
-        print line
+        if line: print line
         if line.count(pattern):
             timer.cancel()
             return True
 
+timeoutOccured = False
+
 def timeout(process):
+    global timeoutOccured
     print '@@@@ TIMEOUT !'
+    timeoutOccured = True
     killPlay()
 
 def killPlay():

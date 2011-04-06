@@ -1,4 +1,4 @@
-package play.db.sql
+package play.db.anorm
 
 import scala.util.parsing.combinator._
 

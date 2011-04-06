@@ -4,7 +4,7 @@ import java.lang.reflect.{Type, ParameterizedType}
 import java.lang.annotation.Annotation
 
 import play.data.binding._
-import play.db.sql._
+import play.db.anorm._
 
 class PkBinder extends TypeBinder[Pk[_]] {
 

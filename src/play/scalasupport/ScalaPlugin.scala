@@ -40,7 +40,7 @@ class ScalaPlugin extends PlayPlugin {
     
     override def onLoad {
         play.templates.CustomGroovy()
-        play.data.binding.Binder.register(classOf[play.db.sql.Pk[_]], new PkBinder())
+        play.data.binding.Binder.register(classOf[play.db.anorm.Pk[_]], new PkBinder())
         play.data.binding.Binder.register(classOf[Option[_]], new OptionBinder())
     }
   
@@ -72,15 +72,15 @@ class ScalaPlugin extends PlayPlugin {
                 val result = play.data.binding.Binder.bind(name, parameterClass.asInstanceOf[Class[_]], parameterClass, annotations, params)
                 Option(result)
             }
-            case c if c == classOf[play.db.sql.Pk[_]] => {
+            case c if c == classOf[play.db.anorm.Pk[_]] => {
                 val parameterClass = t.asInstanceOf[java.lang.reflect.ParameterizedType].getActualTypeArguments()(0)
                 val result = play.data.binding.Binder.bind(name, parameterClass.asInstanceOf[Class[_]], parameterClass, annotations, params)
-                play.db.sql.Id(result)
+                play.db.anorm.Id(result)
             }
-            case c if c == classOf[play.db.sql.Id[_]] => {
+            case c if c == classOf[play.db.anorm.Id[_]] => {
                 val parameterClass = t.asInstanceOf[java.lang.reflect.ParameterizedType].getActualTypeArguments()(0)
                 val result = play.data.binding.Binder.bind(name, parameterClass.asInstanceOf[Class[_]], parameterClass, annotations, params)
-                play.db.sql.Id(result)
+                play.db.anorm.Id(result)
             }
             case _ => null
        }
@@ -88,8 +88,8 @@ class ScalaPlugin extends PlayPlugin {
     
     override def unBind(o:Any, name:String) = {
         o match {
-            case play.db.sql.Id(id) => Map(name -> id).asInstanceOf[Map[String,AnyRef]]
-            case play.db.sql.NotAssigned => null
+            case play.db.anorm.Id(id) => Map(name -> id).asInstanceOf[Map[String,AnyRef]]
+            case play.db.anorm.NotAssigned => null
             case Some(v) => Map(name -> v).asInstanceOf[Map[String,AnyRef]]
             case None => null
             case _ => null

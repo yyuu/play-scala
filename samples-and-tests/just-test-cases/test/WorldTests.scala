@@ -12,7 +12,7 @@ class WorldTests extends UnitFlatSpec with ShouldMatchers {
     Fixtures.deleteDatabase
     Fixtures.executeSQL(Play.getFile("test/world.sql"))
     
-    import play.db.sql._
+    import play.db.anorm._
     
     it should "Execute SQL requests" in {
         
@@ -118,7 +118,7 @@ class WorldTests extends UnitFlatSpec with ShouldMatchers {
         
     }
     
-    import play.db.sql.SqlParser._
+    import play.db.anorm.SqlParser._
     
     it should "Use the Parser combinator API" in {
         
@@ -248,8 +248,8 @@ class WorldTests extends UnitFlatSpec with ShouldMatchers {
 
 }
 
-import play.db.sql._
-import play.db.sql.SqlParser._
+import play.db.anorm._
+import play.db.anorm.SqlParser._
 
 object CountryLanguage extends Magic[CountryLanguage]
 object City extends Magic[City]
