@@ -56,9 +56,9 @@ h2. Tutorial — Play Scala guide, a real world app step-by-step
 
 Here is the Scala version of the well known **‘Yet Another Blog Engine’** Play tutorial.
 
-# "Starting up the project":#
-# "A first iteration of the data model":#
-# "Building the first screen":#
-# "The comments page":#
-# "Setting up a Captcha":#
+# "Starting up the project":guide1
+# "A first iteration of the data model":guide2
+# "Building the first screen":guide3
+# "The comments page":guide4
+# "Setting up a Captcha":guide5
 # (to be continued)

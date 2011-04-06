@@ -36,7 +36,7 @@ case class Post(id: Pk[Long], title: String, content: String, postedAt: Date, au
 object Post extends Magic[Post] {
     
     private val postWithAuthor = Post ~< User
-    private val postWithAuthorAndComments = postWithAuthor spanM( Comment )
+    private val postWithAuthorAndComments = postWithAuthor ~< Post.spanM( Comment )
     
     def allWithAuthor = 
         SQL(
