@@ -293,7 +293,7 @@ package anorm {
         case class ColumnSymbol(name:Symbol) {
       
             def of[T](implicit extractor:ColumnTo[T] ):Parser[T] = get[T](name.name)(extractor)
-            def is[T](t:T)(implicit extractor:ColumnTo[T] ):Parser[Unit] = contains[T](name.name,t)(extractor)
+            def is[T,TT <: T](t:TT)(implicit extractor:ColumnTo[T] ):Parser[Unit] = contains[T](name.name,t)(extractor)
   
         }
   
@@ -483,7 +483,7 @@ package anorm {
     }
 
     trait MParser[T] extends ParserWithId[T] {
-    
+      mparser =>
         val m:ClassManifest[T]
         val tableName:Option[String] = None
         val analyser = new Analyse[T](tableName,m) {
@@ -539,10 +539,43 @@ package anorm {
                             .reduceLeft((a,b) => for( aa <- a ; bb <- b) yield new ~(a,b))
         }
 
+        def on(differentTableName: String) : ParserWithId[T] ={
+          val new_names_types = analyser.names_types.map{case (n,m) =>  (List(differentTableName,n.split('.')(1)).filterNot(_=="").mkString("."),m)}
+
+          new ParserWithId[T]{
+            val uniqueId : (Row=> MayErr[SqlRequestError,Any]) =  {
+              val ids = new_names_types.collect { 
+                  case (n,m) if m >:> Manifest.classType(classOf[Id[_]]) => (n,m)
+              }
+              if(ids != Nil) 
+                row => 
+                    ids.map(i => getExtractor(i._2).get.transform(row,i._1) )
+                       .reduceLeft((a,b) => for( aa <- a ; bb <- b) yield new ~(a,b))
+              else
+                row => 
+                    new_names_types.map(i =>getExtractor(i._2).get.transform(row,i._1) )
+                                   .reduceLeft((a,b) => for( aa <- a ; bb <- b) yield new ~(a,b))
+            }
+
+            def apply(input:Input):ParseResult[T] = {
+              val paramParser=eatRow( sequence(new_names_types.map { 
+                case (qualified , manifest) => guard[Any](current(qualified)(getExtractor(manifest).get)) }
+                 ))
+
+              (paramParser ^^ { 
+                  case args => { 
+                      analyser.c.newInstance( args.toSeq.map(_.asInstanceOf[Object]):_*).asInstanceOf[T] 
+                  } 
+              }) (input)
+            }
+            
+          } 
+        }
         def apply(input:Input):ParseResult[T] = {
-            val paramParser=eatRow( sequence(analyser.names_types.map(i => 
-                guard[Any](current(i._1)(getExtractor(i._2).get))
-            )))
+           
+            val paramParser=eatRow( sequence(analyser.names_types.map{ 
+              case (qualified , manifest) => guard[Any](current(qualified)(getExtractor(manifest).get)) }
+            ))
 
             (paramParser ^^ { 
                 case args => { 
@@ -567,11 +600,11 @@ package anorm {
         def clean(scalaName:String) =
             scalaName.split('$').reverse.find( 
                 part => part.size > 0 && !part.matches("^[0-9]+$")
-            ).getOrElse(throw new RuntimeException("Unable to clean " + scalaName)).toUpperCase()
+            ).getOrElse(throw new RuntimeException("Unable to clean " + scalaName))
   
         val typeName = clean(m.erasure.getSimpleName)
 
-        val name = tableName.getOrElse(typeName).toUpperCase()
+        val name = tableName.getOrElse(typeName)
   
         def getQualifiedColumnName(column:String) = name+"."+column
 
@@ -657,10 +690,9 @@ package anorm {
   
         lazy val asList = data.zip(metaData.ms.map(_.nullable)).map(i=> if(i._2) Option(i._1) else i._1)
  
-        lazy val asMap :scala.collection.Map[String,Any]=  metaData.ms.map(_.column.toUpperCase()).zip(asList).toMap
+        lazy val asMap :scala.collection.Map[String,Any]=  metaData.ms.map(_.column).zip(asList).toMap
 
-        private lazy val ColumnsDictionary:Map[String,Any] = metaData.ms.map(_.column).zip(data).toMap
-
+       
         def get[A](a:String)(implicit c:ColumnTo[A]):MayErr[SqlRequestError,A] = c.transform(this,a)
 
         private def getType(t:String) = t match {
@@ -670,11 +702,12 @@ package anorm {
             case _ => Class.forName(t)
         }
  
+        private lazy val ColumnsDictionary:Map[String,Any] = metaData.ms.map(_.column.toUpperCase()).zip(data).toMap
         private[anorm] def get1(a:String):MayErr[SqlRequestError,Any] = {
             for(
                 meta <- metaData.get(a).toRight(ColumnNotFound(a));
                 val (qualified,nullable,clazz) = meta;
-                result <- ColumnsDictionary.get(qualified).toRight(ColumnNotFound(qualified))
+                result <- ColumnsDictionary.get(qualified.toUpperCase()).toRight(ColumnNotFound(qualified))
             ) yield result    
         }
 

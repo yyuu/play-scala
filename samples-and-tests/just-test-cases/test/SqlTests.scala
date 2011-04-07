@@ -75,16 +75,16 @@ class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
                       "COMMENT.ID"->(false,classOf[Int]),
                       "COMMENT.TEXT"->(false,classOf[String]))
    
-    val in= Stream.range(1,100)
+    val in= Stream.range(1,4)
                   .flatMap(i => 
-                    Stream.range(1,100)
+                    Stream.range(1,4)
                            .map(j =>
                              MockRow(List(i, "person"+i, 13, j, "comment"+j),metaData)))
     // manual groupBy
    
     val groupByPerson=spanM(by=int("PERSON.ID"),(str("COMMENT.TEXT")))* ;
     groupByPerson(StreamReader(in)).get should be (
-      List.fill(99)(List.range(1,100).map("comment"+_)))
+      List.fill(3)(List.range(1,4).map("comment"+_)))
     
     // "magical" groupBy
     import Magic._
@@ -92,8 +92,8 @@ class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
                       {case  p ~ cs  => p.copy(comments=cs) } *;
 
     ( parsePeople (StreamReader(in)) get ) should be (
-      List.range(1,100).map(
-        i=> Person(i, "person"+i, Seq.range(1,100).map(
+      List.range(1,4).map(
+        i=> Person(i, "person"+i, Seq.range(1,4).map(
               j=> Comment(j,"comment"+j) ))))
 
   }
@@ -133,16 +133,16 @@ class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
     play.db.DB.execute("""insert into Student Values('1','1')""")
    
     val t = evaluating { Task.find("where id={id}").on("id" -> 1).first() } should produce [RuntimeException] 
-    t.getMessage should equal ("ColumnNotFound(TASK.COMMENT)")
+    t.getMessage should equal ("ColumnNotFound(Task.comment)")
 
     val thrown = evaluating { Task.find().list() } should produce [RuntimeException]
-    thrown.getMessage should equal ("ColumnNotFound(TASK.COMMENT)")
+    thrown.getMessage should equal ("ColumnNotFound(Task.comment)")
 
     val thrown1 = evaluating {
       SQL("select * from Task join Student on Task.id=Student.Task_Id")
         .as(Task ~< Student)
       }  should produce [RuntimeException]
-    thrown1.getMessage should equal ("ColumnNotFound(TASK.COMMENT)")
+    thrown1.getMessage should equal ("ColumnNotFound(Task.comment)")
   }  
 
   @Test def testAlternate(){
