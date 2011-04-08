@@ -8,15 +8,15 @@ The model layer has a central position in a Play application (and in fact in all
 
 Because most model objects need to survive between application restarts, we have to save them in a persistent datastore. A common choice is to use a relational database. 
 
-The Scala module includes a brand new data access layer called "Anorm":anorm that uses plain SQL to make your database request and provides several API to parse and transform the resulting dataset. 
+The Scala module includes a brand new data access layer called "Anorm":anorm that uses plain SQL to make your database requests and provides several API to parse and transform the resulting dataset. 
 
-There are several way to use *Anorm*, depending of your need. In this tutorial we will use the most advanced one where we will automatically map the result of our SQL queries to a set of *case class* representing our data.
+There are several ways to use *Anorm*, depending of your needs. In this tutorial we will use the most advanced one where we will automatically map the result of our SQL queries to a set of *case classes* representing our data.
 
 h2. <a>The User model</a>
 
 We will start to code the blog engine by creating the User model.
 
-First we need to create the *User* table in the database. We will use the Play *evolutions* feature to organize our SQL schema modification: create a new evolution file *db/evolutions/1.sql* that contain the following SQL script:
+First we need to create the *User* table in the database. We will use the Play *evolutions* feature to organize our SQL schema modification: create a new evolution file *db/evolutions/1.sql* that contains the following SQL script:
 
 bc. # Users schema
  
@@ -61,19 +61,19 @@ Now we will also define a *companion object* for the User class:
 
 bc. object User extends Magic[User]
 
-This *User* object inherits *Magic* that analyses the type which is parametrized by, and then offer a set of functionalities for parsing and doing SQL queries. 
+This *User* object inherits *Magic* that analyses the type it is parametrized by, and then offers a set of functionalities for parsing and running SQL queries. 
 
-You can now refresh the application home page, to see the result. In fact, unless you made a mistake, you should not see any change: Play has automatically compiled and loaded the User class, but this does not add any new features to the application.
+You can now refresh the application home page to see the result. In fact, unless you made a mistake, you should not see any change: Play has automatically compiled and loaded the User class, but this has not added any new feature to the application.
 
 h2. <a>Writing the first test</a>
 
-A good way to test the newly created User class is to write a test case. It will allow you to incrementally complete the application model and ensure that all is fine.
+A good way to test the newly created User class is to write a test case. It will allows you to incrementally complete the application model and ensure that all is fine.
 
-To run a test case, you need to start the application in a special ‘test’ mode. Stop the currently running application, open a command line and type:
+To run a test case, you need to start the application in a special “test” mode. Stop the currently running application, open a command line and type:
 
 bc. ~$ play test
 
-The **play test** command is almost the same as **play run**, except that it loads a test runner module that allows you to run test suite directly from a browser. 
+The **play test** command is almost the same as **play run**, except that it loads a test runner module that allows you to run test suites directly from a browser. 
 
 p(note). When you run a Play application in **test mode**, Play will automatically switch to the **test** framework ID and load the **application.conf** file accordingly. Check the "framework ID documentation":ids for more information.
 
@@ -81,7 +81,9 @@ Open a browser to the "http://localhost:9000/@tests":http://localhost:9000/@test
 
 !images/guide2-1!
 
-To test the model part of the application we will use a test. As you can see, a default **Tests.scala** file already exists, so let’s open it (**/yabe/test/Tests.scala**):
+The scala module is bundled with the "scalatest":http://www.scalatest.org framework.
+
+To test the model part of the application we will use a behavior driven test. As you can see, a default **Tests.scala** file already exists, so let’s open it (**/yabe/test/Tests.scala**):
 
 bc. import play._
 import play.test._
@@ -189,7 +191,7 @@ bc. case class Post(
  
 object Post extends Magic[Post]
 
-We will write a new test case to check that the **Post** model works as expected. But before writing more tests, we need to do something in our test. In the current test, the database content is never deleted, so each new run creates more and more objects. This will soon become problematic, when more advanced tests count objects to check that all is fine.
+We will write a new test case to check that the **Post** model works as expected. But before writing more tests, we need to do something in our test. In the current test, the database content is never deleted, so each new run creates more and more objects. This will soon become problematic, when more advanced tests will count objects to check that all is fine.
 
 So we need to delete the database before each test. Mix your test class with the @BeforeAndAfterEach@ trait, and override the @beforeEach@ method definition:
 
@@ -226,9 +228,9 @@ bc. it should "create a Post" in {
     
 }
 
-Now if we think about our use case we probably want to fetch each post with his author to be able to display this information on the home page. So let's create a new method in the *Post* object that allow to fetch Post and corresponding User objects in a single query.
+Now if we think about our use case we probably want to fetch each post with his author to be able to display this information on the home page. So let's create a new method in the *Post* object that allows to fetch Post and corresponding User objects in a single query.
 
-First here the SQL query we need:
+First, here is the SQL query we need:
 
 bc. select * from Post p 
 join User u on p.author_id = u.id 
@@ -303,7 +305,7 @@ bc. case class Comment(
  
 object Comment extends Magic[Comment]
 
-We will also add new methods to the *Post* object, to retrieve posts with the corresponding comment collection. First the method that retrieve all posts:
+We will also add new methods to the *Post* object, to retrieve posts with the corresponding comment collection. First the method that retrieves all posts:
 
 bc. def allWithAuthorAndComments:List[(Post,User,List[Comment])] = 
     SQL(
@@ -317,7 +319,7 @@ bc. def allWithAuthorAndComments:List[(Post,User,List[Comment])] =
 
 Here our parser it a bit more complicated. @Post.spanM( Comment )@ will span several rows and extract the comments list for each post.
 
-And then another method that return a @Option[(Post,User,List[Comment])]@ from a Post id:
+And then another method that returns an @Option[(Post,User,List[Comment])]@ from a Post id:
 
 bc. def byIdWithAuthorAndComments(id: Long):Option[(Post,User,List[Comment])] = 
     SQL(
@@ -354,7 +356,7 @@ bc. it should "support Comments" in {
 
 Is it green?
 
-Finally, we will add an helper method to the **Comment** object to simplify adding comments:
+Finally, we will add a helper method to the **Comment** object to simplify adding comments:
 
 bc. object Comment extends Magic[Comment] {
     

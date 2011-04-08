@@ -57,12 +57,12 @@ We will keep these components but add code to them to load the posts list and di
 Open the **/yabe/app/controllers.scala** controller and modify the **index** action to load the posts list, as is:
 
 bc. def index = {
-    Post.allWithAuthorAndComments.map( 
+    val allPosts = Post.allWithAuthorAndComments.map( 
         t => new { val (content,author,comments) = t }
     )
     Template(
-        'frontPost -> allPosts.headOption, 
-        'olderPosts -> allPosts.drop(1)
+        'front -> allPosts.headOption, 
+        'older -> allPosts.drop(1)
     )
 }
 
@@ -137,9 +137,9 @@ bc. #{extends 'main.html' /}
     </div>
 #{/else}
 
-You can read about this template works in the "Templates chapter":templates. Basically, it allows you to access your Scala objects dynamically. Under the hood we use Groovy. Most of the pretty constructs you see (like the **?:** operator) come from Groovy. But you don’t really need to learn Groovy to write Play templates. If you’re already familiar with another template language like JSP with JSTL you won’t be lost.
+You can read about the way this template works in the "Templates chapter":templates. Basically, it allows you to access your Scala objects dynamically. Under the hood we use Groovy. Most of the pretty constructs you see (like the **?:** operator) come from Groovy. But you don’t really need to learn Groovy to write Play templates. If you’re already familiar with another template language like JSP with JSTL you won’t be lost.
 
-@front@ being an @Option[T]@ here, we use the *?* operator to autmatically ignore @None@ case, and automatically unwrap the @Some@ value if exists. Also you can note that we can use @Option@ and @Seq@ and @#if@ statements.
+@front@ being an @Option[T]@ here, we use the *?* operator to autmatically ignore @None@ case, and automatically unwrap the @Some@ value if it exists. Also you can note that we can use @Option@ and @Seq@ in @#if@ statements.
 
 OK, now refresh the blog home page.
 
@@ -285,7 +285,7 @@ bc. <!DOCTYPE html >
 
 Refresh and check the result. It seems to work, except that the **blogTitle** and the **blogBaseLine** variables are not displayed. This is because we didn’t pass them to the **Template(…)** value. Of course we could add them to the **Template(…)** call in the **index** action. But because the **main.html** file will be used as main template for all application actions, we don’t want to add them every time.
 
-One way to execute the same code for each action of a controller (or a hierarchy of controllers) is to define a **@Before** interceptor. Because we will possibly need to use this interceptor with several controllers we will define it as a @Trait@ and mix it with the @Application@ controller.
+One way to execute the same code for each action of a controller (or a hierarchy of controllers) is to define a **@Before** interceptor. Because we will possibly need to use this interceptor with several controllers we will define it as a @Trait@ and mix it in the @Application@ controller.
 
 Let’s write the @Defaults@ trait:
 
