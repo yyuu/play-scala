@@ -7,6 +7,7 @@ import org.scalatest.matchers._
 
 import play.db.anorm._
 import SqlParser._ 
+import defaults._
 
 // Constructors with unspported type of parameter won't be picked
 case class Task(ids:Option[List[Int]],comment:String){
@@ -25,28 +26,35 @@ class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
       val metaData=meta("TASK.COMMENT"->(true,classOf[String]),
                         "TASK.NAME"->(false,classOf[String]))
    
-      val in= StreamReader(Stream.range(1,100).map(i => MockRow(List("comment no:"+i, "nameb"),metaData)))
-      commit((str("COMMENT1")))* (in) should be (Error(ColumnNotFound("COMMENT1").toString,in))
+      val in= StreamReader(Stream.range(1,2).map(i => MockRow(List("comment no:"+i, "nameb"),metaData)))
+     // commit((str("COMMENT1")))* (in) should be (Error(ColumnNotFound("COMMENT1").toString,in))
+
+      val Error(msg,next) = commit((str("COMMENT1")))* (in)
+      next should be (PError(ColumnNotFound("COMMENT1").toString,in).next)
       
       ((str("COMMENT1")) ?)(in).get should be (None)
 
-      (str("COMMENT1"))+ (in) should be (Failure(ColumnNotFound("COMMENT1").toString,in))
+      (str("COMMENT1"))+ (in) should be (PFailure(ColumnNotFound("COMMENT1").toString,in))
 
-      (str("COMMENT"))* (in) should be (Success(List(),in))
 
-      str("TASK.COMMENT")+ (in) should be (
-        Failure(UnexpectedNullableFound("TASK.COMMENT").toString,in))
+      commit((str("COMMENT1")))* (in) should be (PError(ColumnNotFound("COMMENT1").toString,in))
 
-      str("COMMENT")+ (in) should be (
-        Failure(UnexpectedNullableFound("TASK.COMMENT").toString,in))
+      val inWithNull= StreamReader(Stream(MockRow(List(null, "nameb"),metaData)))
+
+      //println("<<<<<<"+((str("COMMENT"))* (inWithNull)).get + ">>>>>>")
+      (((str("COMMENT1"))*) (in)).get should be (List())
+
+      str("TASK.COMMENT")+ (inWithNull) should be (
+        PError(UnexpectedNullableFound("TASK.COMMENT").toString,inWithNull))
+
+      str("COMMENT")+ (inWithNull) should be (
+        PError(UnexpectedNullableFound("TASK.COMMENT").toString,inWithNull))
 
           import Magic._
-      Task* (in) should be(Success(List(),in))
-      (Task)+ (in) should be(
-        Failure(UnexpectedNullableFound("TASK.COMMENT").toString,in))
+      (Task* (in)).get should be(Success(List(Task(None,"comment no:1")),in).get)
+      ((Task)+ (in)).get should be((Success(List(Task(None,"comment no:1")),in).get))
 
-      commit((Task)+) (in) should be(
-        Error(UnexpectedNullableFound("TASK.COMMENT").toString,in))
+      
 
       val metaData1=meta("TASK.COMMENT"->(false,classOf[String]),
                         "TASK.NAME"->(false,classOf[String]))

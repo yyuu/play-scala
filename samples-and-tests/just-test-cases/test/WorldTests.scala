@@ -6,6 +6,7 @@ import org.scalatest.junit._
 import org.scalatest._
 import org.scalatest.matchers._
 
+
 class WorldTests extends UnitFlatSpec with ShouldMatchers {
     
     // Load the World (check test/world.sql)
@@ -13,7 +14,7 @@ class WorldTests extends UnitFlatSpec with ShouldMatchers {
     Fixtures.executeSQL(Play.getFile("test/world.sql"))
     
     import play.db.anorm._
-    
+
     it should "Execute SQL requests" in {
         
         SQL("Select 1").execute() should be (true)
@@ -250,7 +251,7 @@ class WorldTests extends UnitFlatSpec with ShouldMatchers {
 
 import play.db.anorm._
 import play.db.anorm.SqlParser._
-
+import defaults._
 object CountryLanguage extends Magic[CountryLanguage]
 object City extends Magic[City]
 object Country extends Magic[Country]

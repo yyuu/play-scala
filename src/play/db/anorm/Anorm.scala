@@ -8,7 +8,8 @@ package object anorm {
     implicit def implicitID[ID](id: Id[ID]): ID = id.id
     
     def SQL(stmt: String) = Sql.sql(stmt)
-    
+    val asIs :PartialFunction[AnalyserInfo,String] = {case ColumnC(_,f) => f; case TableC(typeName) => typeName}
+    val defaults = Convention(asIs)
 }
 
 package anorm {
@@ -55,7 +56,7 @@ package anorm {
     
         nullHandler: Function2[Any,MetaDataItem,Option[SqlRequestError]] = (value, meta) => {
             val MetaDataItem(qualified,nullable,clazz) = meta
-            if (nullable || value == null)
+            if (value == null)
                 Some(UnexpectedNullableFound(qualified)) 
             else 
                 None
@@ -187,22 +188,25 @@ package anorm {
         def flatten[T1,T2,R](implicit f:  TupleFlattener[(T1~T2) => R] ): ((T1~T2) => R) = f.f   
     }
 
-    trait SqlParser extends scala.util.parsing.combinator.PackratParsers {
+    trait SqlParser extends scala.util.parsing.combinator1.Parsers {
           
 
-        case class StreamReader[T](s:Stream[T]) extends PackratReader[Either[EndOfStream,T]]( new scala.util.parsing.input.Reader[Either[EndOfStream,T]] {
-  
+        case class StreamReader(s:Stream[Row], override val lastNoSuccess:NoSuccess=null) extends ReaderWithLastNoSuccess[Either[EndOfStream,Row]] {
+         // type R = StreamReader
           def first = s.headOption.toRight(EndOfStream())
-          def rest = new StreamReader(s.drop(1))
+          def rest = this.copy( s= (s.drop(1))).asInstanceOf[R]
           def pos = scala.util.parsing.input.NoPosition
           def atEnd = s.isEmpty
+          override def withLastNoSuccess(noSuccess:NoSuccess)= this.copy(lastNoSuccess=noSuccess).asInstanceOf[R]
 
-        })
+        }
 
         case class EndOfStream()
 
         type Elem = Either[EndOfStream,Row]
-  
+        
+        override type Input = StreamReader
+
         import scala.collection.generic.CanBuildFrom
         import scala.collection.mutable.Builder
   
@@ -222,8 +226,9 @@ package anorm {
                              }
         implicit def rowFunctionToParser[T](f:(Row => MayErr[SqlRequestError,T])): Parser[T] = {
             eatRow( Parser[T] { in=>
-               in.first.left.map(_=>Failure("End of Stream",in))
-                            .flatMap(f(_).left.map(e=>Failure(e.toString,in)))
+               in.first.left.map(_=>PFailure("End of Stream",in))
+                            .flatMap(f(_).left.map({case e@UnexpectedNullableFound(msg) => PError(e.toString,in)
+                                                    case e=>PFailure(e.toString,in) }))
                             .fold(e=>e, a=> {Success(a,in)}) })
         }
 
@@ -247,16 +252,29 @@ package anorm {
       
         def get[T](columnName:String)(implicit extractor:ColumnTo[T]): RowParser[T] = RowParser( extractor.transform(_,columnName))
 
-        def contains[T](columnName:String,t:T)(implicit extractor:ColumnTo[T]): Parser[Unit] = guard(get[T](columnName)(extractor) ^? {case a if a==t => Unit})
+        def contains[TT : ColumnTo, T <: TT ](columnName:String,t:T): Parser[Unit] = guard(get[TT](columnName)(implicitly[ColumnTo[TT]]) ^? {case a if a==t => Unit})
 
         def current[T](columnName:String)(implicit extractor:ColumnTo[T]): RowParser[T] = RowParser( extractor.transform(_,columnName))
 
         def eatRow[T](p:Parser[T]) = p <~ newLine
+/*
+        def noError[T](p:Parser[T]) = Parser( in => {
+          val before = lastNoSuccess
+          val result = p(in)
+          val after = lastNoSuccess
+          if((after != null) && !(before eq after))
+            after match {
+              case Error(_,_) => after
+              case Failure(_,_)  => result
+            }
+          else result
+
+        })*/
 
         def current1[T](columnName:String)(implicit extractor:ColumnTo[T]): Parser[T] = commit(current[T](columnName)(extractor))
   
         def newLine:Parser[Unit] = Parser[Unit] {
-            in => if(in.atEnd) Failure("end",in) else Success(Unit,in.rest) 
+            in => if(in.atEnd) PFailure("end",in) else Success(Unit,in.rest) 
         }
         
         def scalar[T](implicit m:Manifest[T]) = {
@@ -277,12 +295,12 @@ package anorm {
             d >> (first => Parser[List[A]] { in =>
                 //instead of cast it'd be much better to override type Reader
                 {
-                    val (groupy,rest) =in.asInstanceOf[StreamReader[Row]].s.span(by(_).right.toOption.exists(r=>r==first))
+                    val (groupy,rest) =in.asInstanceOf[StreamReader].s.span(by(_).right.toOption.exists(r=>r==first))
                     val g = (a *)(StreamReader(groupy))
                     g match{
                         case Success(a,_)=> Success(a,StreamReader(rest))
-                        case Failure(msg,_) => Failure(msg,in)
-                        case Error(msg,_) => Error(msg,in) 
+                        case Failure(msg,_) => PFailure(msg,in)
+                        case Error(msg,_) => PError(msg,in) 
                     }
                 }
             })
@@ -293,24 +311,34 @@ package anorm {
         case class ColumnSymbol(name:Symbol) {
       
             def of[T](implicit extractor:ColumnTo[T] ):Parser[T] = get[T](name.name)(extractor)
-            def is[T,TT <: T](t:TT)(implicit extractor:ColumnTo[T] ):Parser[Unit] = contains[T](name.name,t)(extractor)
+            def is[TT : ColumnTo, T <: TT ](t:T):Parser[Unit] = contains[TT,T](name.name,t)(implicitly[ColumnTo[TT]])
   
         }
   
     }
 
-    
-
-    case class Magic[T](override val tableName:Option[String]=None)(implicit val m:ClassManifest[T]) extends M[T] {
+    case class Convention(conv:PartialFunction[AnalyserInfo,String]){
+      case class Magic[T](override val tableName:Option[String]=None, override val conventions :PartialFunction[AnalyserInfo,String]= conv)(implicit val m:ClassManifest[T]) extends M[T] {
+        def using(tableName:Symbol) = this.copy(tableName=Some(tableName.name))
+      }
+      case class MagicSql[T] ( override val tableName:Option[String]=None, override val conventions:  PartialFunction[AnalyserInfo,String] = conv)(implicit val m:ClassManifest[T]) extends  MSql[T] {
         def using(tableName:Symbol) = this.copy(tableName=Some(tableName.name))
     }
+      case class MagicParser[T] ( override val tableName:Option[String]=None, override val conventions: PartialFunction[AnalyserInfo,String] = conv)(implicit val m:ClassManifest[T]) extends  MParser[T] with Analyser[T] {
+        def using(tableName:Symbol) = this.copy(tableName=Some(tableName.name))
+      }
+
+    }    
+
 
     trait M[T] extends MParser[T] {
         self =>
+        override val conventions: PartialFunction[AnalyserInfo,String] = asIs
 
         val msql:MSql[T] = new MSql[T] {
             override lazy val analyser = self.analyser
             override val m = self.m
+            override val conventions = self.conventions
         }
 
         val idParser:SqlParser.Parser[_] = {
@@ -408,15 +436,13 @@ package anorm {
         }    
     }
     
-    case class MagicSql[T] ( override val tableName:Option[String]=None)(implicit val m:ClassManifest[T]) extends  MSql[T] {
-        def using(tableName:Symbol) = this.copy(tableName=Some(tableName.name))
-    }
+
     
     trait MSql[T] {
-        
+        val conventions: PartialFunction[AnalyserInfo,String] = asIs
         val m:ClassManifest[T]
         val tableName:Option[String] = None
-        lazy val analyser = new Analyse[T](tableName,m)
+        lazy val analyser = new Analyse[T](tableName,conventions,m)
     
         import Sql._
         import java.lang.reflect._
@@ -438,10 +464,7 @@ package anorm {
     
     }
 
-    case class MagicParser[T] ( override val tableName:Option[String]=None)(implicit val m:ClassManifest[T]) extends  MParser[T] with Analyser[T] {
-        def using(tableName:Symbol) = this.copy(tableName=Some(tableName.name))
-    }
-    
+
     trait ParserWithId[T] extends SqlParser.Parser[T] {
         parent =>
   
@@ -467,12 +490,12 @@ package anorm {
            ( d >> (first => Parser[B] {in =>
                 //instead of cast it'd be much better to override type Reader
                 { 
-                    val (groupy,rest) = in.asInstanceOf[StreamReader[Row]].s.span(uniqueId(_).right.toOption.exists(r=>r==first));
+                    val (groupy,rest) = in.asInstanceOf[StreamReader].s.span(uniqueId(_).right.toOption.exists(r=>r==first));
                     val g = p(StreamReader(groupy))
                     g match {
                         case Success(r,_)=> Success(r,StreamReader(rest))
-                        case Failure(msg,_) => Failure(msg,in)
-                        case Error(msg,_) => Error(msg,in) 
+                        case Failure(msg,_) => PFailure(msg,in)
+                        case Error(msg,_) => PError(msg,in) 
                     }
                 }
             }))
@@ -484,9 +507,11 @@ package anorm {
 
     trait MParser[T] extends ParserWithId[T] {
       mparser =>
+
+        val conventions: PartialFunction[AnalyserInfo,String] = asIs
         val m:ClassManifest[T]
         val tableName:Option[String] = None
-        val analyser = new Analyse[T](tableName,m) {
+        val analyser = new Analyse[T](tableName,conventions,m) {
             
             import java.lang.reflect._
       
@@ -571,6 +596,7 @@ package anorm {
             
           } 
         }
+
         def apply(input:Input):ParseResult[T] = {
            
             val paramParser=eatRow( sequence(analyser.names_types.map{ 
@@ -584,8 +610,11 @@ package anorm {
             }) (input)
         }
     }
+    abstract class AnalyserInfo
+    case class ColumnC(typeName:String,fieldName:String) extends AnalyserInfo
+    case class TableC(typeName:String) extends AnalyserInfo
 
-    case class Analyse[T](override val tableName:Option[String]=None,val m:ClassManifest[T]) extends Analyser[T]
+    case class Analyse[T](override val tableName:Option[String]=None, override val conventions :PartialFunction[AnalyserInfo,String] = asIs, val m:ClassManifest[T]) extends Analyser[T]
 
     trait Analyser[T]{
         
@@ -593,7 +622,14 @@ package anorm {
         import java.lang.reflect._
         import scala.reflect.Manifest
         import scala.reflect.ClassManifest
+
+       
   
+        val conventions: PartialFunction[AnalyserInfo,String]
+
+
+       
+
         val m:ClassManifest[T]
         val tableName:Option[String] = None
         
@@ -604,7 +640,7 @@ package anorm {
   
         val typeName = clean(m.erasure.getSimpleName)
 
-        val name = tableName.getOrElse(typeName)
+        val name = tableName.getOrElse(conventions(TableC(typeName)))
   
         def getQualifiedColumnName(column:String) = name+"."+column
 
@@ -628,7 +664,7 @@ package anorm {
             val coherent = paramTypes.length == paramNames.length
       
             val names_types =  paramNames.zip(paramTypes).map( nt => 
-                (getQualifiedColumnName(clean(nt._1)),nt._2)
+                (getQualifiedColumnName(conventions(ColumnC(typeName,clean(nt._1)))),nt._2)
             )
 
             if(!coherent && names_types.map(_._1).exists(_.contains("outer")))
