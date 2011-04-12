@@ -191,13 +191,13 @@ package anorm {
     trait SqlParser extends scala.util.parsing.combinator1.Parsers {
           
 
-        case class StreamReader(s:Stream[Row], override val lastNoSuccess:NoSuccess=null) extends ReaderWithLastNoSuccess[Either[EndOfStream,Row]] {
-         // type R = StreamReader
+        case class StreamReader(s:Stream[Row], override val lastNoSuccess:NoSuccess=null) extends ReaderWithLastNoSuccess {
+          override type R = Input
           def first = s.headOption.toRight(EndOfStream())
-          def rest = this.copy( s= (s.drop(1))).asInstanceOf[R]
+          def rest = this.copy( s= (s.drop(1)))
           def pos = scala.util.parsing.input.NoPosition
           def atEnd = s.isEmpty
-          override def withLastNoSuccess(noSuccess:NoSuccess)= this.copy(lastNoSuccess=noSuccess).asInstanceOf[R]
+          override def withLastNoSuccess(noSuccess:NoSuccess)= this.copy(lastNoSuccess=noSuccess)
 
         }
 
@@ -205,7 +205,7 @@ package anorm {
 
         type Elem = Either[EndOfStream,Row]
         
-        override type Input = StreamReader
+        type Input = StreamReader
 
         import scala.collection.generic.CanBuildFrom
         import scala.collection.mutable.Builder
@@ -295,7 +295,7 @@ package anorm {
             d >> (first => Parser[List[A]] { in =>
                 //instead of cast it'd be much better to override type Reader
                 {
-                    val (groupy,rest) =in.asInstanceOf[StreamReader].s.span(by(_).right.toOption.exists(r=>r==first))
+                    val (groupy,rest) =in.s.span(by(_).right.toOption.exists(r=>r==first))
                     val g = (a *)(StreamReader(groupy))
                     g match{
                         case Success(a,_)=> Success(a,StreamReader(rest))
@@ -488,9 +488,8 @@ package anorm {
       def span[B](p:Parser[B]) : Parser[B] = {
             val d = guard(uniqueId)
            ( d >> (first => Parser[B] {in =>
-                //instead of cast it'd be much better to override type Reader
                 { 
-                    val (groupy,rest) = in.asInstanceOf[StreamReader].s.span(uniqueId(_).right.toOption.exists(r=>r==first));
+                    val (groupy,rest) = in.s.span(uniqueId(_).right.toOption.exists(r=>r==first));
                     val g = p(StreamReader(groupy))
                     g match {
                         case Success(r,_)=> Success(r,StreamReader(rest))

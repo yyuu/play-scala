@@ -53,8 +53,9 @@ import annotation.migration
 
 
 trait Parsers {
- trait ReaderWithLastNoSuccess[+T] extends Reader[T] {
-  val lastNoSuccess : NoSuccess
+ trait ReaderWithLastNoSuccess extends Reader[Elem] {
+   type R <: Input
+   val lastNoSuccess : NoSuccess
   def withLastNoSuccess(lastNoSuccess:NoSuccess): R
 }
 
@@ -65,7 +66,7 @@ trait Parsers {
 
   /** The parser input is an abstract reader of input elements, i.e. the type of input the parsers in this component
    * expect. */
-  type Input <: ReaderWithLastNoSuccess[Elem]
+  type Input <: ReaderWithLastNoSuccess
 
   /** A base class for parser results. A result is either successful or not (failure may be fatal, i.e., an Error, or
    * not, i.e., a Failure). On success, provides a result of type `T` which consists of some result (and the rest of
@@ -162,7 +163,7 @@ trait Parsers {
    *  @param msg    An error message string describing the failure.
    *  @param next   The parser's unconsumed input at the point where the failure occurred.
    */
-  case class Failure (override val msg: String, override val next: Input) extends NoSuccess(msg, next) {
+  case class Failure private[combinator1] (override val msg: String, override val next: Input) extends NoSuccess(msg, next) {
     /** The toString method of a Failure yields an error message */
     override def toString = "["+next.pos+"] failure: "+msg+"\n\n"+next.pos.longString
 
@@ -182,7 +183,7 @@ trait Parsers {
    *  @param msg    An error message string describing the error.
    *  @param next   The parser's unconsumed input at the point where the error occurred.
    */
-  case class Error (override val msg: String, override val next: Input) extends NoSuccess(msg, next) {
+  case class Error private[combinator1](override val msg: String, override val next: Input) extends NoSuccess(msg, next) {
     /** The toString method of an Error yields an error message */
     override def toString = "["+next.pos+"] error: "+msg+"\n\n"+next.pos.longString
     def append[U >: Nothing](a: => ParseResult[U]): ParseResult[U] = this

@@ -16,7 +16,7 @@ import scala.util.parsing.input._
  * @author Martin Odersky, Adriaan Moors
  */
 trait Reader[+T] {
-  type R = this.type
+  type R <: Reader[T]
 
   /** If this is a reader over character sequences, the underlying char sequence 
    *  If not, throws a <code>NoSuchMethodError</code> exception.
@@ -38,7 +38,9 @@ trait Reader[+T] {
    *         more elements.
    */
   def rest: R
-  
+ 
+/*
+ 
   /** Returns an abstract reader consisting of all elements except the first
    *  <code>n</code> elements.
    */ 
@@ -51,6 +53,7 @@ trait Reader[+T] {
     }
     r*/
   }
+*/
 
   /** The position of the first element in the reader
    */
