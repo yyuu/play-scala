@@ -1,10 +1,12 @@
-h1. Play Scala — (beta)
+h1. Play --with Scala
 
 Welcome to the Play Scala documentation. This documentation is intended for the **0.9 release** of the Scala module and may significantly differs from previous versions. 
 
+Play Scala enables you to use the Scala language for your application keeping key properties of the Play framework. It uses a more functional and Scala idiomatic style of programming without giving up on simplicity and developer friendliness.
+
 p(note). This version is still in beta but can already be used to create complete Play applications using Scala as main language. Most of the API is stabilized and future versions will just improve compatibility with the existing Play features.
  
-This version is intented to be used with **Play 1.2**; for now you can download a "preview release of Play 1.2":#.
+"Check the roadmap to 1.0":roadmap.
 
 h2. Getting started
 

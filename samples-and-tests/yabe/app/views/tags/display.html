@@ -2,17 +2,19 @@
  
 <div class="post ${_as == 'teaser' ? 'teaser' : ''}">
     <h2 class="post-title">
-        <a href="@{Application.show(_post._1.id)}">${_post._1.title}</a>
+        <a href="@{show(_arg?.post.id)}">${_arg?.post.title}</a>
     </h2>
     <div class="post-metadata">
-        <span class="post-author">by ${_post._2.fullname}</span>,
-        <span class="post-date">${_post._1.postedAt.format('dd MMM yy')}</span>
+        <span class="post-author">by ${_arg?.author.fullname}</span>,
+        <span class="post-date">
+            ${_arg?.post.postedAt.format('dd MMM yy')}
+        </span>
         #{if _as != 'full'}
             <span class="post-comments">
-                &nbsp;|&nbsp; ${_post._3.size() ?: 'no'} 
-                comment${_post._3.pluralize()}
-                #{if _post._3}
-                    , latest by ${_post._3[0].author}
+                &nbsp;|&nbsp; ${_arg?.comments.size() ?: 'no'} 
+                comment${_arg?.comments.size().pluralize()}
+                #{if _arg?.comments}
+                    , latest by ${_arg?.comments[0].author}
                 #{/if}
             </span>
         #{/if}
@@ -20,7 +22,7 @@
     #{if _as != 'teaser'}
         <div class="post-content">
             <div class="about">Detail: </div>
-            ${_post._1.content.nl2br()}
+            ${_arg?.post.content.nl2br()}
         </div>
     #{/if}
 </div>
@@ -28,11 +30,11 @@
 #{if _as == 'full'}
     <div class="comments">
         <h3>
-            ${_post._3.size() ?: 'no'} 
-            comment${_post._3.pluralize()}
+            ${_arg?.comments.size() ?: 'no'} 
+            comment${_arg?.comments.size().pluralize()}
         </h3>
         
-        #{list items:_post._3, as:'comment'}
+        #{list items:_arg?.comments, as:'comment'}
             <div class="comment">
                 <div class="comment-metadata">
                     <span class="comment-author">by ${comment.author},</span>

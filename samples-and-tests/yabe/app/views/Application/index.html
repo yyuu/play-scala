@@ -1,17 +1,17 @@
 #{extends 'main.html' /}
 #{set title:'Home' /}
  
-#{if frontPost}
+#{if front}
     
-    #{display post:frontPost, as:'home' /}
+    #{display front, as:'home' /}
     
-    #{if olderPosts}
+    #{if older}
     
         <div class="older-posts">
             <h3>Older posts <span class="from">from this blog</span></h3>
         
-            #{list items:olderPosts, as:'oldPost'}
-                #{display post:oldPost, as:'teaser' /}
+            #{list items:older}
+                #{display _, as:'teaser' /}
             #{/list}
         </div>
         

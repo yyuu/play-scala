@@ -21,37 +21,51 @@ trait Defaults {
 object Application extends Controller with Defaults {
     
     def index = {
-        val allPosts = Post.allWithAuthorAndComments
-        Template('frontPost -> allPosts.headOption, 'olderPosts -> allPosts.drop(1))
+        val allPosts = Post.allWithAuthorAndComments.map( 
+            t => new { val (post,author,comments) = t }
+        )
+        Template(
+            'front -> allPosts.headOption, 
+            'older -> allPosts.drop(1)
+        )
     }
     
     def show(id: Long) = {
-        Template('post -> Post.byIdWithAuthorAndComments(id), 'randomID -> Codec.UUID)
+        Post.byIdWithAuthorAndComments(id).map( p =>
+            Template(
+                'item -> new { val (post,author,comments) = p },
+                'pagination -> p._1.prevNext,
+                'randomID -> Codec.UUID
+            )
+        ).getOrElse(NotFound("No such Post"))
     }
     
-    def captcha(id: String) = {
+    def postComment(
+        postId:Long, 
+        @Required(message="Author is required") author:String, 
+        @Required(message="A message is required") content:String,
+        @Required(message="Please type the code") code:String,
+        randomID:String) = {
+
+        validation.equals(
+            code, Cache.get(randomID).orNull
+        ).message("Invalid code. Please type it again");
+
+        if(validation.hasErrors) {
+            show(postId)
+        } else {
+            Comment.create(Comment(postId, author, content))
+            flash += "success" -> ("Thanks for posting " + author)
+            Cache.delete(randomID)
+            Action(show(postId))
+        }
+    }
+    
+    def captcha(id:String) = {
         val captcha = Images.captcha
         val code = captcha.getText("#E4EAFD")
         Cache.set(id, code, "10mn")
         captcha
     }
     
-    def postComment(
-        postId: Long, 
-        @Required(message="Author is required") author: String,
-        @Required(message="A message is required") content: String,
-        @Required(message="Please type the code") code: String,
-        randomID: String
-    ) = {
-        validation.equals(code, Cache.get(randomID).orNull).message("Invalid code. Please type it again")
-        if (validation.hasErrors) {
-            Template("Application/show.html", 'post -> Post.byIdWithAuthorAndComments(postId), 'randomID -> randomID)
-        } else {
-            Cache.delete(randomID)
-            Comment.create( Comment(postId, author, content) )
-            flash.success("Thanks for posting %s", author)
-            Action( show(postId) )
-        }
-    }
-
 }

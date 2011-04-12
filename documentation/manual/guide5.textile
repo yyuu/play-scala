@@ -63,6 +63,7 @@ bc. def show(id: Long) = {
     Post.byIdWithAuthorAndComments(id).map( p =>
         Template(
             'item -> new { val (post,author,comments) = p },
+            'pagination -> p._1.prevNext,
             'randomID -> Codec.UUID
         )
     ).getOrElse(NotFound("No such Post"))
@@ -109,7 +110,7 @@ bc. def postComment(
     randomID:String) = {
         
     validation.equals(
-        code, Cache.get(randomID).get
+        code, Cache.get(randomID).orNull
     ).message("Invalid code. Please type it again");
         
     if(validation.hasErrors) {

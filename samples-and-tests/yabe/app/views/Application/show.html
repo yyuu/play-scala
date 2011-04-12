@@ -1,33 +1,33 @@
 #{extends 'main.html' /}
-#{set title:post._1.title /}
+#{set title:item.post.title /}
 
 <ul id="pagination">
-    #{if post._1.previous()}
+    #{if pagination._1}
         <li id="previous">
-            <a href="@{Application.show(post._1.previous()?.id)}">
-                ${post._1.previous()?.title}
+            <a href="@{show(pagination._1?.id)}">
+                ${pagination._1?.title}
             </a>
         </li>
     #{/if}
-    #{if post._1.next()}
+    #{if pagination._2}
         <li id="next">
-            <a href="@{Application.show(post._1.next()?.id)}">
-                ${post._1.next()?.title}
+            <a href="@{show(pagination._2?.id)}">
+                ${pagination._2?.title}
             </a>
         </li>
     #{/if}
 </ul>
-
+ 
 #{if flash.success}
     <p class="success">${flash.success}</p>
 #{/if}
  
-#{display post:post, as:'full' /}
- 
+#{display item, as:'full' /}
+
 <h3>Post a comment</h3>
  
-#{form @Application.postComment(post._1.id)}
-
+#{form @postComment(item?.post.id)}
+ 
     #{ifErrors}
         <p class="error">
             ${errors[0]}
@@ -36,7 +36,7 @@
  
     <p>
         <label for="author">Your name: </label>
-        <input type="text" name="author" id="author" value="${params.author}" />
+        <input type="text" name="author" value="${params.author}"/>
     </p>
     <p>
         <label for="content">Your message: </label>
@@ -44,7 +44,7 @@
     </p>
     <p>
         <label for="code">Please type the code below: </label>
-        <img src="@{Application.captcha(randomID)}" />
+        <img src="@{captcha(randomID)}" />
         <br />
         <input type="text" name="code" id="code" size="18" value="" />
         <input type="hidden" name="randomID" value="${randomID}" />

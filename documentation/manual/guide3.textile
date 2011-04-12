@@ -46,6 +46,8 @@ You have to create an **initial-data.yml** in the **yabe/conf/** directory. You 
 
 Now run the application using **play run** and display the page "http://localhost:9000/":http://localhost:9000/ in the browser.
 
+p(note). You need to restart the application to apply the @BootStrap@ job. You can then connect to the SQL console to check that the database is correctly filled with initial data.
+
 h2. <a>The blog home page</a>
 
 This time, we can really start to code the home page.
@@ -58,13 +60,15 @@ Open the **/yabe/app/controllers.scala** controller and modify the **index** act
 
 bc. def index = {
     val allPosts = Post.allWithAuthorAndComments.map( 
-        t => new { val (content,author,comments) = t }
+        t => new { val (post,author,comments) = t }
     )
     Template(
         'front -> allPosts.headOption, 
         'older -> allPosts.drop(1)
     )
 }
+
+p(note). Be sure to import @models._@ in the scope of your Application controller.
 
 First we transform our @List[(Post,User,List[Comment])]@ into a list of an anonymous class that have the 3 *content, author and comments* fields. Just because it will be simple for us to access these properties from the template (instead of using *front._2* we will use *front.author* that is simpler to read).
 

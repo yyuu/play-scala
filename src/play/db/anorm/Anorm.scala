@@ -227,8 +227,7 @@ package anorm {
         implicit def rowFunctionToParser[T](f:(Row => MayErr[SqlRequestError,T])): Parser[T] = {
             eatRow( Parser[T] { in=>
                in.first.left.map(_=>PFailure("End of Stream",in))
-                            .flatMap(f(_).left.map({case e@UnexpectedNullableFound(msg) => PError(e.toString,in)
-                                                    case e=>PFailure(e.toString,in) }))
+                            .flatMap(f(_).left.map({ case e=>PFailure(e.toString,in) }))
                             .fold(e=>e, a=> {Success(a,in)}) })
         }
 

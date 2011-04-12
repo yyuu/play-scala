@@ -61,6 +61,8 @@ Now we will also define a *companion object* for the User class:
 
 bc. object User extends Magic[User]
 
+p(note). You also need to import @play.db.anorm.defaults._@ to have access to the @Magic@ type.
+
 This *User* object inherits *Magic* that analyses the type it is parametrized by, and then offers a set of functionalities for parsing and running SQL queries. 
 
 You can now refresh the application home page to see the result. In fact, unless you made a mistake, you should not see any change: Play has automatically compiled and loaded the User class, but this has not added any new feature to the application.
@@ -191,6 +193,10 @@ bc. case class Post(
  
 object Post extends Magic[Post]
 
+p(note). As the @Post@ class use it, you need to import @java.util.Date@ in the scope:
+ 
+@import java.util.{Date}@
+
 We will write a new test case to check that the **Post** model works as expected. But before writing more tests, we need to do something in our test. In the current test, the database content is never deleted, so each new run creates more and more objects. This will soon become problematic, when more advanced tests will count objects to check that all is fine.
 
 So we need to delete the database before each test. Mix your test class with the @BeforeAndAfterEach@ trait, and override the @beforeEach@ method definition:
@@ -238,7 +244,9 @@ order by p.postedAt desc
 
 It is a simple join on the *author_id* column.
 
-Let's add a Scala method that executes this query:
+p(note). If you want to test SQL statements, you can open "http://localhost:9000/@db":http://localhost:9000/@db to access the SQL console.
+
+Let's add a Scala method that executes this query to the @Post@ object:
 
 bc. def allWithAuthor:List[(Post,User)] = 
     SQL(

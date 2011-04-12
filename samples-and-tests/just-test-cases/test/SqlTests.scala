@@ -45,10 +45,10 @@ class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
       (((str("COMMENT1"))*) (in)).get should be (List())
 
       str("TASK.COMMENT")+ (inWithNull) should be (
-        PError(UnexpectedNullableFound("TASK.COMMENT").toString,inWithNull))
+        PFailure(UnexpectedNullableFound("TASK.COMMENT").toString,inWithNull))
 
       str("COMMENT")+ (inWithNull) should be (
-        PError(UnexpectedNullableFound("TASK.COMMENT").toString,inWithNull))
+        PFailure(UnexpectedNullableFound("TASK.COMMENT").toString,inWithNull))
 
           import Magic._
       (Task* (in)).get should be(Success(List(Task(None,"comment no:1")),in).get)

@@ -69,6 +69,8 @@ class SqlTests extends UnitFlatSpec with ShouldMatchers with BeforeAndAfterEach 
     
     it should "work with Magic parsers" in {
         
+        import play.db.anorm.defaults._
+        
         val miniContact = Magic[MiniContact]().using('CONTACT)
         
         val contacts = SQL("select * from Contact").as( miniContact* )

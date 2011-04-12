@@ -1,5 +1,5 @@
 import play.jobs._
-
+    
 @OnApplicationStart class BootStrap extends Job {
     
     override def doJob {

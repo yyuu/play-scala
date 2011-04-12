@@ -135,7 +135,7 @@ Note that since @collect(…)@ ignore the cases where the partial function isn't
 
 h2. Dealing with Nullable columns
 
-If a column is defined as **Nullable** in the database schema, you need to manipulate it as an @Option@ type.
+If a column can contain **Null** values in the database schema, you need to manipulate it as an @Option@ type.
 
 For example, the **indepYear** of the **Country** table being nullable, you need to match it as @Option[Short]@:
 
@@ -143,13 +143,13 @@ bc. SQL("Select name,indepYear from Country")().collect {
     case Row(name:String, Some(year:Short)) => name -> year
 }
 
-If you try to match this column as @Short@ it won't match. If you try to retrieve the column content as @Short@ directly from the dictionnary:
+If you try to match this column as @Short@ it won't be able to parse @Null@ cases. If you try to retrieve the column content as @Short@ directly from the dictionnary:
 
 bc. SQL("Select name,indepYear from Country")().map { row =>
     row[String]("name") -> row[Short]("indepYear")
 }
 
-It will produce an @UnexpectedNullableFound(COUNTRY.INDEPYEAR)@ exception. So you need to map it properly to an @Option[Short]@, as:
+It will produce an @UnexpectedNullableFound(COUNTRY.INDEPYEAR)@ exception if it encounter a null value. So you need to map it properly to an @Option[Short]@, as:
 
 bc. SQL("Select name,indepYear from Country")().map { row =>
     row[String]("name") -> row[Option[Short]]("indepYear")
@@ -264,7 +264,7 @@ def spokenLanguages(countryCode:String):Option[SpokenLanguages] = {
 
 If you try this on the **world** sample database, you will get:
 
-bc. > spokenLanguages("FRA")
+bc. $ spokenLanguages("FRA")
 > Some(
     SpokenLanguages(France,Some(French),List(
         Arabic, Italian, Portuguese, Spanish, Turkish
@@ -274,6 +274,12 @@ bc. > spokenLanguages("FRA")
 h2. Adding some Magic[T]
 
 Based on all these concepts, Play provides a **Magic** helper that will help you to write parsers. The idea is that if you define a @case class@ that match a database table, Play Scala will generate a parser for you.
+
+p(note). The @Magic@ parsers need a convention to map you Scala structures to your database scheme. In this example we will use the default convention that map Scala case classes to Tables using exactly the class names as table name, and the field names as column names. 
+ 
+So before continuing, you need to import:
+ 
+@import play.db.anorm.defaults._@
 
 Let's try by defining a first @Country@ case class that describes the **Country** table:
 
@@ -286,6 +292,10 @@ Note that we are not required to specify every existing table column in the case
 Now let's create an object that extends @Magic@ to automatically get a parser of @Country@:
 
 bc. object Country extends Magic[Country]
+
+p(note). If you want to break the convention here and use a different table name to for the @Country@ case class, you can specify it:
+ 
+@object Country extends Magic[Country]().using("Countries")@
 
 And we can simply use **Country** as @Country@ parser:
 

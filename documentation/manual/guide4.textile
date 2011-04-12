@@ -78,18 +78,43 @@ To allow users to navigate easily through posts, we will add a pagination mechan
 Here is the SQL query we will use to fetch both previous and next post from a particular element:
 
 bc. (
-    select *,'next' as pos from post 
-    where postedAt > {date} order by postedAt asc limit 1
+    select *, 'next' as pos from post 
+    where postedAt < {date} order by postedAt desc limit 1
 )
     union
 (
-    select *,'prev' as pos from post 
-    where postedAt < {date} order by postedAt desc limit 1
+    select *, 'prev' as pos from post 
+    where postedAt > {date} order by postedAt asc limit 1
 )
+ 
+order by postedAt desc
 
 And we will translate the result as a @(Option[Post], Option[Post])@ value, where the first element of the tuple is the previous post, and the second element is the next post:
 
-bc. TODO
+bc. opt('pos.is("prev") ~> Post.on("")) ~ opt('pos.is("next") ~> Post.on(""))
+
+Here is the new @prevNext@ method we need to add to the @Post@ class:
+
+bc. def prevNext = {        
+    SQL(
+        """
+            (
+                select *, 'next' as pos from post 
+                where postedAt < {date} order by postedAt desc limit 1
+            )
+                union
+            (
+                select *, 'prev' as pos from post 
+                where postedAt > {date} order by postedAt asc limit 1
+            )
+ 
+            order by postedAt desc
+            
+        """
+    ).on("date" -> postedAt).as( 
+        opt('pos.is("prev")~>Post.on("")) ~ opt('pos.is("next")~>Post.on("")) 
+    )
+}
 
 Now, let's add this information to the *show.html* template:
 
@@ -97,7 +122,7 @@ bc. def show(id: Long) = {
     Post.byIdWithAuthorAndComments(id).map( p =>
         Template(
             'item -> new { val (post,author,comments) = p },
-            'pagination -> new { val (prev, next) = p._1.prevNext }
+            'pagination -> p._1.prevNext
         )
     ).getOrElse(NotFound("No such Post"))
 }
@@ -105,17 +130,17 @@ bc. def show(id: Long) = {
 We will call these methods several times during a request so they could be optimized, but they’re good enough for now. Also, add the pagination links at the top of the **show.html** template (before the **#{display/}** tag):
 
 bc. <ul id="pagination">
-    #{if pagination.prev}
+    #{if pagination._1}
         <li id="previous">
-            <a href="@{show(pagination.prev.id)}">
-                ${pagination.prev.title}
+            <a href="@{show(pagination._1?.id)}">
+                ${pagination._1?.title}
             </a>
         </li>
     #{/if}
-    #{if pagination.next}
+    #{if pagination._2}
         <li id="next">
-            <a href="@{show(pagination.next.id)}">
-                ${pagination.next.title}
+            <a href="@{show(pagination._2?.id)}">
+                ${pagination._2?.title}
             </a>
         </li>
     #{/if}
@@ -202,7 +227,7 @@ bc. <h3>Post a comment</h3>
 
 Note that we reuse the posted parameters to fill the HTML input values.
 
-To make the UI feedback more pleasant for the poster, we will add a little JavaScript to automatically set focus on the comment form in case of an error. As this script uses "JQuery Tools Expose":files/jquery.tools-1.2.5.toolbox.expose.min.js as support libraries, you have to include them. Download these two libraries to the **yabe/public/javascripts/** directory and modify the **main.html** template to include them:
+To make the UI feedback more pleasant for the poster, we will add a little JavaScript to automatically set focus on the comment form in case of an error. As this script uses "JQuery Tools Expose":files/jquery.tools.min.js as support libraries, you have to include them. Download these two libraries to the **yabe/public/javascripts/** directory and modify the **main.html** template to include them:
 
 bc. …
     <script src="@{'/public/javascripts/jquery-1.5.2.min.js'}"></script> 
