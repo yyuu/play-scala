@@ -27,7 +27,7 @@ bc. $ play new helloworld --with scala
 ~ |  __/|_|\____|\__ (_)
 ~ |_|            |__/   
 ~
-~ play! 1.2-beta, http://www.playframework.org
+~ play! 1.2, http://www.playframework.org
 ~
 ~ The new application will be created in ~/myScalaApp
 ~ What is the application name? [helloworld] Hello world

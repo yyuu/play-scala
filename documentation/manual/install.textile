@@ -2,7 +2,7 @@ h1. Installation guide
 
 h2. Prerequisites
 
-Before installing the Play Scala module, be sure to have a working installation of Play framework. You will also need "Java 5 or later":http://java.sun.com/.
+Before installing the Play Scala module, be sure to have a working installation of Play framework. Play Scala require *Play 1.2*.
 
 p(note). You don't need to already have Scala installed on your computer. The Play Scala module comes with all required libraries and with the Scala compiler. 
  
@@ -19,7 +19,7 @@ bc. $ play install scala
 ~ |  __/|_|\____|\__ (_)
 ~ |_|            |__/   
 ~
-~ play! 1.2-beta, http://www.playframework.org
+~ play! 1.2, http://www.playframework.org
 ~
 ~ Will install scala-0.9
 ~ This module is compatible with: Play 1.2
@@ -45,7 +45,7 @@ bc. $ play new myScalaApp --with scala
 ~ |  __/|_|\____|\__ (_)
 ~ |_|            |__/   
 ~
-~ play! 1.2-beta, http://www.playframework.org
+~ play! 1.2, http://www.playframework.org
 ~
 ~ The new application will be created in ~/myScalaApp
 ~ What is the application name? [myScalaApp] 
