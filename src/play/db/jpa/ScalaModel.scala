@@ -11,11 +11,11 @@ import play.data.validation.Validation
 */
 @MappedSuperclass
 private[jpa] class ScalaModel extends JPABase {
- 
+
     /**
      * holds entity managers
      */
-    def em() = JPA.em()
+    override def em() = JPA.em()
 
     /**
      * refreshes current instance
