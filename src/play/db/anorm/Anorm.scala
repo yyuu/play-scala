@@ -131,7 +131,20 @@ package anorm {
                     case _ => Left(TypeDoesNotMatch("Cannot convert " + value + " to Long for column " + qualified))
                 }            
             })
-        } 
+        }
+
+        implicit def rowToBigInteger: Column[java.math.BigInteger] = {
+            import java.math.BigInteger
+            Column[BigInteger](transformer = { (value, meta) =>
+                val MetaDataItem(qualified,nullable,clazz) = meta
+                value match {
+                    case bi:BigInteger => Right(bi)
+                    case int:Int => Right(BigInteger.valueOf(int))
+                    case long:Long => Right(BigInteger.valueOf(long))
+                    case _ => Left(TypeDoesNotMatch("Cannot convert " + value + " to Long for column " + qualified))
+                }            
+            })
+        }
       
         implicit def rowToDate: Column[Date] = {
             Column[Date](transformer = { (value, meta) =>
@@ -317,7 +330,7 @@ package anorm {
     }
 
     case class Convention(conv:PartialFunction[AnalyserInfo,String]){
-      case class Magic[T](override val tableName:Option[String]=None, override val conventions :PartialFunction[AnalyserInfo,String]= conv)(implicit val m:ClassManifest[T]) extends M[T] {
+      case class Magic[T](override val tableName:Option[String]=None, override val conventions :  PartialFunction[AnalyserInfo,String]= conv)(implicit val m:ClassManifest[T]) extends M[T] {
         def using(tableName:Symbol) = this.copy(tableName=Some(tableName.name))
       }
       case class MagicSql[T] ( override val tableName:Option[String]=None, override val conventions:  PartialFunction[AnalyserInfo,String] = conv)(implicit val m:ClassManifest[T]) extends  MSql[T] {
@@ -509,6 +522,7 @@ package anorm {
         val conventions: PartialFunction[AnalyserInfo,String] = asIs
         val m:ClassManifest[T]
         val tableName:Option[String] = None
+        def extendExtractor[C](f:(Manifest[C] => Option[ColumnTo[C]]), ma:Manifest[C]):Option[ColumnTo[C]] = None
         val analyser = new Analyse[T](tableName,conventions,m) {
             
             import java.lang.reflect._
@@ -524,6 +538,7 @@ package anorm {
             case m if m == Manifest.classType(classOf[String])   => Some(implicitly[ColumnTo[String]])
             case m if m == Manifest.Int =>Some(implicitly[ColumnTo[Int]])
             case m if m == Manifest.Long => Some(implicitly[ColumnTo[Long]])
+            case m if m == Manifest.classType(classOf[java.math.BigInteger]) => Some(implicitly[ColumnTo[java.math.BigInteger]])
             case m if m == Manifest.Boolean => Some(implicitly[ColumnTo[Boolean]])
             case m if m >:> Manifest.classType(classOf[Date]) => Some(implicitly[ColumnTo[Date]])
             case m if m.erasure == classOf[Option[_]] => {
@@ -543,7 +558,7 @@ package anorm {
                                 .getOrElse( implicitly[Manifest[Any]] )
                 getExtractor(typeParam).map( mapper => ColumnTo.rowToPk(mapper) )
             }
-            case _ => None
+            case m => extendExtractor[C](getExtractor[C] _,m)
         }).asInstanceOf[Option[ColumnTo[C]]]
 
         import SqlParser._
@@ -638,7 +653,7 @@ package anorm {
   
         val typeName = clean(m.erasure.getSimpleName)
 
-        val name = tableName.getOrElse(conventions(TableC(typeName)))
+        lazy val name = tableName.getOrElse(conventions(TableC(typeName)))
   
         def getQualifiedColumnName(column:String) = name+"."+column
 
