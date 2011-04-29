@@ -1,7 +1,7 @@
 package play.db
 
 package object anorm {
-    
+
     implicit def sqlToSimple(sql:SqlQuery): SimpleSql[Row] = sql.asSimple
     implicit def sqlToBatch(sql:SqlQuery): BatchSql = sql.asBatch
     
@@ -413,7 +413,7 @@ package anorm {
                             .onParams(toSet.map(_._2):_*)
     
             val result = catching(classOf[java.sql.SQLException])
-                            .either(query.execute1())
+                            .either(query.execute1(getGeneratedKeys=true))
                             .left.map( e => IntegrityConstraintViolation(e.asInstanceOf[java.sql.SQLException].getMessage))
 
             for { 
@@ -810,8 +810,10 @@ package anorm {
   
         def first(conn:java.sql.Connection=connection):Option[T] = parse((guard(acceptMatch("not at end",{case Right(_) => Unit})) ~> commit(defaultParser) )?)
 
-        def getFilledStatement(connection:java.sql.Connection) = {
-            val s =connection.prepareStatement(sql.query,java.sql.Statement.RETURN_GENERATED_KEYS)
+        def getFilledStatement(connection:java.sql.Connection, getGeneratedKeys:Boolean=false) = {
+            val s =if(getGeneratedKeys) connection.prepareStatement(sql.query,java.sql.Statement.RETURN_GENERATED_KEYS)
+                   else connection.prepareStatement(sql.query)
+
             val argsMap=Map(params:_*)
             sql.argsInitialOrder.map(argsMap)
                .zipWithIndex
@@ -829,8 +831,9 @@ package anorm {
 
         def addBatchParams(args:Any*):BatchSql = this.copy(params=(this.params) :+ sql.argsInitialOrder.zip(args))
 
-        def getFilledStatement(connection:java.sql.Connection) = {
-            val statement=connection.prepareStatement(sql.query)
+        def getFilledStatement(connection:java.sql.Connection, getGeneratedKeys:Boolean=false) = {
+            val statement= if(getGeneratedKeys) connection.prepareStatement(sql.query,java.sql.Statement.RETURN_GENERATED_KEYS)
+                           else connection.prepareStatement(sql.query)
             params.foldLeft(statement)( (s,ps) => {
                 s.addBatch()
                 val argsMap=Map(ps:_*)
@@ -850,7 +853,7 @@ package anorm {
   
         def connection = play.db.DB.getConnection
         
-        def getFilledStatement(connection:java.sql.Connection):java.sql.PreparedStatement
+        def getFilledStatement(connection:java.sql.Connection, getGeneratedKeys:Boolean=false):java.sql.PreparedStatement
         
         def filledStatement = getFilledStatement(connection)
   
@@ -866,8 +869,8 @@ package anorm {
 
         def execute(conn:java.sql.Connection=connection):Boolean = getFilledStatement(connection).execute()
 
-        def execute1(conn:java.sql.Connection=connection):(java.sql.PreparedStatement,Int) = {
-            val statement=getFilledStatement(connection)
+        def execute1(conn:java.sql.Connection=connection, getGeneratedKeys:Boolean=false):(java.sql.PreparedStatement,Int) = {
+            val statement=getFilledStatement(connection, getGeneratedKeys)
             (statement, {statement.executeUpdate()} )
         }
 
@@ -881,7 +884,7 @@ package anorm {
 
     case class SqlQuery(query:String,argsInitialOrder:List[String]=List.empty) extends Sql {
 
-        def getFilledStatement(connection:java.sql.Connection):java.sql.PreparedStatement = asSimple().getFilledStatement(connection)
+        def getFilledStatement(connection:java.sql.Connection, getGeneratedKeys: Boolean = false):java.sql.PreparedStatement = asSimple().getFilledStatement(connection,getGeneratedKeys)
   
         private def defaultParser : Parser[Row] = acceptMatch("not end.", { case Right(r) => r } )
   
