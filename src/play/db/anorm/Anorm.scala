@@ -653,7 +653,7 @@ package anorm {
   
         val typeName = clean(m.erasure.getSimpleName)
 
-        lazy val name = tableName.getOrElse(conventions(TableC(typeName)))
+        lazy val name = tableName.orElse(conventions.lift(TableC(typeName))).getOrElse(typeName)
   
         def getQualifiedColumnName(column:String) = name+"."+column
 
@@ -677,7 +677,8 @@ package anorm {
             val coherent = paramTypes.length == paramNames.length
       
             val names_types =  paramNames.zip(paramTypes).map( nt => 
-                (getQualifiedColumnName(conventions(ColumnC(typeName,clean(nt._1)))),nt._2)
+                (getQualifiedColumnName(conventions.lift(ColumnC(typeName,clean(nt._1)))
+                                                   .getOrElse(clean(nt._1))),nt._2)
             )
 
             if(!coherent && names_types.map(_._1).exists(_.contains("outer")))
@@ -818,7 +819,7 @@ package anorm {
             sql.argsInitialOrder.map(argsMap)
                .zipWithIndex
                .map(_.swap)
-               .foldLeft(s)((s,e)=>{s.setObject(e._1+1,e._2);s})
+               .foldLeft(s)((s,e) => {setAny(e._1+1,e._2,s)} )
         }
         
         def using[U](p:Parser[U]):SimpleSql[U] = SimpleSql(sql,params,p)
@@ -841,7 +842,7 @@ package anorm {
                     .map(argsMap)
                     .zipWithIndex
                     .map(_.swap)
-                    .foldLeft(s)( (s,e) => {s.setObject(e._1+1,e._2);s} )
+                    .foldLeft(s)( (s,e) => {setAny(e._1+1,e._2,s)} )
             })
         }
     }
@@ -861,6 +862,14 @@ package anorm {
 
         def resultSet (conn:java.sql.Connection=connection) = (getFilledStatement(connection).executeQuery())
   
+        protected def setAny(index:Int,value:Any,stmt:java.sql.PreparedStatement):java.sql.PreparedStatement = {
+          value match {
+            case bd:java.math.BigDecimal => stmt.setBigDecimal(index,bd)
+            case o => stmt.setObject(index,o)
+          }
+          stmt
+        }
+
         import SqlParser._
   
         def as[T](parser:Parser[T], conn:java.sql.Connection=connection):T = Sql.as[T](parser,resultSet(connection))
