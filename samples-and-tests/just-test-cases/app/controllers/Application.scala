@@ -3,11 +3,13 @@ package controllers
 import play._
 import play.mvc._
 import play.db.jpa._
-import play.data.validation._
+import play.data.validation.Annotations._
 import play.libs._
 import org.joda.time._
 import play.utils.Scala._
 import models._
+
+import play.Logger._
 
 object Application extends Controller with Secure {
     
@@ -112,7 +114,7 @@ object Application extends Controller with Secure {
         yop = yop + 3
         println(name)
         
-        info("Yop %d", 9)
+        info("Yop %d", 9.asInstanceOf[AnyRef])
         
         response <<< OK
         response <<< "YOUHOUxxx" 

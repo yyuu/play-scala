@@ -19,7 +19,7 @@ import play.WithEscape
  *
  * Represents a Scala based Controller
  */
-private[mvc] abstract class ScalaController extends ControllerDelegate with LocalVariablesSupport with ControllerSupport {
+abstract class ScalaController extends ControllerDelegate with LocalVariablesSupport with ControllerSupport {
 
     /**
      * implicit def to provider an easier way to render arguments 
@@ -78,6 +78,8 @@ private[mvc] abstract class ScalaController extends ControllerDelegate with Loca
     def Template(name: String, args: (Symbol, Any)*)    = new Template(template = Some(name), args = ScalaControllerCompatibility.argsToParams(args: _*))
     def Action(action: => Any)                          = new ScalaAction(action)
     def Continue                                        = new NoResult()
+    
+    // Deprecated
     def Suspend(s: String)                              = new ScalaSuspend(s)
     def Suspend(t: Int)                                 = new ScalaSuspend(t)
     def WaitFor(tasks: Future[_])                       = new ScalaWaitFor(tasks)

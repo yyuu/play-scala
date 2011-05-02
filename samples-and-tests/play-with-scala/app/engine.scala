@@ -1,5 +1,4 @@
 import scala.collection.mutable._
-import play.scalasupport.OnTheFly
 
 package object play_with_scala {
     

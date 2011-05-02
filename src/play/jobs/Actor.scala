@@ -36,7 +36,7 @@ trait PlayActor extends Actor {
                     } catch {
                       case e => val element = PlayException.getInterestingStrackTraceElement(e)
                       if (element != null) {
-                        error(
+                        Logger.error(
                           new JavaExecutionException(
                             Play.classes.getApplicationClass(element.getClassName()), element.getLineNumber(), e
                           )
@@ -45,7 +45,7 @@ trait PlayActor extends Actor {
                           "Caught in PlayActor"
                         )
                       } else {
-                        error(e, "Caught in PlayActor")
+                        Logger.error(e, "Caught in PlayActor")
                       }
                       sender ! Left(e)
                     }

@@ -202,8 +202,7 @@ package anorm {
     }
 
     trait SqlParser extends scala.util.parsing.combinator1.Parsers {
-          
-
+        
         case class StreamReader(s:Stream[Row], override val lastNoSuccess:NoSuccess=null) extends ReaderWithLastNoSuccess {
           override type R = Input
           def first = s.headOption.toRight(EndOfStream())
