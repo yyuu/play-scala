@@ -63,3 +63,17 @@ def after(**kargs):
         dotProject = os.path.join(app.path, '.project')
         replaceAll(dotProject, r'org.eclipse.jdt.core.javabuilder', "ch.epfl.lamp.sdt.core.scalabuilder")
         replaceAll(dotProject, r'<natures>', "<natures>\n\t\t<nature>ch.epfl.lamp.sdt.core.scalanature</nature>")
+
+    # ~~~~~~~~~~~~~~~~~~~~~~ Idealize
+    if command == 'idea' or command == 'idealize':
+        application_name = app.readConf('application.name')
+        imlFile = os.path.join(app.path, application_name + '.iml')
+        replaceAll(imlFile, r'</module>', '''
+    <component name="FacetManager">
+        <facet type="scala" name="Scala">
+            <configuration>
+                <option name="compilerLibraryLevel" value="Global" />
+            </configuration>
+        </facet>
+    </component>
+</module>''')
