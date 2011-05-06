@@ -35,7 +35,9 @@ def before(**kargs):
     
     if command == 'run' or command == 'test' or command == 'auto-test':
         args.append('-Xms512m')
-        args.append('-Xmx1024m')
+        args.append('-Xmx512m')
+        args.append('-XX:PermSize=256m') 
+        args.append('-XX:MaxPermSize=256m')
 
 def after(**kargs):
     
