@@ -102,4 +102,4 @@ trait Scala {
 
 }
 
-object Scala extends Scala
+object Scala extends Scala with java.io.Serializable
