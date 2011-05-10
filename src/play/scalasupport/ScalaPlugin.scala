@@ -7,6 +7,7 @@ import play.exceptions._
 import play.classloading.ApplicationClasses.ApplicationClass
 import play.scalasupport.compiler._
 import play.classloading.HotswapAgent
+import play.templates._
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable.ListBuffer
@@ -22,7 +23,7 @@ import org.scalatest.tools.ScalaTestRunner
 class ScalaPlugin extends PlayPlugin {
     
     override def onLoad {
-        play.templates.CustomGroovy()
+        CustomGroovy()
         play.data.binding.Binder.register(classOf[play.db.anorm.Pk[_]], new PkBinder())
         play.data.binding.Binder.register(classOf[Option[_]], new OptionBinder())
         onConfigurationRead()
@@ -35,8 +36,8 @@ class ScalaPlugin extends PlayPlugin {
         Play.configuration.put("play.bytecodeCache", "false")
     }
   
-    override def overrideTemplateSource(template: play.templates.BaseTemplate, source: String) = {
-        if(template.isInstanceOf[play.templates.GroovyTemplate]) {
+    override def overrideTemplateSource(template: BaseTemplate, source: String) = {
+        if(template.isInstanceOf[GroovyTemplate]) {
             template.source.replace("?.", "?.safeNull()?.")
         } else {
             null
@@ -119,9 +120,14 @@ class ScalaPlugin extends PlayPlugin {
     
     def compilationException(compilationError: CompilationError) = {
         val CompilationError(_, message, source, line, marker) = compilationError
-        println(compilationError)
         if(source.isDefined) {
-            new CompilationException(VFile.open(source.get), message, line.getOrElse(-1), marker.getOrElse(-1) - 1, marker.getOrElse(-1) - 1)
+            if(source.get.getParentFile == ScalaTemplateCompiler.generatedDirectory) {
+                val generatedSource = GeneratedSource(source.get)
+                val originalPos = generatedSource.toSourcePosition(marker.get)
+                new CompilationException(VFile.open(generatedSource.source.get), message, originalPos._1, originalPos._2 - 1, originalPos._2 - 1)
+            } else {
+                new CompilationException(VFile.open(source.get), message, line.getOrElse(-1), marker.getOrElse(0) - 1, marker.getOrElse(0) - 1)
+            }
         } else {
             new CompilationException(message)
         }
@@ -162,12 +168,32 @@ class ScalaPlugin extends PlayPlugin {
     )
     
     def sources:Map[File,Long] = {
-        currentSources.empty ++ (for(p <- Play.javaPath) yield PlayScalaCompiler.scanFiles(p.getRealFile)).flatten.map(f => (f,f.lastModified))
+        import play.vfs.VirtualFile
+        currentSources.empty ++ (for(p <- (Play.javaPath ++ Seq(VirtualFile.open(ScalaTemplateCompiler.generatedDirectory)))) 
+            yield PlayScalaCompiler.scanFiles(p.getRealFile)).flatten.map(f => (f,f.lastModified))
+    }
+    
+    def templates:Seq[File] = {
+        (for(p <- Play.javaPath) 
+            yield PlayScalaCompiler.scanFiles(p.getRealFile, """^[^.].*[.]scala[.]html$""".r)).flatten
+    }
+    
+    def generated:Seq[GeneratedSource] = {
+        ScalaTemplateCompiler.generatedDirectory.listFiles.map { f =>
+            GeneratedSource(f)
+        }
     }
     
     var currentSources = Map[File,Long]()
     
     def update() = {
+        
+        // Sync generated
+        generated.foreach(_.sync())
+        
+        // Generate templates
+        templates.foreach(ScalaTemplateCompiler.compile(_))
+        
         val newSources = sources
         if(currentSources != newSources) {
             compiler.update(newSources.keySet.toList).right.map( r => {currentSources = newSources; r} )
