@@ -26,21 +26,21 @@ def execute(**kargs):
         java_cmd.insert(2, '-Xmx512M')
         subprocess.call(java_cmd, env=os.environ)
         print
-        
+
 def before(**kargs):
     command = kargs.get("command")
     app = kargs.get("app")
     args = kargs.get("args")
     env = kargs.get("env")
-    
+
     if command == 'run' or command == 'test' or command == 'auto-test':
         args.append('-Xms512m')
         args.append('-Xmx512m')
-        args.append('-XX:PermSize=256m') 
+        args.append('-XX:PermSize=256m')
         args.append('-XX:MaxPermSize=256m')
 
 def after(**kargs):
-    
+
     command = kargs.get("command")
     app = kargs.get("app")
     args = kargs.get("args")
