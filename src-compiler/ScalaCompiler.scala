@@ -46,7 +46,7 @@ class PlayScalaCompiler(app: File, libs: File, classpath: List[File], output: Fi
     // then you get Either(compilationError, (updatedClasses,removedClasses))    
     def update(sources:List[File]):Either[CompilationError,(List[ClassDefinition], List[ClassDefinition])] = {        
         try {
-            val inputs = SbtCompiler.inputs(classpath, sources, output, Nil, Nil, 1, order)(compilers, SbtLogger)        
+            val inputs = SbtCompiler.inputs(classpath, sources, output, Nil/*Seq("-verbose")*/, Nil, 1, order)(compilers, SbtLogger)        
             
             val result = SbtCompiler(inputs, SbtLogger)
             val (stamps,relations) = result.stamps -> result.relations
@@ -133,7 +133,7 @@ class PlayScalaCompiler(app: File, libs: File, classpath: List[File], output: Fi
         def log(level: Level.Value, message: => String) = {
             level match {
                 case Level.Error => println(message)
-                case _ => 
+                case _ => //println("!!! " + message)
             }
         }
 
@@ -196,7 +196,7 @@ class PlayScalaCompiler(app: File, libs: File, classpath: List[File], output: Fi
 
                     def component(componentID: String) = {
                         componentID match {
-                            case "compiler-interface-bin_2.8.1.final" => Array(new File(libs, "../dlib/compiler-interface-bin-0.9.4-SNAPSHOT.jar"))
+                            case "compiler-interface-bin_2.8.1.final" => Array(new File(libs, "../dlib/compiler-interface-bin-0.9.5.jar"))
                             case _ => Array[File]()
                         }
                     }
