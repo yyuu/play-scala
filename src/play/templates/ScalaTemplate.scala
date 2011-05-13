@@ -429,7 +429,6 @@ object ScalaTemplateCompiler {
             Nil :+ """
                 package """ :+ packageName :+ """
 
-                import views.html._
                 import play.templates._
                 import play.templates.TemplateMagic._
 
@@ -504,8 +503,13 @@ trait Format[T<:Appendable[T]] {
 }
 
 case class Html(text:String) extends Appendable[Html] {
-    def +(other:Html) = Html(text + other.text)
-    override def toString = text
+    val buffer = new StringBuilder(text) 
+    
+    def +(other:Html) = {
+        buffer.append(other.buffer)
+        this
+    }
+    override def toString = buffer.toString
 }
 
 object HtmlFormat extends Format[Html] {    
