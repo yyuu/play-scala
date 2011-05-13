@@ -466,7 +466,7 @@ object Source {
             /* 
                 -- GENERATED --
                 DATE: """ + new java.util.Date + """
-                SOURCE: """ + template.relativePath + """
+                SOURCE: """ + template.relativePath.replaceFirst("\\{[^\\}]*\\}", "") + """
                 HASH: """ + Codec.hexSHA1(template.contentAsString) + """
                 MATRIX: """ + positions.map { pos =>
                     pos._1 + "->" + pos._2
