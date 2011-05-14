@@ -19,7 +19,7 @@ private[cache] object ScalaCache extends CacheDelegate {
         loop {
             react { 
                 case Exit(from: Actor, exc: Exception) => {
-                    play.Logger.warn("cache actor crashed on: "+exc.toString+" resstarting...");
+                    play.Logger.warn(exc, "cache actor crashed resstarting...");
                     from.restart();
                     play.Logger.warn("restarted cache actor")
                 }
@@ -48,9 +48,16 @@ private[cache] object ScalaCache extends CacheDelegate {
         }
     }
 
-    private def getFromCache[T](key: String) = Option(_impl.get(key).asInstanceOf[T])
+    private def getFromCache[T](key: String) = getFromCache1(key).map(_.asInstanceOf[T])
 
-    private def getFromCache1(key: String): Option[_] = Option(_impl.get(key))
+    private def getFromCache1(key: String): Option[_] = {
+
+      import scala.util.control.Exception._
+      catching(classOf[java.io.InvalidClassException])
+        .either(Option( _impl.get(key)))
+        .left.map( e => {delete(key);play.Logger.warn(e.getMessage());e} )
+        .right.toOption.flatMap(identity)
+    }
 
     /**
     * Retrieves value from Cache based on the type parameter
@@ -59,11 +66,11 @@ private[cache] object ScalaCache extends CacheDelegate {
     */
     def get[T](key: String)(implicit m: ClassManifest[T]): Option[T] = {
         if (key == null) None
-        val v = _impl.get(key).asInstanceOf[T]
+        val v = _impl.get(key)
         if (v == null) {
             None
         } else if (m.erasure.isAssignableFrom(v.asInstanceOf[AnyRef].getClass)) {
-            Some(v)
+            Some(v.asInstanceOf[T])
         } else {
             play.Logger.warn("Found a value in cache for key '%s' of type %s where %s was expected", key, v.asInstanceOf[AnyRef].getClass.getName, m.erasure.getName)
             None
@@ -78,8 +85,7 @@ private[cache] object ScalaCache extends CacheDelegate {
     * @param expiration expiration period
     */
     def get[T](key: String, expiration: String)(getter: => T): T = {
-
-        get(key) match {
+       getFromCache[T](key) match {
             case Some(x) => x
             case None => {
                 val r = getter
@@ -129,12 +135,12 @@ private[cache] object ScalaCache extends CacheDelegate {
             v
         }
         
-        get(key).getOrElse({
+        getFromCache[A](key).getOrElse({
             val result = getter;
             if (isDesirable(result)) {
                 cacheIt(result)
             } else {
-                get(prefixed(key)).map({v=> set(key, v, "2min");v}).getOrElse(result)
+                getFromCache[A](prefixed(key)).map({v=> set(key, v, "2min");v}).getOrElse(result)
             }
         })
         

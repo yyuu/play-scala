@@ -102,6 +102,17 @@ package anorm {
             })
         } 
         
+        implicit def rowToDouble: Column[Double] = {
+            Column[Double](transformer = { (value, meta) =>
+                val MetaDataItem(qualified,nullable,clazz) = meta
+                value match {
+                    case d:Double => Right(d)
+                    case _ => Left(TypeDoesNotMatch("Cannot convert " + value + " to Double for column " + qualified))
+                }            
+            })
+        }
+
+
         implicit def rowToShort: Column[Short] = {
             Column[Short](transformer = { (value, meta) =>
                 val MetaDataItem(qualified,nullable,clazz) = meta
@@ -141,7 +152,19 @@ package anorm {
                     case bi:BigInteger => Right(bi)
                     case int:Int => Right(BigInteger.valueOf(int))
                     case long:Long => Right(BigInteger.valueOf(long))
-                    case _ => Left(TypeDoesNotMatch("Cannot convert " + value + " to Long for column " + qualified))
+                    case _ => Left(TypeDoesNotMatch("Cannot convert " + value + " to BigInteger for column " + qualified))
+                }            
+            })
+        }
+
+        implicit def rowToBigDecimal: Column[java.math.BigDecimal] = {
+            import java.math.BigDecimal
+            Column[BigDecimal](transformer = { (value, meta) =>
+                val MetaDataItem(qualified,nullable,clazz) = meta
+                value match {
+                    case bi:java.math.BigDecimal => Right(bi)
+                    case double:Double => Right(new java.math.BigDecimal(double))
+                    case _ => Left(TypeDoesNotMatch("Cannot convert " + value + " to BigDecimal for column " + qualified))
                 }            
             })
         }
@@ -537,7 +560,9 @@ package anorm {
             case m if m == Manifest.classType(classOf[String])   => Some(implicitly[ColumnTo[String]])
             case m if m == Manifest.Int =>Some(implicitly[ColumnTo[Int]])
             case m if m == Manifest.Long => Some(implicitly[ColumnTo[Long]])
+            case m if m == Manifest.Double => Some(implicitly[ColumnTo[Double]])
             case m if m == Manifest.classType(classOf[java.math.BigInteger]) => Some(implicitly[ColumnTo[java.math.BigInteger]])
+            case m if m == Manifest.classType(classOf[java.math.BigDecimal]) => Some(implicitly[ColumnTo[java.math.BigDecimal]])
             case m if m == Manifest.Boolean => Some(implicitly[ColumnTo[Boolean]])
             case m if m >:> Manifest.classType(classOf[Date]) => Some(implicitly[ColumnTo[Date]])
             case m if m.erasure == classOf[Option[_]] => {
