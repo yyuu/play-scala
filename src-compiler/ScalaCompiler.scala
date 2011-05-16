@@ -11,10 +11,14 @@ case class ClassDefinition(name: String, code: Array[Byte], source: Option[File]
 object PlayScalaCompiler {
     
     def scanFiles(path: File, regex: scala.util.matching.Regex = "^[^.].*[.](scala|java)$".r ):Seq[File] = {
-        path.listFiles.toSeq.collect({
-            case f if f.isFile && regex.unapplySeq(f.getName).isDefined => Seq(f.getAbsoluteFile)
-            case f if f.isDirectory => scanFiles(f, regex)
-        }).flatten
+        if(path.isDirectory) {
+            path.listFiles.toSeq.collect({
+                case f if f.isFile && regex.unapplySeq(f.getName).isDefined => Seq(f.getAbsoluteFile)
+                case f if f.isDirectory => scanFiles(f, regex)
+            }).flatten
+        } else {
+            Nil
+        }
     } 
     
 }
@@ -46,7 +50,7 @@ class PlayScalaCompiler(app: File, libs: File, classpath: List[File], output: Fi
     // then you get Either(compilationError, (updatedClasses,removedClasses))    
     def update(sources:List[File]):Either[CompilationError,(List[ClassDefinition], List[ClassDefinition])] = {        
         try {
-            val inputs = SbtCompiler.inputs(classpath, sources, output, Nil/*Seq("-verbose")*/, Nil, 1, order)(compilers, SbtLogger)        
+            val inputs = SbtCompiler.inputs(classpath, sources, output, Nil/*Seq("-verbose")*/, Seq("-g"), 1, order)(compilers, SbtLogger)        
             
             val result = SbtCompiler(inputs, SbtLogger)
             val (stamps,relations) = result.stamps -> result.relations
