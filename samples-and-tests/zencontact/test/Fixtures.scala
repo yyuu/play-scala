@@ -6,7 +6,7 @@ class FreshDatabase {
     
     import models._
     
-    info("Apply fixture: FreshDatabase")
+    Logger.info("Apply fixture: FreshDatabase")
     
     Fixtures.deleteDatabase()
     
