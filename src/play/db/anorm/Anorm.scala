@@ -850,9 +850,11 @@ package anorm {
         
     }
 
-    case class BatchSql(sql:SqlQuery, params:Seq[Seq[(String,Any)]]) extends Sql {
+    case class BatchSql(sql:SqlQuery, params:Seq[Seq[(String,Any)]]) {
 
         def addBatch(args:(String,Any)*):BatchSql = this.copy(params=(this.params) :+ args)
+
+        def connection = play.db.DB.getConnection
 
         def addBatchParams(args:Any*):BatchSql = this.copy(params=(this.params) :+ sql.argsInitialOrder.zip(args))
 
@@ -869,6 +871,19 @@ package anorm {
                     .foldLeft(s)( (s,e) => {setAny(e._1+1,e._2,s)} )
             })
         }
+
+      protected def setAny(index:Int,value:Any,stmt:java.sql.PreparedStatement):java.sql.PreparedStatement = {
+          value match {
+            case bd:java.math.BigDecimal => stmt.setBigDecimal(index,bd)
+            case o => stmt.setObject(index,o)
+          }
+          stmt
+        }
+
+      def filledStatement = getFilledStatement(connection)
+
+      def execute(conn:java.sql.Connection=connection):Array[Int] = getFilledStatement(connection).executeBatch()
+    
     }
     
     trait Sql {
