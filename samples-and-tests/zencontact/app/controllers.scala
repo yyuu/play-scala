@@ -12,32 +12,32 @@ import play.db.anorm._
 
 object Application extends Controller {
     
+    import views.Application._
+    
     def index = {
-        Template('now -> new Date)    
+        html.index(new Date)
     }
     
     def list = {
-        Template('contacts -> Contact.find("order by name, firstname ASC").list())
+        html.list(Contact.find("order by name, firstname ASC").list())
     }
        
-    def form(id: Long) = {
-        Template('contact -> Contact.find("id={id}").onParams(id).first())
+    def edit(id: Option[Long]) = {
+        html.edit {
+            id.flatMap( id => Contact.find("id={id}").onParams(id).first() )
+        }
     }
     
-    def save(@Valid contact: Contact) = {
-        if(Validation.hasErrors()) {
-            Template("@form", 'contact -> contact)
+    def save(id: Option[Long]) = {
+        val contact = params.get("contact", classOf[Contact])
+        Validation.valid("contact", contact) // We need a more powerful way to achieve this
+        if(Validation.hasErrors) {
+            html.edit(Some(contact))
         } else {
-            Contact.update(contact)        
-            Action(list)
-        }        
-    }
-    
-    def create(@Valid contact: Contact) = {
-        if(Validation.hasErrors()) {
-            Template("@form", 'contact -> contact )
-        } else {
-            Contact.create(contact)
+            id match {
+                case Some(id) => Contact.update(contact)
+                case None => Contact.create(contact)
+            }
             Action(list)
         }
     }

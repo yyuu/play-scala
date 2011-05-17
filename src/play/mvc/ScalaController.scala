@@ -87,37 +87,42 @@ abstract class ScalaController extends ControllerDelegate with LocalVariablesSup
     /**
      * @returns a play request object
      */
-    def request = Request.current()
+    implicit def request = Request.current()
 
     /**
      * @returns a play response object
      */
-    def response = Response.current()
+    implicit def response = Response.current()
 
     /**
      * @returns a session object
      */
-    def session = Session.current()
+    implicit def session = Session.current()
 
     /**
      * @returns a flash object
      */
-    def flash = Flash.current()
+    implicit def flash = Flash.current()
 
     /**
      * @returns parameters
      */
-    def params = Params.current()
+    implicit def params = Params.current()
 
     /**
      * @returns render argument object
      */
-    def renderArgs = RenderArgs.current()
+    implicit def renderArgs = RenderArgs.current()
 
     /**
      * @returns Validation
      */
-    def validation = Validation.current()
+    implicit def validation = Validation.current()
+    
+    implicit def validationErrors:Map[String,play.data.validation.Error] = {
+        import scala.collection.JavaConverters._
+        Map.empty[String,play.data.validation.Error] ++ Validation.errors.asScala.map( e => (e.getKey, e) )
+    } 
 
     def reverse(action: => Any): play.mvc.Router.ActionDefinition = {
         val actionDefinition = reverse()
