@@ -48,8 +48,6 @@ package play.templates {
                 }
             }
             
-            println(origin)
-            
             origin.map { origin =>            
                 val source = Play.classes.getApplicationClass(origin.getClassName).javaFile
                 val generated = GeneratedSource(source.getRealFile)
