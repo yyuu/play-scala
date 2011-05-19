@@ -21,6 +21,48 @@ package play.templates {
         }
     
     }
+    
+    class TemplateExecutionError(source:VirtualFile, message:String, line:Int) extends play.exceptions.PlayException("Template execution error") {
+
+        override def getErrorTitle = getMessage    
+        override def getErrorDescription = "Execution error occured in template <strong>" + getSourceFile + "</strong>: " + message
+        override def getSourceFile = source.relativePath
+        override def getLineNumber = line
+        override def isSourceAvailable = true
+
+        def getSource = source.contentAsString.split('\n') :+ ""
+
+    }
+    
+    object Reporter {
+
+        def toHumanException(e:Throwable) = {
+
+            val origin = e.getStackTrace.filter { element =>
+                Play.classes.hasClass(element.getClassName)
+            }.headOption.flatMap { origin =>
+                if(Play.classes.getApplicationClass(origin.getClassName).javaFile.getRealFile.getParentFile == ScalaTemplateCompiler.generatedDirectory) {
+                    Some(origin)
+                } else {
+                    None
+                }
+            }
+            
+            println(origin)
+            
+            origin.map { origin =>            
+                val source = Play.classes.getApplicationClass(origin.getClassName).javaFile
+                val generated = GeneratedSource(source.getRealFile)
+                val originalLine = generated.mapLine(origin.getLineNumber)       
+                val error = new TemplateExecutionError(VirtualFile.open(generated.source.get), e.getMessage, originalLine)   
+                error.setStackTrace(e.getStackTrace)
+                
+                error
+            }.getOrElse(e)
+
+        }
+
+    }
 
     case class GeneratedSource(file:File) {
     
@@ -42,6 +84,15 @@ package play.templates {
                     Integer.parseInt(c(0)) -> Integer.parseInt(c(1))
                 } catch {
                     case _ => (0,0) // Skip if MATRIX meta is corrupted
+                }
+        }
+        
+        lazy val lines:Seq[(Int,Int)] = {
+            for(pos <- meta("LINES").split('|'); val c = pos.split("->")) 
+                yield try {
+                    Integer.parseInt(c(0)) -> Integer.parseInt(c(1))
+                } catch {
+                    case _ => (0,0) // Skip if LINES meta is corrupted
                 }
         }
     
@@ -82,6 +133,21 @@ package play.templates {
                     pos._2 + (generatedPosition - pos._1)
                 }
             }        
+        }
+        
+        def mapLine(generatedLine:Int) = {
+            val i = lines.findIndexOf(p => p._1 > generatedLine)
+            if(i > 0) {
+                val line = lines(i-1)
+                line._2 + (generatedLine - line._1)
+            } else {
+                if(i == 0) {
+                    0
+                } else {
+                    val line = lines.takeRight(1)(0)
+                    line._2 + (generatedLine - line._1)
+                }
+            }
         }
     
         def toSourcePosition(marker:Int):(Int,Int) = {
@@ -446,7 +512,12 @@ package play.templates {
                     object """ :+ name :+ """ extends BaseScalaTemplate[Html,Format[Html]](HtmlFormat) {
 
                         def apply""" :+ Source(root.params.str, root.params.pos) :+ """:Html = {
-                            _display_ {""" :+ templateCode(root) :+ """}
+                            try {
+                                _display_ {""" :+ templateCode(root) :+ """}
+                            } catch {
+                                case e:TemplateExecutionError => throw e
+                                case e => throw Reporter.toHumanException(e)
+                            }
                         }
 
                     }
@@ -472,7 +543,8 @@ package play.templates {
         def finalSource(template:VirtualFile, generatedTokens:Seq[Any]) = {
             val scalaCode = new StringBuilder
             val positions = ListBuffer.empty[(Int,Int)]
-            serialize(generatedTokens, scalaCode, positions)
+            val lines = ListBuffer.empty[(Int,Int)]
+            serialize(generatedTokens, scalaCode, positions, lines)
             scalaCode + """
                 /* 
                     -- GENERATED --
@@ -482,21 +554,25 @@ package play.templates {
                     MATRIX: """ + positions.map { pos =>
                         pos._1 + "->" + pos._2
                     }.mkString("|") + """
+                    LINES: """ + lines.map { line =>
+                        line._1 + "->" + line._2
+                    }.mkString("|") + """
                     -- GENERATED --
                 */
             """
         }
     
-        private def serialize(parts:Seq[Any], source:StringBuilder, positions:ListBuffer[(Int,Int)]) {
+        private def serialize(parts:Seq[Any], source:StringBuilder, positions:ListBuffer[(Int,Int)], lines:ListBuffer[(Int,Int)]) {
             parts.foreach {
                 case s:String => source.append(s)
                 case Source(code, pos@OffsetPosition(_, offset)) => {
                     source.append("/*" + pos + "*/")
                     positions += (source.length -> offset)
+                    lines += (source.toString.split('\n').size -> pos.line)
                     source.append(code)
                 }
                 case Source(code, NoPosition) => source.append(code)
-                case s:Seq[any] => serialize(s, source, positions)
+                case s:Seq[any] => serialize(s, source, positions, lines)
             }
         }
     
