@@ -522,6 +522,12 @@ package play.templates {
         }
         override def toString = buffer.toString
     }
+    
+    object Html {
+        
+        def empty = Html("")
+        
+    }
 
     object HtmlFormat extends Format[Html] {    
         def raw(text:String) = Html(text)
@@ -581,6 +587,21 @@ package play.templates {
         }
         
         implicit def richDate(date:java.util.Date) = new RichDate(date)
+        
+        // --- STRING
+        
+        class RichString(string:String) {
+            
+            def when(predicate: => Boolean) = {
+                predicate match {
+                    case true => string
+                    case false => ""
+                }
+            }
+            
+        }
+        
+        implicit def richString(string:String) = new RichString(string)
         
         // --- ROUTER
         
