@@ -1,12 +1,14 @@
+@(results:Seq[String])
+
 <!DOCTYPE html>
 
 <html>
     <head>
-        <title>#{get 'title' /}</title>
+        <title>Play with Scala</title>
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-        <link rel="stylesheet" type="text/css" media="screen" href="@{'/public/stylesheets/main.css'}">
-        <link rel="shortcut icon" type="image/png" href="@{'/public/images/favicon.png'}">
-        <script src="@{'/public/javascripts/jquery-1.4.2.min.js'}" type="text/javascript" charset="utf-8"></script>
+        <link rel="stylesheet" type="text/css" media="screen" href="@asset("public/stylesheets/main.css")">
+        <link rel="shortcut icon" type="image/png" href="@asset("public/images/favicon.png")">
+        <script src="@asset("public/javascripts/jquery-1.4.2.min.js")" type="text/javascript" charset="utf-8"></script>
     </head>
     <body>
         
@@ -14,16 +16,16 @@
         <h2>— the easiest way to learn scala</h2>
         
         <p>
-            Life’s too short to not play with scala. You've got the easiest way to learn it. Just edit the <a href="${play.utils.Utils.open('app/scrapbook.scala', 1)}">scrapbook.scala</a> file and refresh this page;
+            Life’s too short to not play with scala. You've got the easiest way to learn it. Just edit the <a href="@play.utils.Utils.open("app/scrapbook.scala", 1)">scrapbook.scala</a> file and refresh this page;
             it will execute the Scrapbook class and display all results of print(…) calls here.
         </p> 
         
         <div id="results">
-            #{list results}
-                <div class="print ${_parity}">
-                    ${_}
+            @results.zipWithIndex.map { e =>
+                <div class="print @(if(e._2 % 2 == 0) "even" else "odd")">
+                    @e._1
                 </div>
-            #{/list}
+            }
         </div>
         
         <h3>Resources,</h3>
