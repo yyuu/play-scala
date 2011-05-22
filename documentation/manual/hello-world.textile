@@ -93,104 +93,115 @@ Let’s see how the **controllers.Application** controller looks like. Open the 
 
 bc. package controllers
  
+import play._
 import play.mvc._
  
-object Application Controller {
- 
-    def index = Template
- 
+object Application extends Controller {
+    
+    import views.Application._
+    
+    def index = {
+        html.index("Your new Scala application is ready!")
+    }
+    
 }
 
-You see that controller objects extend the **play.mvc.Controller** class. This class provides all useful methods for controllers. Also we have imported the @play.mvc._@ package that contain everything needed to write controllers, like the @Template@ value.
+
+You see that controller objects extend the **play.mvc.Controller** class. This class provides all useful methods for controllers. Also we have imported the @play.mvc._@ package that contain everything needed to write controllers.
 
 The index action is defined as an, obejct method. This is how action methods are defined. They always return a value that is interpreted by the framework as the response value.  
 
-The default index action is simple: it returns the @Template@ value which tells Play to render a template. Using a template is the most common way (but not the only one) to generate the HTTP response.
+The default index action is simple: it invoke the *views.Application.html.index* template and returns the generated HTML. Using a template is the most common way (but not the only one) to generate the HTTP response.
 
-Templates are simple text files that live in the **/app/views** directory. Because we didn’t specify a template, the default one for this action will be used: **Application/index.html**
+Templates are special Scala source files that live in the **/app/views** directory. 
 
-To see what the template looks like, open the **helloworld/app/views/Application/index.html** file:
+To see what the template looks like, open the **helloworld/app/views/Application/index.scala.html** file:
 
-bc. #{extends 'main.html' /}
-#{set title:'Home' /}
+bc. @(title:String)
  
-#{welcome /}
+@main(title) {
+    
+    @views.defaults.html.welcome(title)
+    
+}
 
-The template content seems pretty light. In fact, all you see are Play tags. Play tags are very close to JSP taglib. This is the **#{welcome /}** tag that generates the welcome message you’ve seen in the browser. 
+The template content seems pretty light. In fact, this is because it call other templates to generate the welcome page. 
 
-The **#{extends /}** tags tells Play that this template inherits another template called **main.html**. Template inheritance is a powerful concept that allows to create complex web pages by reusing common parts.
+The first line defines the template parameters: a template is a function that generates a *play.template.Html* return value. In this case, the template has a single @title@ parameter of type @String@, so the type of this template is @(String) => Html@.
 
-Open the **helloworld/app/views/main.html** template:
+Then this template call another template called @main@, that take two parameters: a @String@ and an @Html@ block.
 
-bc. <!DOCTYPE html>
+Open the **helloworld/app/views/main.scala.html** file that defines the @main@ template:
+
+bc. @(title:String = "")(body: => Html)
+ 
+<!DOCTYPE html>
 <html>
-    <head>
-        <title>#{get 'title' /}</title>		
-        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-        <link rel="stylesheet" type="text/css" media="screen" 
-            href="@{'/public/stylesheets/main.css'}" />
-        <link rel="shortcut icon" type="image/png" 
-            href="@{'/public/images/favicon.png'}" />
-    </head>
-    <body>
-        #{doLayout /} 
-    </body>
+  <head>
+    <title>@title</title>
+    <link rel="stylesheet" href="@asset("public/stylesheets/main.css")">
+    <link rel="shortcut icon" href="@asset("public/images/favicon.png")">
+    <script src="@asset("public/javascripts/jquery-1.5.2.min.js")"></script>
+  </head>
+  <body>
+    @body
+  </body>
 </html>
 
-Can you see the **#{doLayout /}** tag? This is where the content of **Application/index.html** will be inserted.
+Again, the first line defines the template parameters. And the type of the @main@ template is @(String) (Html) => Html@
 
 h2. <a>Creating the form</a>
 
 We will start the ‘Hello World’ application with a form where you can enter your name.
 
-Edit the **helloworld/app/views/Application/index.html** template:
+Edit the **helloworld/app/views/Application/index.scala.html** template:
 
-bc. #{extends 'main.html' /}
-#{set title:'Home' /}
- 
-<form action="@{Application.sayHello()}" method="GET">
-    <input type="text" name="myName" /> 
-    <input type="submit" value="Say hello!" />
-</form> 
+bc. @main(title = "Home") {
+    <form action="@action(controllers.Application.sayHello)" method="GET">
+        <input type="text" name="myName" /> 
+        <input type="submit" value="Say hello!" />
+    </form>
+}
 
 p(note). Note that we use GET as form submission method, because the form submission does not have any side effect and is idempotent.
 
-We use the **@{…}** notation to ask Play to automatically generate the URL able to invoke the **Application.sayHello** action. Now, refresh the home page in the browser.
+We use the **@action(…)** helper to ask Play to automatically generate the URL able to invoke the **Application.sayHello** action. 
 
-!images/guide1-error!
-
-Oops, you get an error. This is because you reference the non-existent action **Application.sayHello**. Let’s create it in the **helloworld/app/controllers.scala** file:
+Also, let’s adapt our controller in the **helloworld/app/controllers.scala** file:
 
 bc. package controllers
  
+import play._
 import play.mvc._
  
 object Application extends Controller {
- 
-    def index = Template
     
-    def sayHello(myName:String) = Template('myName -> myName)
- 
+    import views.Application._
+    
+    def index = html.index()  
+    def sayHello = html.sayHello(params.get("myName"))
+    
 }
 
-We have declared the **myName** parameter in the action method signature, so it will automatically be filled with the value of the HTTP **myName** parameter, coming from the form submission. 
+In the @index@ action, we remove the parameter of the @html.index@ template as our new template doesn't need any parameter anymore. In the @sayHello@ action we retrieve the @myName@ parameter value coming from the form submission, and we pass it to the @html.sayHello@ template.
 
-This new action also returns a @Template@ value, but this time it specify a value to be included in the template. You can specify as many values you want to send to the template, and for each you need to specify the template variable name. So each value is specified as a @(Symbol, Any)@ tuple, where the first Symbol value will be used a template variable name.
+Now try to refresh the page in the browser, and oops, you will get an error:
 
-!images/guide1-page!
+!images/hello-1!
 
-Now, if you try to enter your name and submit the form, you will get another error:
+This is the way Play works! It will automatically compile your changes at each page refresh, and show you compilation and execution errors right into your browser.
 
-!images/guide1-error2!
+The error is pretty clear. We haven't defined the @html.sayHello@ template. Let’s create it in the file **helloworld/app/views/Application/sayHello.scala.html**:
 
-The error is pretty clear. Play tries to render the default template for this action method, but it doesn’t exist. Let’s create it in the file **helloworld/app/views/Application/sayHello.html**:
-
-bc. #{extends 'main.html' /}
-#{set title:'Home' /}
+bc. @(name:String)
  
-<h1>Hello ${myName ?: 'guest'}!</h1>
- 
-<a href="@{Application.index()}">Back to form</a>
+@main(title = "Hello") {
+    
+    <h1>Hello @name!</h1>
+    
+    <a href="@action(controllers.Application.index)">Back to form</a>
+    
+}
 
 You can refresh the page.
 
