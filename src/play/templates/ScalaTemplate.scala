@@ -8,23 +8,23 @@ package play.templates {
     import scala.annotation.tailrec
 
     class TemplateCompilationError(source:VirtualFile, message:String, line:Int, column:Int) extends play.exceptions.PlayException("Template compilation error") {
-    
-        override def getErrorTitle = getMessage    
+
+        override def getErrorTitle = getMessage
         override def getErrorDescription = "The template <strong>" + getSourceFile + "</strong> cannot be compiled: <strong>" + message + "</strong>"
         override def getSourceFile = source.relativePath
         override def getLineNumber = line
         override def isSourceAvailable = true
-    
+
         def getSource = {
             val lines = source.contentAsString.split('\n') :+ ""
             lines.patch(line - 1, Seq(lines(line - 1).patch(column - 1, "↓", 0)), 1)
         }
-    
+
     }
-    
+
     class TemplateExecutionError(source:VirtualFile, message:String, line:Int) extends play.exceptions.PlayException("Template execution error") {
 
-        override def getErrorTitle = getMessage    
+        override def getErrorTitle = getMessage
         override def getErrorDescription = "Execution error occured in template <strong>" + getSourceFile + "</strong>: " + message
         override def getSourceFile = source.relativePath
         override def getLineNumber = line
@@ -33,7 +33,7 @@ package play.templates {
         def getSource = source.contentAsString.split('\n') :+ ""
 
     }
-    
+
     object Reporter {
 
         def toHumanException(e:Throwable) = {
@@ -47,14 +47,14 @@ package play.templates {
                     None
                 }
             }
-            
-            origin.map { origin =>            
+
+            origin.map { origin =>
                 val source = Play.classes.getApplicationClass(origin.getClassName).javaFile
                 val generated = GeneratedSource(source.getRealFile)
-                val originalLine = generated.mapLine(origin.getLineNumber)       
-                val error = new TemplateExecutionError(VirtualFile.open(generated.source.get), e.getMessage, originalLine)   
+                val originalLine = generated.mapLine(origin.getLineNumber)
+                val error = new TemplateExecutionError(VirtualFile.open(generated.source.get), e.getMessage, originalLine)
                 error.setStackTrace(e.getStackTrace)
-                
+
                 error
             }.getOrElse(e)
 
@@ -63,7 +63,7 @@ package play.templates {
     }
 
     case class GeneratedSource(file:File) {
-    
+
         lazy val meta:Map[String,String] = {
             val Meta = """([A-Z]+): (.*)""".r
             val UndefinedMeta = """([A-Z]+):""".r
@@ -73,31 +73,31 @@ package play.templates {
                     case UndefinedMeta(key) => (key -> "")
                     case _ => ("UNDEFINED", "")
                 }
-            } 
+            }
         }
-    
+
         lazy val matrix:Seq[(Int,Int)] = {
-            for(pos <- meta("MATRIX").split('|'); val c = pos.split("->")) 
+            for(pos <- meta("MATRIX").split('|'); val c = pos.split("->"))
                 yield try {
                     Integer.parseInt(c(0)) -> Integer.parseInt(c(1))
                 } catch {
                     case _ => (0,0) // Skip if MATRIX meta is corrupted
                 }
         }
-        
+
         lazy val lines:Seq[(Int,Int)] = {
-            for(pos <- meta("LINES").split('|'); val c = pos.split("->")) 
+            for(pos <- meta("LINES").split('|'); val c = pos.split("->"))
                 yield try {
                     Integer.parseInt(c(0)) -> Integer.parseInt(c(1))
                 } catch {
                     case _ => (0,0) // Skip if LINES meta is corrupted
                 }
         }
-    
+
         def needRecompilation = {
-            if(file.exists) { 
+            if(file.exists) {
                 // A generated source already exists
-                if(source.isDefined) { 
+                if(source.isDefined) {
                     // The source template still exists
                     if(source.get.lastModified > file.lastModified) {
                         // The source template has been modified
@@ -117,7 +117,7 @@ package play.templates {
                 true
             }
         }
-    
+
         def mapPosition(generatedPosition:Int) = {
             val i = matrix.findIndexOf(p => p._1 > generatedPosition)
             if(i > 0) {
@@ -130,9 +130,9 @@ package play.templates {
                     val pos = matrix.takeRight(1)(0)
                     pos._2 + (generatedPosition - pos._1)
                 }
-            }        
+            }
         }
-        
+
         def mapLine(generatedLine:Int) = {
             val i = lines.findIndexOf(p => p._1 > generatedLine)
             if(i > 0) {
@@ -147,7 +147,7 @@ package play.templates {
                 }
             }
         }
-    
+
         def toSourcePosition(marker:Int):(Int,Int) = {
             try {
                 val targetMarker = mapPosition(marker)
@@ -157,7 +157,7 @@ package play.templates {
                 case _ => (0,0)
             }
         }
-    
+
         def source:Option[File] = {
             val s = Play.getVirtualFile(meta("SOURCE"))
             if(s == null || !s.exists) {
@@ -166,26 +166,26 @@ package play.templates {
                 Some(s.getRealFile)
             }
         }
-    
+
         def sync() {
-            if(file.exists) { 
+            if(file.exists) {
                 if(!source.isDefined) {
                     file.delete()
                 }
             }
         }
-    
+
     }
 
     object ScalaTemplateCompiler {
-    
+
         import scala.util.parsing.input.Positional
         import scala.util.parsing.input.CharSequenceReader
         import scala.util.parsing.combinator.JavaTokenParsers
-    
+
         abstract class TemplateTree
         abstract class ScalaExpPart
-    
+
         case class Params(code:String) extends Positional
         case class Template(name:PosString, params:PosString, imports:Seq[Simple], defs:Seq[Def], sub:Seq[Template], content:Seq[TemplateTree]) extends Positional
         case class PosString(str:String) extends Positional {
@@ -198,7 +198,7 @@ package play.templates {
         case class Simple(code:String) extends ScalaExpPart  with Positional
         case class Block(whitespace: String, args:Option[String], content:Seq[TemplateTree]) extends ScalaExpPart  with Positional
         case class Value(ident:PosString, block:Block) extends Positional
-    
+
         def compile(source:File) {
             val (templateName,generatedSource) = generatedFile(source)
             if(generatedSource.needRecompilation) {
@@ -207,8 +207,8 @@ package play.templates {
                     case templateParser.Success(parsed, rest) if rest.atEnd => {
                          generateFinalTemplate(
                              templateSource,
-                             templateName.dropRight(1).mkString("."), 
-                             templateName.takeRight(1).mkString, 
+                             templateName.dropRight(1).mkString("."),
+                             templateName.takeRight(1).mkString,
                              parsed
                          )
                     }
@@ -219,33 +219,33 @@ package play.templates {
                         throw new TemplateCompilationError(VirtualFile.open(source), message, input.pos.line, input.pos.column)
                     }
                 }
-            
+
                 IO.writeContent(generated.toString, generatedSource.file)
             }
         }
-    
+
         lazy val generatedDirectory = {
             val dir = new File(Play.tmpDir, "generated")
             dir.mkdirs()
             dir
         }
-    
+
         def generatedFile(template:File) = {
             val templateName = source2TemplateName(template).split('.')
             templateName -> GeneratedSource(new File(generatedDirectory, templateName.mkString(".") + ".scala"))
         }
-    
+
         @tailrec def source2TemplateName(f:File, suffix:String = ""):String = {
             val Name = """([a-zA-Z0-9_]+)[.]scala[.]([a-z]+)""".r
             (f, f.getName) match {
                 case (f, Name(name,ext)) if f.isFile => source2TemplateName(f.getParentFile, ext + "." + name)
                 case (_, "views") => "views." + suffix
                 case (f, name) => source2TemplateName(f.getParentFile, name + "." + suffix)
-            }   
+            }
         }
-    
+
         val templateParser = new JavaTokenParsers {
-        
+
             def as[T](parser:Parser[T], error:String) = {
                 Parser(in => parser(in) match {
                     case s:Success[T] => s
@@ -253,7 +253,7 @@ package play.templates {
                     case Error(_, next) => Error(error, next)
                 })
             }
-        
+
             def several[T](p: => Parser[T]): Parser[List[T]] = Parser { in =>
                 import scala.collection.mutable.ListBuffer
                 val elems = new ListBuffer[T]
@@ -268,25 +268,25 @@ package play.templates {
                 }
                 continue(in)
             }
-        
+
             def at = "@"
-        
+
             def eof = """\Z""".r
-        
+
             def identifier = as(ident, "identifier")
-        
+
             def whiteSpaceNoBreak = """[ \t]+""".r
-        
+
             def escapedAt = at ~> at
-        
+
             def any = {
                 Parser(in => if(in.atEnd) {
-                    Failure("end of file", in) 
+                    Failure("end of file", in)
                 } else {
                     Success(in.first, in.rest)
                 })
             }
-        
+
             def plain:Parser[Plain] = {
                 positioned(
                     ((escapedAt | (not(at) ~> (not("{" | "}") ~> any)) ) +) ^^ {
@@ -294,19 +294,19 @@ package play.templates {
                     }
                 )
             }
-        
+
             def parentheses:Parser[String] = {
                 "(" ~ (several((parentheses | not(")") ~> any))) ~ commit(")") ^^ {
                     case p1~charList~p2 => p1 + charList.mkString + p2
                 }
             }
-        
+
             def brackets:Parser[String] = {
                 ensureMatchedBrackets( (several((brackets | not("}") ~> any))) ) ^^ {
                     case charList => "{" + charList.mkString + "}"
                 }
             }
-        
+
             def ensureMatchedBrackets[T](p:Parser[T]):Parser[T] = Parser { in =>
                 val pWithBrackets = "{" ~> p <~ ("}" | eof ~ err("EOF"))
                 pWithBrackets(in) match {
@@ -316,7 +316,7 @@ package play.templates {
                     case e:Error => e
                 }
             }
-        
+
             def block:Parser[Block] = {
                 positioned(
                     (whiteSpaceNoBreak?) ~ ensureMatchedBrackets( (blockArgs?) ~ several(mixed) ) ^^ {
@@ -324,23 +324,23 @@ package play.templates {
                     }
                 )
             }
-        
+
             def blockArgs:Parser[String] = """.*=>""".r
-        
+
             def methodCall:Parser[String] = identifier ~ (parentheses?) ^^ {
                 case methodName~args => methodName + args.getOrElse("")
-            }    
-        
+            }
+
             def expression:Parser[Display] = {
                 at ~> commit(positioned(methodCall ^^ {case code => Simple(code)})) ~ several(expressionPart) ^^ {
                     case first~parts => Display(ScalaExp(first :: parts))
                 }
             }
-        
+
             def expressionPart:Parser[ScalaExpPart] = {
                 chainedMethods | block | (whiteSpaceNoBreak ~> scalaBlockChained) | elseCall
             }
-        
+
             def chainedMethods:Parser[Simple] = {
                 positioned(
                     "." ~> rep1sep(methodCall, ".") ^^ {
@@ -348,17 +348,17 @@ package play.templates {
                      }
                 )
             }
-        
+
             def elseCall:Parser[Simple] = {
                 (whiteSpaceNoBreak?) ~> positioned("else" ^^ {case e => Simple(e)}) <~ (whiteSpaceNoBreak?)
             }
-        
+
             def safeExpression:Parser[Display] = {
                 at ~> positioned(parentheses ^^ {case code => Simple(code)}) ^^ {
                     case code => Display(ScalaExp(code :: Nil))
                 }
             }
-        
+
             def matchExpression:Parser[Display] = {
                 at ~> positioned(identifier ~ whiteSpaceNoBreak ~ "match" ^^ {case i~w~m => Simple(i+w+m)}) ~ block ^^ {
                     case expr~block => {
@@ -366,7 +366,7 @@ package play.templates {
                     }
                 }
             }
-        
+
             def forExpression:Parser[Display] = {
                 at ~> positioned("for" ~ parentheses ^^ {case f~p => Simple(f+p+" yield ")}) ~ block ^^ {
                     case expr~block => {
@@ -374,13 +374,13 @@ package play.templates {
                     }
                 }
             }
-        
+
             def caseExpression:Parser[ScalaExp] = {
                 (whiteSpace?) ~> positioned("""case (.+)=>""".r ^^ {case c => Simple(c)}) ~ block <~ (whiteSpace?) ^^ {
                     case pattern~block => ScalaExp(List(pattern, block))
-                } 
+                }
             }
-        
+
             def importExpression:Parser[Simple] = {
                 positioned(
                     at ~> """import .*\n""".r ^^ {
@@ -388,30 +388,30 @@ package play.templates {
                     }
                 )
             }
-        
+
             def scalaBlock:Parser[Simple] = {
                 at ~> positioned(
                     brackets ^^ {case code => Simple(code)}
                 )
             }
-        
+
             def scalaBlockChained:Parser[Block] = {
                 scalaBlock ^^ {
                     case code => Block("", None, ScalaExp(code :: Nil) :: Nil)
                 }
             }
-        
+
             def scalaBlockDisplayed:Parser[Display] = {
                 scalaBlock ^^ {
                     case code => Display(ScalaExp(code :: Nil))
                 }
             }
-        
+
             def mixed:Parser[Seq[TemplateTree]] = {
-                ((scalaBlockDisplayed | caseExpression | matchExpression | forExpression | safeExpression | plain | expression) ^^ {case t => List(t)}) | 
+                ((scalaBlockDisplayed | caseExpression | matchExpression | forExpression | safeExpression | plain | expression) ^^ {case t => List(t)}) |
                 ("{" ~ several(mixed) ~ "}") ^^ {case p1~content~p2 => Plain(p1) +: content.flatten :+ Plain(p2)}
             }
-        
+
             def template:Parser[Template] = {
                 templateDeclaration ~ """[ \t]*=[ \t]*[{]""".r ~ templateContent <~ "}" ^^ {
                     case declaration~assign~content => {
@@ -419,7 +419,7 @@ package play.templates {
                     }
                 }
             }
-        
+
             def localDef:Parser[Def] = {
                 templateDeclaration ~ """[ \t]*=[ \t]*""".r ~ scalaBlock ^^ {
                     case declaration~w~code => {
@@ -427,44 +427,44 @@ package play.templates {
                     }
                 }
             }
-        
+
             def templateDeclaration:Parser[(PosString,PosString)] = {
                 at ~> positioned(identifier ^^ {case s => PosString(s)}) ~ positioned(several(parentheses) ^^ {case s => PosString(s.mkString)}) ^^ {
                     case name~params => name -> params
                 }
             }
-        
+
             def templateContent:Parser[(List[Simple],List[Def],List[Template],List[TemplateTree])] = {
                 (several(importExpression | localDef | template | mixed)) ^^ {
                     case elems => {
-                        elems.foldLeft((List[Simple](),List[Def](),List[Template](),List[TemplateTree]())) { (s,e) => 
+                        elems.foldLeft((List[Simple](),List[Def](),List[Template](),List[TemplateTree]())) { (s,e) =>
                             e match {
                                 case i:Simple => (s._1 :+ i, s._2, s._3, s._4)
                                 case d:Def => (s._1, s._2 :+ d, s._3, s._4)
                                 case v:Template => (s._1, s._2, s._3 :+ v, s._4)
                                 case c:Seq[TemplateTree] => (s._1, s._2, s._3, s._4 ++ c)
-                            }                        
+                            }
                         }
                     }
                 }
             }
-        
+
             def parser:Parser[Template] = {
                 opt(opt(whiteSpaceNoBreak) ~> at ~> positioned((parentheses+) ^^ {case s => PosString(s.mkString)})) ~ templateContent ^^ {
                     case args~content => {
                         Template(PosString(""), args.getOrElse(PosString("()")), content._1, content._2, content._3, content._4)
                     }
-                } 
+                }
             }
-        
+
             override def skipWhitespace = false
-        
+
         }
-    
+
         @scala.annotation.tailrec
         def visit(elem:Seq[TemplateTree], previous:Seq[Any]):Seq[Any] = {
             elem match {
-                case head :: tail => 
+                case head :: tail =>
                     val tripleQuote = "\"\"\""
                     visit(tail, head match {
                         case p@Plain(text) => (if(previous.isEmpty) Nil else previous :+ "+") :+ "format.raw" :+ Source("(", p.pos) :+ tripleQuote :+ text :+ tripleQuote :+ ")"
@@ -477,10 +477,10 @@ package play.templates {
                 case Nil => previous
             }
         }
-    
+
         def templateCode(template:Template):Seq[Any] = {
-        
-            val defs = (template.sub ++ template.defs).map { i => 
+
+            val defs = (template.sub ++ template.defs).map { i =>
                 i match {
                     case t:Template if t.name == "" => templateCode(t)
                     case t:Template => {
@@ -491,14 +491,14 @@ package play.templates {
                     }
                 }
             }
-        
+
             val imports = template.imports.map(_.code).mkString("\n")
-        
+
             Nil :+ imports :+ "\n" :+ defs :+ "\n" :+ visit(template.content, Nil)
         }
-    
+
         def generateFinalTemplate(template: VirtualFile, packageName: String, name: String, root:Template) = {
-        
+
             val generated = {
                 Nil :+ """
                     package """ :+ packageName :+ """
@@ -522,10 +522,10 @@ package play.templates {
 
                 """
             }
-        
+
             Source.finalSource(template, generated)
         }
-        
+
     }
 
     /* ------ */
@@ -535,16 +535,16 @@ package play.templates {
     case class Source(code:String, pos:Position = NoPosition)
 
     object Source {
-    
+
         import scala.collection.mutable.ListBuffer
-    
+
         def finalSource(template:VirtualFile, generatedTokens:Seq[Any]) = {
             val scalaCode = new StringBuilder
             val positions = ListBuffer.empty[(Int,Int)]
             val lines = ListBuffer.empty[(Int,Int)]
             serialize(generatedTokens, scalaCode, positions, lines)
             scalaCode + """
-                /* 
+                /*
                     -- GENERATED --
                     DATE: """ + new java.util.Date + """
                     SOURCE: """ + template.relativePath.replaceFirst("\\{[^\\}]*\\}", "") + """
@@ -559,7 +559,7 @@ package play.templates {
                 */
             """
         }
-    
+
         private def serialize(parts:Seq[Any], source:StringBuilder, positions:ListBuffer[(Int,Int)], lines:ListBuffer[(Int,Int)]) {
             parts.foreach {
                 case s:String => source.append(s)
@@ -573,7 +573,7 @@ package play.templates {
                 case s:Seq[any] => serialize(s, source, positions, lines)
             }
         }
-    
+
     }
 
     /* ------ */
@@ -588,55 +588,55 @@ package play.templates {
     }
 
     case class Html(text:String) extends Appendable[Html] {
-        val buffer = new StringBuilder(text) 
-    
+        val buffer = new StringBuilder(text)
+
         def +(other:Html) = {
             buffer.append(other.buffer)
             this
         }
         override def toString = buffer.toString
     }
-    
+
     object Html {
-        
+
         def empty = Html("")
-        
+
     }
 
-    object HtmlFormat extends Format[Html] {    
+    object HtmlFormat extends Format[Html] {
         def raw(text:String) = Html(text)
         def escape(text:String) = Html(text.replace("<","&lt;"))
     }
 
     case class BaseScalaTemplate[T<:Appendable[T],F<:Format[T]](format: F) {
-    
+
         def _display_(o:Any):T = {
             o match {
                 case escaped:T => escaped
                 case () => format.raw("")
                 case None => format.raw("")
-                case Some(v) => _display_(v) 
+                case Some(v) => _display_(v)
                 case escapeds:Seq[Any] => escapeds.foldLeft(format.raw(""))(_ + _display_(_))
                 case string:String => format.escape(string)
                 case v if v != null => _display_(v.toString)
                 case _ => format.raw("")
             }
         }
-    
+
     }
 
     /* ------ */
 
     object TemplateMagic {
-        
+
         // --- IF
-    
+
         implicit def iterableToBoolean(x:Iterable[_]) = x != null && !x.isEmpty
         implicit def optionToBoolean(x:Option[_]) = x != null && x.isDefined
         implicit def stringToBoolean(x:String) = x != null && !x.isEmpty
-        
+
         // --- DEFAULT
-    
+
         case class Default(default:Any) {
             def ?:(x:Any) = x match {
                 case "" => default
@@ -647,59 +647,59 @@ package play.templates {
                 case _ => x
             }
         }
-    
+
         implicit def anyToDefault(x:Any) = Default(x)
-        
+
         // --- DATE
-        
+
         class RichDate(date:java.util.Date) {
-            
+
             def format(pattern:String) = {
                 new java.text.SimpleDateFormat(pattern).format(date)
             }
-            
+
         }
-        
+
         implicit def richDate(date:java.util.Date) = new RichDate(date)
-        
+
         // --- STRING
-        
+
         class RichString(string:String) {
-            
+
             def when(predicate: => Boolean) = {
                 predicate match {
                     case true => string
                     case false => ""
                 }
             }
-            
+
         }
-        
+
         implicit def richString(string:String) = new RichString(string)
-        
+
         // --- ROUTER
-        
+
         def action(action: => Any) = {
             new play.mvc.results.ScalaAction(action).actionDefinition.url
         }
-        
+
         def asset(path:String) = play.mvc.Router.reverse(play.Play.getVirtualFile(path))
-    
+
     }
 
 }
 
 package views {
-    
+
     package object html {
-        
+
         import play.templates.Html
-        
+
         def form(action: => Any)(body: => Html) = Html {
             var actionDef = new play.mvc.results.ScalaAction(action).actionDefinition
             """<form action="""" + actionDef.url + """" method="""" + (if(actionDef.star) "POST" else actionDef.method) + """">""" + body + """</form>"""
         }
-        
+
         def a(action: => Any)(body: => Html) = Html {
             var actionDef = new play.mvc.results.ScalaAction(action).actionDefinition
             if(actionDef.method == "GET") {
@@ -709,9 +709,9 @@ package views {
                 """<a href="javascript:document.getElementById('""" + uuid + """').submit()">""" + body + """</a><form id="""" + uuid + """" action="""" + actionDef.url + """" method="""" + actionDef.method + """"></form>"""
             }
         }
-        
+
     }
-    
+
     package object txt {}
-    
+
 }
