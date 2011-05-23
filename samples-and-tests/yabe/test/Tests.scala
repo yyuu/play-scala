@@ -1,10 +1,10 @@
 import play._
 import play.test._
-
+ 
 import org.scalatest._
 import org.scalatest.junit._
 import org.scalatest.matchers._
-
+ 
 class BasicTests extends UnitFlatSpec with ShouldMatchers with BeforeAndAfterEach {
     
     import models._    
@@ -138,5 +138,5 @@ class BasicTests extends UnitFlatSpec with ShouldMatchers with BeforeAndAfterEac
         Comment.count().single() should be (0)
 
     }
-
+ 
 }

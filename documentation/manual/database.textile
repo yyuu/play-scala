@@ -10,51 +10,6 @@ We believe that it is the best way to access your relational databases from Scal
 
 Please check the "complete manual":anorm for more information.
 
-h2. Using JPA
-
-JPA (using Hibernate as implementation) is the default way to access and manage an SQL database in a standard Play Java application. It is still possible to use JPA from a Play Scala application, but **it is probably not the best way, and it should be considered as legacy and deprecated**.
-
-There are several problematic points when you want to use JPA with Scala:
-
-* JPA forces you to use the Java collection library to set up entities relations. Of course you can import some Java to Scala implicit conversion in your scope, but it is not ideal.
-* Some of your database columns can be nullable. And as a seasoned Scala developer you probably want to map them as @Option@ types. Unfortunately this is not possible at all.
-* JPA relies a lot on Java annotations. And there are several semantic differences that make Java and Scala annotations not really compatibles.
-
-But the most important point is: do you really need a Relationnal to Objects mapper when you have the power of a functional language? Probably not. JPA is a convenient way to abstract the Java's lack of power in data transformation, but it really feels wrong when you start to use it from Scala.
-
-Anyway, if you really want to use JPA from a Play Scala application here is how to define a @play.db.jpa.Model@ class with its corresponding companion object:
-
-bc. import play.db.jpa._
- 
-import java.util.{List -> JList}
-import javax.persistence._
- 
-@Entity class User extends Model {
-    
-    var name:String
-    var email:String
-    
-    @OneToMany var posts:JList[Post]
-    
-}
- 
-object User extends QueryOn[User]
-
-Look at the User class and its companion object, and note these important points:
-
-* You need to declare a standard @class@ and not a @case class@.
-* Let you class with an empty constructor.
-* Always declare JPA annotation on fields, not into the constructor.
-* Use @var@ instead of @val@ for persistent fields, as they need to be mutable.
-* Use the @java.util.Collection@ API to express entities relations.
-* The entity class will not have @find@ or any other factory methods. For that you need to create a companion object that extends the @QueryOn[T]@ Trait.
-
-And here a few examples about using the @QueryOn[T]@ API to access your entities:
-
-bc. val mayBeUser:Option[User] = User.findById(5)
-val totoUsers:List[User] = User.find("byName", "Toto").fetch()
-User.all().fetch().each { _.delete() }
-
 h2. Integrating other existing Database access librairies
 
 Perhaps you already use another existing Database access library for Scala and you want to keep using it from your Play application. Basically a Play application manage the JDBC connection for you, and provide your application with a simple @java.sql.Connection@ object that you can use to integrate any other existing framework you want.

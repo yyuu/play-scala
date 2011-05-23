@@ -4,55 +4,42 @@ import play._
 import play.mvc._
 import play.libs._
 import play.cache._
-
-import play.data.validation.Annotations._
+import play.data.validation._
 
 import models._
 
-trait Defaults {
-    self:Controller =>
+object Application extends Controller {
     
-    @Before def setDefaults {
-        renderArgs += "blogTitle" -> configuration("blog.title")
-        renderArgs += "blogBaseline" -> configuration("blog.baseline") 
-    }
-    
-}
-
-object Application extends Controller with Defaults {
+    import views.Application._
     
     def index = {
-        val allPosts = Post.allWithAuthorAndComments.map( 
-            t => new { val (post,author,comments) = t }
-        )
-        Template(
-            'front -> allPosts.headOption, 
-            'older -> allPosts.drop(1)
-        )
+        val allPosts = Post.allWithAuthorAndComments
+        html.index(front = allPosts.headOption, older = allPosts.drop(1))
     }
     
     def show(id: Long) = {
-        Post.byIdWithAuthorAndComments(id).map( p =>
-            Template(
-                'item -> new { val (post,author,comments) = p },
-                'pagination -> p._1.prevNext,
-                'randomID -> Codec.UUID
-            )
-        ).getOrElse(NotFound("No such Post"))
+        Post.byIdWithAuthorAndComments(id).map { post =>
+            html.show(post, post._1.prevNext, Codec.UUID)
+        } getOrElse {
+            NotFound("No such Post")
+        }
     }
     
-    def postComment(
-        postId:Long, 
-        @Required(message="Author is required") author:String, 
-        @Required(message="A message is required") content:String,
-        @Required(message="Please type the code") code:String,
-        randomID:String) = {
-
-        validation.equals(
-            code, Cache.get(randomID).orNull
-        ).message("Invalid code. Please type it again");
-
-        if(validation.hasErrors) {
+    def postComment(postId:Long) = {
+        val author = params.get("author")
+        val content = params.get("content")
+        val code = params.get("code")
+        val randomID = params.get("randomID")
+        Validation.required("author", author).message("Author is required")
+        Validation.required("content", content).message("Content is required")
+        
+        println(code)
+        println(Cache.get(randomID).orNull)
+        
+        Validation.equals("code", code, "code", Cache.get(randomID).orNull).message(
+            "Invalid code. Please type it again"
+        )
+        if(Validation.hasErrors) {
             show(postId)
         } else {
             Comment.create(Comment(postId, author, content))

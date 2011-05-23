@@ -27,18 +27,18 @@ bc. $ play new helloworld --with scala
 ~ |  __/|_|\____|\__ (_)
 ~ |_|            |__/   
 ~
-~ play! 1.2, http://www.playframework.org
+~ play! 1.2.2, http://www.playframework.org
 ~
 ~ The new application will be created in ~/myScalaApp
 ~ What is the application name? [helloworld] Hello world
 ~
 ~ Resolving dependencies using ~/helloworld/conf/dependencies.yml,
 ~
-~ 	play->scala 0.9 (from playLocalModules)
+~ 	play->scala 0.9.1 (from playLocalModules)
 ~
 ~ Installing resolved dependencies,
 ~
-~ 	modules/scala-0.9 -> ~/play/1.2/modules/scala-0.9
+~ 	modules/scala-0.9.1 -> ~/play/1.2.2/modules/scala-0.9.1
 ~
 ~ OK, the application is created.
 ~ Start it with : play run helloworld
@@ -109,7 +109,7 @@ object Application extends Controller {
 
 You see that controller objects extend the **play.mvc.Controller** class. This class provides all useful methods for controllers. Also we have imported the @play.mvc._@ package that contain everything needed to write controllers.
 
-The index action is defined as an, obejct method. This is how action methods are defined. They always return a value that is interpreted by the framework as the response value.  
+The index action is defined as a simple method of this object. This is how action methods are defined. They always return a value that is interpreted by the framework as the response value.  
 
 The default index action is simple: it invoke the *views.Application.html.index* template and returns the generated HTML. Using a template is the most common way (but not the only one) to generate the HTTP response.
 
@@ -197,7 +197,7 @@ bc. @(name:String)
  
 @main(title = "Hello") {
     
-    <h1>Hello @name!</h1>
+    <h1>Hello @(name ?: "Guest")!</h1>
     
     <a href="@action(controllers.Application.index)">Back to form</a>
     
@@ -207,7 +207,7 @@ You can refresh the page.
 
 !images/guide1-page2!
 
-Look how we have used the **?:** operator in the template. It switches to a default value if the **myName** variable is not filled. So if you try to submit the form without entering any name, it will display ‘Hello guest’.
+Look how we have used the **?:** operator in the template. It switches to a default value if the **name** value is empty. So if you try to submit the form without entering any name, it will display ‘Hello guest’.
 
 h2. <a>Providing a better URL</a>
 
@@ -233,8 +233,7 @@ bc. ...
 <body>
     The Hello world app.
     <hr/>
-    
-    #{doLayout /}
+    @body
 </body>
 ...
 
@@ -249,19 +248,18 @@ We will add a little validation to the form, to make the name field required. We
 Edit the **helloworld/app/controllers.scala** file, and the **sayHello** action:
 
 bc. ...
-def sayHello(@Required myName:String) = {
-    if(validation.hasErrors) {
-        flash += "error" -> "Oops, please enter your name!"
+def sayHello = {
+    val myName = params.get("myName")
+    if(myName == "") {
+        flash += ("error" -> "Oops, please enter your name!")
         Action(index)
     } else {
-        Template("myName" -> myName)
+        html.sayHello(params.get("myName"))
     }
 }
 ...
 
-And don’t forget to import the **play.data.validation.Annotations._** values to get the **@Required** annotation. 
-
-Now our **sayHello** can return 2 distincts values. A @Template@ value in the case of there is a name provided by the form, or an @Action@ value if there is an error. An @Action@ value is used to redirect to another existing action method. Here we specify that we want to redirect to the @index@ action.
+Now our **sayHello** can return 2 distincts values. A @Html@ value in the case of there is a name provided by the form, or an @Action@ value if there is an error. An @Action@ value is used to redirect to another existing action method. Here we specify that we want to redirect to the @index@ action.
 
 Play will automatically check that the myName field is filled or will add an error object to the **errors** scope. Then if there is any error, we add a message to the **flash** scope and redirect to the **index** action.
 
@@ -269,23 +267,26 @@ The flash scope allows to keep messages during action redirection.
 
 Now you just have to display the **error** message if any. Edit the **helloworld/app/views/Application/index.html**:
 
-bc. #{extends 'main.html' /}
-#{set title:'Home' /}
+bc. @()(implicit flash:play.mvc.Scope.Flash)
  
-#{if flash.error}
+@if(flash.get("error")) {
     <p style="color:#c00">
-        ${flash.error}
+        @flash.get("error")
     </p>
-#{/if}
+}
  
-<form action="@{Application.sayHello()}" method="GET">
-    <input type="text" name="myName" /> 
-    <input type="submit" value="Say hello!" />
-</form>
+@main(title = "Home") {
+    <form action="@action(controllers.Application.sayHello)" method="GET">
+        <input type="text" name="myName" /> 
+        <input type="submit" value="Say hello!" />
+    </form>
+}
 
 And check that it works:
 
 !images/guide1-page4!
+
+See how we take implicitely the flash parameter from the controller scope.
 
 h2. <a>Writing an automated test suite</a>
 

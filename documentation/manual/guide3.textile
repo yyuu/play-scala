@@ -59,91 +59,98 @@ We will keep these components but add code to them to load the posts list and di
 Open the **/yabe/app/controllers.scala** controller and modify the **index** action to load the posts list, as is:
 
 bc. def index = {
-    val allPosts = Post.allWithAuthorAndComments.map( 
-        t => new { val (post,author,comments) = t }
-    )
-    Template(
-        'front -> allPosts.headOption, 
-        'older -> allPosts.drop(1)
+    val allPosts = Post.allWithAuthorAndComments
+    html.index(
+        front = allPosts.headOption, 
+        older = allPosts.drop(1)
     )
 }
 
 p(note). Be sure to import @models._@ in the scope of your Application controller.
 
-First we transform our @List[(Post,User,List[Comment])]@ into a list of an anonymous class that have the 3 *content, author and comments* fields. Just because it will be simple for us to access these properties from the template (instead of using *front._2* we will use *front.author* that is simpler to read).
+Can you see how we call the @views.Application.html.index@ template? It will allow us to access them from the template using the name defined by the @Symbol@. In this case, the variables **front** and **older** will be available in the template.
 
-Can you see how we pass objects to the **Template**? It will allow us to access them from the template using the name defined by the @Symbol@. In this case, the variables **front** and **older** will be available in the template.
+Open the **/yabe/app/views/Application/index.scala.html** and modify it to display these objects:
 
-Open the **/yabe/app/views/Application/index.html** and modify it to display these objects:
-
-bc. #{extends 'main.html' /}
-#{set title:'Home' /}
+bc. @(
+    front:Option[(models.Post,models.User,Seq[models.Comment])], 
+    older:Seq[(models.Post,models.User,Seq[models.Comment])]
+)
  
-#{if front}
-    <div class="post">
-        <h2 class="post-title">
-            <a href="#">${front?.post.title}</a>
-        </h2>
-        <div class="post-metadata">
-            <span class="post-author">by ${front?.author.fullname}</span>
-            <span class="post-date">
-                ${front?.post.postedAt.format('MMM dd')}
-            </span>
-            <span class="post-comments">
-                &nbsp;|&nbsp; 
-                ${front?.comments.size() ?: 'no'} 
-                comment${front?.comments.pluralize()}
-                #{if front?.comments}
-                    , latest by ${front?.comments[0].author}
-                #{/if}
-            </span>
-        </div>
-        <div class="post-content">
-            ${front?.post.content.nl2br()}
-        </div>
-    </div>
+@main(title = "Home") {
     
-    #{if older}
-        <div class="older-posts">    
-            <h3>Older posts <span class="from">from this blog</span></h3>
-        
-            #{list items:older}
-                <div class="post">
-                    <h2 class="post-title">
-                        <a href="#">${_.post.title}</a>
-                    </h2>
-                    <div class="post-metadata">
-                        <span class="post-author">
-                            by ${_.author.fullname}
-                        </span>
-                        <span class="post-date">
-                            ${_.post.postedAt.format('dd MMM yy')}
-                        </span>
-                        <div class="post-comments">
-                            ${_.comments.size() ?: 'no'} 
-                            comment${_.comments.pluralize()}
-                            #{if _.comments}
-                                - latest by ${_.comments[0].author}
-                            #{/if}
-                        </div>
-                    </div>
-                </div>
-            #{/list}
-        </div>
-        
-    #{/if}
-    
-#{/if}
+    @front.map { front =>
  
-#{else}
-    <div class="empty">
-        There is currently nothing to read here.
-    </div>
-#{/else}
+        <div class="post">
+            <h2 class="post-title">
+                <a href="#">@front._1.title</a>
+            </h2>
+            <div class="post-metadata">
+                <span class="post-author">by @front._2.fullname</span>
+                <span class="post-date">
+                    @front._1.postedAt.format("MMM dd")
+                </span>
+                <span class="post-comments">
+                    &nbsp;|&nbsp; 
+ 
+                    @if(front._3) {
+                        @front._3.size comments, 
+                        latest by @front._3(0).author
+                    } else {
+                        no comments
+                    }
+ 
+                </span>
+            </div>
+            <div class="post-content">
+                @Html(front._1.content.replace("\n", "<br>"))
+            </div>
+        </div>
+ 
+        @Option(older).filterNot(_.isEmpty).map { posts =>
+ 
+            <div class="older-posts">    
+                <h3>Older posts <span class="from">from this blog</span></h3>
+ 
+                @posts.map { post =>
+                    <div class="post">
+                       <h2 class="post-title">
+                           <a href="#">@post._1.title</a>
+                       </h2>
+                       <div class="post-metadata">
+                           <span class="post-author">
+                               by @post._2.fullname
+                           </span>
+                           <span class="post-date">
+                               @post._1.postedAt.format("dd MMM yy")
+                           </span>
+                           <div class="post-comments">
+                               @if(post._3) {
+                                   @post._3.size comments, 
+                                   latest by @post._3(0).author
+                               } else {
+                                   no comments
+                               }
+                           </div>
+                       </div>
+                   </div>
+                }
+ 
+            </div> 
+ 
+        }
+ 
+    }.getOrElse {
+ 
+        <div class="empty">
+            There is currently nothing to read here.
+        </div>
+ 
+    }
+    
+}
 
-You can read about the way this template works in the "Templates chapter":templates. Basically, it allows you to access your Scala objects dynamically. Under the hood we use Groovy. Most of the pretty constructs you see (like the **?:** operator) come from Groovy. But you don’t really need to learn Groovy to write Play templates. If you’re already familiar with another template language like JSP with JSTL you won’t be lost.
-
-@front@ being an @Option[T]@ here, we use the *?* operator to autmatically ignore @None@ case, and automatically unwrap the @Some@ value if it exists. Also you can note that we can use @Option@ and @Seq@ in @#if@ statements.
+You can read about the way this template works in the "Templates chapter":templates. Basically, it allows you to write Scala code in a simple text file. Under the hood, the template is compiled as a standard Scala function.
 
 OK, now refresh the blog home page.
 
@@ -151,113 +158,127 @@ OK, now refresh the blog home page.
 
 Not pretty but it works!
 
-However you can see we have already started to duplicate code. Because we will display posts in several ways (full, full with comment, teaser) we should create something like a function that we could call from several templates. This is exactly what a Play tag does!
+However you can see we have already started to duplicate code. Because we will display posts in several ways (full, full with comment, teaser) we should create another function that we could call from several templates. As templates are just functions, it is easy to compose them in several ways.
 
-To create a tag, just create the new **/yabe/app/views/tags/display.html** file. A tag is just another template. It has parameters (like a function). The **#{display /}** tag will have two parameters: the Post object to display and the display mode which will be one of ‘home’, ‘teaser’ or ‘full’.
+Just create the new **/yabe/app/views/Application/display.scala.html** file:
 
-bc. *{ Display a post in one of these modes: 'full', 'home' or 'teaser' }*
+bc. @(post:(models.Post,models.User,Seq[models.Comment]), mode: String = "full")
  
-<div class="post ${_as == 'teaser' ? 'teaser' : ''}">
+@commentsTitle = {
+    @if(post._3) {
+        @post._3.size comments, latest by @post._3(0).author
+    } else {
+        no comments
+    }
+}
+  
+<div class="post @mode">
     <h2 class="post-title">
-        <a href="#">${_arg?.post.title}</a>
+        <a href="#">@post._1.title</a>
     </h2>
     <div class="post-metadata">
-        <span class="post-author">by ${_arg?.author.fullname}</span>,
+        <span class="post-author">by @post._2.fullname</span>,
         <span class="post-date">
-            ${_arg?.post.postedAt.format('dd MMM yy')}
+            @post._1.postedAt.format("dd MMM yy")
         </span>
-        #{if _as != 'full'}
+        @if(mode != "full") {
             <span class="post-comments">
-                &nbsp;|&nbsp; ${_arg?.comments.size() ?: 'no'} 
-                comment${_arg?.comments.size().pluralize()}
-                #{if _arg?.comments}
-                    , latest by ${_arg?.comments[0].author}
-                #{/if}
+                @commentsTitle
             </span>
-        #{/if}
+        }
     </div>
-    #{if _as != 'teaser'}
+    @if(mode != "teaser") {
         <div class="post-content">
             <div class="about">Detail: </div>
-            ${_arg?.post.content.nl2br()}
+            @Html(post._1.content.replace("\n", "<br>"))
         </div>
-    #{/if}
+    }
 </div>
  
-#{if _as == 'full'}
+@if(mode == "full") {
+    
     <div class="comments">
         <h3>
-            ${_arg?.comments.size() ?: 'no'} 
-            comment${_arg?.comments.size().pluralize()}
+            @commentsTitle
         </h3>
         
-        #{list items:_arg?.comments, as:'comment'}
+        @post._3.map { comment =>
             <div class="comment">
                 <div class="comment-metadata">
-                    <span class="comment-author">by ${comment.author},</span>
+                    <span class="comment-author">by @comment.author,</span>
                     <span class="comment-date">
-                        ${comment.postedAt.format('dd MMM yy')}
+                        @comment.postedAt.format("dd MMM yy")
                     </span>
                 </div>
                 <div class="comment-content">
                     <div class="about">Detail: </div>
-                    ${comment.content.escape().nl2br()}
+                    @Html(comment.content.replace("\n", "<br>"))
                 </div>
             </div>
-        #{/list}
+        }
         
     </div>
-#{/if}
+    
+}
+
 
 Now using this tag we can rewrite the home page without code duplication:
 
-bc. #{extends 'main.html' /}
-#{set title:'Home' /}
+bc. @(
+    front:Option[(models.Post,models.User,Seq[models.Comment])], 
+    older:Seq[(models.Post,models.User,Seq[models.Comment])]
+)
  
-#{if front}
+@main(title = "Home") {
     
-    #{display front, as:'home' /}
-    
-    #{if older}
-    
-        <div class="older-posts">
-            <h3>Older posts <span class="from">from this blog</span></h3>
+    @front.map { front =>
         
-            #{list items:older}
-                #{display _, as:'teaser' /}
-            #{/list}
+        @display(front, mode = "home")
+ 
+        @Option(older).filterNot(_.isEmpty).map { posts =>
+ 
+            <div class="older-posts">    
+                <h3>Older posts <span class="from">from this blog</span></h3>
+ 
+                @posts.map { post =>
+                    @display(post, mode = "teaser")
+                }
+ 
+            </div> 
+ 
+        }
+ 
+    }.getOrElse {
+ 
+        <div class="empty">
+            There is currently nothing to read here.
         </div>
-        
-    #{/if}
-    
-#{/if}
  
-#{else}
-    <div class="empty">
-        There is currently nothing to read here.
-    </div>
-#{/else}
+    }
+    
+}
 
 Reload the page and check that all is fine.
 
 h2. <a>Improving the layout</a>
 
-As you can see, the **index.html** template extends **main.html**. Because we want to provide a common layout for all blog pages, with the blog title and authentication links, we need to modify this file.
+As you can see, the **index.scala.html** template extends **main.scala.html**. Because we want to provide a common layout for all blog pages, with the blog title and authentication links, we need to modify this file.
 
-Edit the **/yabe/app/views/main.html** file:
+Edit the **/yabe/app/views/main.scala.html** file:
 
-bc. <!DOCTYPE html >
+bc. @(title:String = "")(body: => Html)
+ 
+<!DOCTYPE html>
 <html>
     <head>
-        <title>#{get 'title' /}</title>		
+        <title>@title</title>
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-        <link rel="stylesheet" type="text/css" media="screen" 
-            href="@{'/public/stylesheets/main.css'}" />
-        <link rel="shortcut icon" type="image/png" 
-            href="@{'/public/images/favicon.png'}" />
+        <link rel="stylesheet" media="screen" href="@asset("public/stylesheets/main.css")">
+        <link rel="shortcut icon" type="image/png" href="@asset("public/images/favicon.png")">
+        <script src="@asset("public/javascripts/jquery-1.5.2.min.js")" type="text/javascript"></script>
     </head>
     <body>
-        
+         
         <div id="header">
             <div id="logo">
                 yabe.
@@ -269,13 +290,13 @@ bc. <!DOCTYPE html >
             </ul>
             <div id="title">
                 <span class="about">About this blog</span>
-                <h1><a href="#">${blogTitle}</a></h1>
-                <h2>${blogBaseline}</h2>
+                <h1><a href="#">@play.Play.configuration.get("blog.title")</a></h1>
+                <h2>@play.Play.configuration.get("blog.baseline")</h2>
             </div>
         </div>
         
         <div id="main">
-            #{doLayout /} 
+            @body
         </div>
         
         <p id="footer">
@@ -287,38 +308,14 @@ bc. <!DOCTYPE html >
     </body>
 </html>
 
-Refresh and check the result. It seems to work, except that the **blogTitle** and the **blogBaseLine** variables are not displayed. This is because we didn’t pass them to the **Template(…)** value. Of course we could add them to the **Template(…)** call in the **index** action. But because the **main.html** file will be used as main template for all application actions, we don’t want to add them every time.
-
-One way to execute the same code for each action of a controller (or a hierarchy of controllers) is to define a **@Before** interceptor. Because we will possibly need to use this interceptor with several controllers we will define it as a @Trait@ and mix it in the @Application@ controller.
-
-Let’s write the @Defaults@ trait:
-
-bc. trait Defaults {
-    self:Controller =>
-    
-    @Before def setDefaults {
-        renderArgs += "blogTitle" -> configuration("blog.title")
-        renderArgs += "blogBaseline" -> configuration("blog.baseline") 
-    }
-    
-}
-
-Now we can mix this trait with our controller:
-
-bc. object Application extends Controller with Defaults {
-    …
-}
-
-All variables added to the **renderArgs** scope will be available from the templates. And you can see that the method reads the variable’s values from the **Play.configuration** object. This object contains all configuration keys from the **/yabe/conf/application.conf** file.
-
-Add these two keys to the configuration file:
+Also, add these two keys to the configuration file:
 
 bc. # Blog engine configuration
 # ~~~~~
 blog.title=Yet another blog
 blog.baseline=We won't write about anything
 
-Reload the home page and check that it works!
+Refresh and check the result. 
 
 !images/guide3-2!
 

@@ -60,32 +60,30 @@ Now, before displaying a comment form we will generate a unique ID. Then we will
 Let’s rewrite the **Application.show** action:
 
 bc. def show(id: Long) = {
-    Post.byIdWithAuthorAndComments(id).map( p =>
-        Template(
-            'item -> new { val (post,author,comments) = p },
-            'pagination -> p._1.prevNext,
-            'randomID -> Codec.UUID
-        )
-    ).getOrElse(NotFound("No such Post"))
+    Post.byIdWithAuthorAndComments(id).map { post =>
+        html.show(post, post._1.prevNext, Codec.UUID)
+    } getOrElse {
+        NotFound("No such Post")
+    }
 }
 
-And now the form in the **/yable/app/views/Application/show.html** template:
+And now the form in the **/yable/app/views/Application/show.scala.html** template:
 
 bc. ...
 <p>
     <label for="author">Your name: </label>
-    <input type="text" name="author" value="${params.author}"/>
+    <input type="text" name="author" value="@params.get("author")">
 </p>
 <p>
     <label for="content">Your message: </label>
-    <textarea name="content" id="content">${params.content}</textarea>
+    <textarea name="content">@params.get("content")</textarea>
 </p>
 <p>
     <label for="code">Please type the code below: </label>
-    <img src="@{captcha(randomID)}" />
-    <br />
-    <input type="text" name="code" id="code" size="18" value="" />
-    <input type="hidden" name="randomID" value="${randomID}" />
+    <img src="@action(controllers.Application.captcha(randomID))">
+    <br>
+    <input type="text" name="code" id="code" size="18" value="">
+    <input type="hidden" name="randomID" value="@randomID">
 </p>
 <p>
     <input type="submit" value="Submit your comment" />
@@ -102,18 +100,20 @@ Now we just have to validate the captcha. We have added the **randomID** as a hi
 
 Not that difficult. Let’s modify the **postComment** action.
 
-bc. def postComment(
-    postId:Long, 
-    @Required(message="Author is required") author:String, 
-    @Required(message="A message is required") content:String,
-    @Required(message="Please type the code") code:String,
-    randomID:String) = {
-        
-    validation.equals(
-        code, Cache.get(randomID).orNull
-    ).message("Invalid code. Please type it again");
-        
-    if(validation.hasErrors) {
+bc. def postComment(postId:Long) = {
+    val author = params.get("author")
+    val content = params.get("content")
+    val code = params.get("code")
+    val randomID = params.get("randomID")
+    Validation.required("author", author).message("Author is required")
+    Validation.required("content", content).message("Content is required")
+    
+    println(code)
+    println(Cache.get(randomID).orNull)
+    
+    Validation.equals("code", code, "code", Cache.get(randomID).orNull).
+        message("Invalid code. Please type it again")
+    if(Validation.hasErrors) {
         show(postId)
     } else {
         Comment.create(Comment(postId, author, content))
@@ -123,14 +123,14 @@ bc. def postComment(
     }
 }
 
-Because we now have more error messages, modify the way we display errors in the **show.html** template (yes we will just display the first error, it’s good enough):
+Because we now have more error messages, modify the way we display errors in the **show.scala.html** template (yes we will just display the first error, it’s good enough):
 
 bc. .. 
-#{ifErrors}
+@if(errors) {
     <p class="error">
-        ${errors[0]}
+        @errors.head._2
     </p>
-#{/ifErrors}
+}
 ...
 
 p(note). Typically for more complex forms, error messages are not managed this way but externalized in the **messages** file and each error is printed inside the corresponding field.

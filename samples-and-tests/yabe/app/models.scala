@@ -1,10 +1,10 @@
 package models
  
 import play.db.anorm._
-import play.db.anorm.defaults._
 import play.db.anorm.SqlParser._
-
-import java.util.{Date}
+import play.db.anorm.defaults._
+ 
+// User
  
 case class User(
     id: Pk[Long], 
@@ -20,6 +20,8 @@ object User extends Magic[User] {
     }
     
 }
+
+import java.util.{Date}
 
 case class Post(
     id: Pk[Long], 
@@ -43,7 +45,7 @@ case class Post(
 
             """
         ).on("date" -> postedAt).as( 
-            opt('pos.is("prev")~>Post.on("")) ~ opt('pos.is("next")~>Post.on("")) 
+            opt('pos.is("prev")~>Post.on("")) ~ opt('pos.is("next")~>Post.on("")) ^^ flatten
         )
     }
     
@@ -70,6 +72,7 @@ object Post extends Magic[Post] {
             """
         ).as( Post ~< User ~< Post.spanM( Comment ) ^^ flatten * )
         
+
     def byIdWithAuthorAndComments(id: Long):Option[(Post,User,List[Comment])] = 
         SQL(
             """
@@ -79,6 +82,7 @@ object Post extends Magic[Post] {
                 where p.id = {id}
             """
         ).on("id" -> id).as( Post ~< User ~< Post.spanM( Comment ) ^^ flatten ? )
+    
     
 }
 
@@ -94,4 +98,3 @@ object Comment extends Magic[Comment] {
     }
     
 }
-

@@ -1,12 +1,14 @@
+@(title:String = "")(body: => Html)
+
 <!DOCTYPE html >
 <html>
     <head>
-        <title>#{get 'title' /}</title>		
+        <title>@title</title>		
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-        <link rel="stylesheet" type="text/css" media="screen" href="@{'/public/stylesheets/main.css'}" />
-        <link rel="shortcut icon" type="image/png" href="@{'/public/images/favicon.png'}" />
-        <script src="@{'/public/javascripts/jquery-1.5.2.min.js'}"></script> 
-        <script src="@{'/public/javascripts/jquery.tools.min.js'}"></script>
+        <link rel="stylesheet" media="screen" href="@asset("public/stylesheets/main.css")">
+        <link rel="shortcut icon" type="image/png" href="@asset("public/images/favicon.png")">
+        <script src="@asset("public/javascripts/jquery-1.5.2.min.js")" type="text/javascript"></script>
+        <script src="@asset("public/javascripts/jquery.tools.min.js")" type="text/javascript"></script>
     </head>
     <body>
         
@@ -21,13 +23,17 @@
             </ul>
             <div id="title">
                 <span class="about">About this blog</span>
-                <h1><a href="@{Application.index()}">${blogTitle}</a></h1>
-                <h2>${blogBaseline}</h2>
+                <h1>
+                    <a href="@action(controllers.Application.index)">
+                        @play.Play.configuration.get("blog.title")
+                    </a>
+                </h1>
+                <h2>@play.Play.configuration.get("blog.baseline")</h2>
             </div>
         </div>
         
         <div id="main">
-            #{doLayout /} 
+            @body
         </div>
         
         <p id="footer">

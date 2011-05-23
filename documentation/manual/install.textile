@@ -2,7 +2,7 @@ h1. Installation guide
 
 h2. Prerequisites
 
-Before installing the Play Scala module, be sure to have a working installation of Play framework. Play Scala require *Play 1.2*.
+Before installing the Play Scala module, be sure to have a working installation of Play framework. Play Scala require *Play 1.2.2*.
 
 p(note). You don't need to already have Scala installed on your computer. The Play Scala module comes with all required libraries and with the Scala compiler. 
  
@@ -19,18 +19,18 @@ bc. $ play install scala
 ~ |  __/|_|\____|\__ (_)
 ~ |_|            |__/   
 ~
-~ play! 1.2, http://www.playframework.org
+~ play! 1.2.2, http://www.playframework.org
 ~
-~ Will install scala-0.9
-~ This module is compatible with: Play 1.2
+~ Will install scala-0.9.1
+~ This module is compatible with: Play 1.2.2
 ~ Do you want to install this version (y/n)? y
 ~ Installing module scala-0.9...
 ~
-~ Fetching http://www.playframework.org/modules/scala-0.9.zip
+~ Fetching http://www.playframework.org/modules/scala-0.9.1.zip
 ~ [--------------------------100%-------------------------] 17313.2 KiB/s   
 ~ Unzipping...
 ~
-~ Module scala-0.9 is installed!
+~ Module scala-0.9.1 is installed!
 
 h2. Creating a new Scala application
 
@@ -45,18 +45,18 @@ bc. $ play new myScalaApp --with scala
 ~ |  __/|_|\____|\__ (_)
 ~ |_|            |__/   
 ~
-~ play! 1.2, http://www.playframework.org
+~ play! 1.2.2, http://www.playframework.org
 ~
 ~ The new application will be created in ~/myScalaApp
 ~ What is the application name? [myScalaApp] 
 ~
 ~ Resolving dependencies using ~/myScalaApp/conf/dependencies.yml,
 ~
-~ 	play->scala 0.9 (from playLocalModules)
+~ 	play->scala 0.9.1 (from playLocalModules)
 ~
 ~ Installing resolved dependencies,
 ~
-~ 	modules/scala-0.9 -> ~/play/1.2/modules/scala-0.9
+~ 	modules/scala-0.9.1 -> ~/play/1.2/modules/scala-0.9.1
 ~
 ~ OK, the application is created.
 ~ Start it with : play run myScalaApp
@@ -69,7 +69,7 @@ bc. # Application dependencies
  
 require:
     - play
-    - play -> scala 0.9
+    - play -> scala 0.9.1
 
 h2. Starting a Scala application
 
@@ -82,7 +82,7 @@ bc. $ play run myScalaApp
 ~ |  __/|_|\____|\__ (_)
 ~ |_|            |__/   
 ~
-~ play! 1.2, http://www.playframework.org
+~ play! 1.2.2, http://www.playframework.org
 ~
 ~ Ctrl+C to stop
 ~ 

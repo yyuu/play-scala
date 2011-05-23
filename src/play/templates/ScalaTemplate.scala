@@ -631,9 +631,9 @@ package play.templates {
         
         // --- IF
     
-        implicit def seqToBoolean(x:Seq[_]) = !x.isEmpty
-        implicit def optionToBoolean(x:Option[_]) = x.isDefined
-        implicit def stringToBoolean(x:String) = !x.isEmpty
+        implicit def iterableToBoolean(x:Iterable[_]) = x != null && !x.isEmpty
+        implicit def optionToBoolean(x:Option[_]) = x != null && x.isDefined
+        implicit def stringToBoolean(x:String) = x != null && !x.isEmpty
         
         // --- DEFAULT
     
@@ -697,7 +697,7 @@ package views {
         
         def form(action: => Any)(body: => Html) = Html {
             var actionDef = new play.mvc.results.ScalaAction(action).actionDefinition
-            """<form action="""" + actionDef.url + """" method="""" + actionDef.method + """">""" + body + """</form>"""
+            """<form action="""" + actionDef.url + """" method="""" + (if(actionDef.star) "POST" else actionDef.method) + """">""" + body + """</form>"""
         }
         
         def a(action: => Any)(body: => Html) = Html {

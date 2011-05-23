@@ -46,35 +46,13 @@ bc. def index = Ok
 
 <hr>
 
-h3. Template
-
-If an action method return a @Template@ value, the corresponding action template will be rendered, and a **200 OK** response filled with the generated content will be sent to the client.
-
-bc. def index = Template
-
-By default the template name will be resolved from the action method name. So if the @controllers.Application.index@ method returns a @Template@, the **app/views/Application/index.html** template will be rendered.
-
-You can of course specify another template name:
-
-bc. def index = Template("Commons/home.html")
-
-In this case the **app/views/Commons/home.html** template will be rendered.
-
-You can also pass values to be included during the template evaluation. Values are passed in form of @(Symbol,Any)@ tuples, where the first member will be used as variable name in the template, and the second member as variable value.
-
-bc. def index = Template('now -> new Date(), 'numbers -> List(1,2,3))
-
-p(note). In a Java controller you never specify the template variable name, and Play automatically determine it by extracting the Java variable local name. 
- 
-It would be to complex to achieve the same thing in Scala without limiting the expressivness of your Scala code (that can contains pattern matching, lambda, etc…). Moreover because we use Tuple definitions here, the result is not so verbose.
-
-<hr>
-
 h3. Html
 
 Returning an @Html@ value will generated a **200 OK** response filled with the HTML content. The response content type will be automatically set to **text/html**.
 
 bc. def index = Html("<h1>Hello world!</h1>")
+
+You can also generate Html by calling a template.
 
 <hr>
 

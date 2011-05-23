@@ -7,33 +7,40 @@ h2. <a>Creating the ‘show’ action</a>
 To display the post details page, we will need a new action method on the **Application** controller. Let’s call it **show**:
 
 bc. def show(id: Long) = {
-    Post.byIdWithAuthorAndComments(id).map( p =>
-        Template('item -> new { val (post,author,comments) = p })
-    ).getOrElse(NotFound("No such Post"))
+    Post.byIdWithAuthorAndComments(id).map {
+        html.show(_)
+    } getOrElse {
+        NotFound("No such Post")
+    }
 }
 
 As you can see this action is pretty simple. We declare the **id** method parameter to automatically retrieve the HTTP **id** parameter as a **Long** Scala value. This parameter will be extracted either from the query string, from the URL path or from the request body.
 
 p(note). If we try to send an **id** HTTP parameter that is not a valid number, Play will automatically add a validation error to the **errors** container.
 
-This action will display the **/yabe/app/views/Application/show.html** template:
+This action will display the **/yabe/app/views/Application/show.scala.html** template:
 
-bc. #{extends 'main.html' /}
-#{set title:item.post.title /}
+bc. @(post:(models.Post,models.User,Seq[models.Comment]))
  
-#{display item, as:'full' /}
+@main(title = post._1.title) {
+    
+    @display(post, mode = "full")
+    
+}
 
-Because we’ve already written the **display** tag, this page is really simple to write.
+Because we’ve already written the **display** function, this page is really simple to write.
 
 h2. <a>Adding links to the details page</a>
 
-In the display tag we’ve left all links empty (using **#**). It’s now time to make these links point to the **Application.show** action. With Play you can easily build links in a template using the **@{...} notation**. This syntax uses the router to ‘reverse’ the URL needed to call the specified action. 
+In the display tag we’ve left all links empty (using **#**). It’s now time to make these links point to the **Application.show** action. With Play you can easily build links in a template using the **action(…) helper**. It uses the router to ‘reverse’ the URL needed to call the specified action. 
 
-Let’s edit the **/yabe/app/views/tags/display.html** tag:
+Let’s edit the **/yabe/app/views/tags/display.scala.html** tag:
 
 bc. ...
 <h2 class="post-title">
-    <a href="@{show(_arg?.post.id)}">${_arg?.post.title}</a>
+    <a href="@action(controllers.Application.show(post._1.id()))">
+        @post._1.title
+    </a>
 </h2>
 ...
 
@@ -41,13 +48,17 @@ You can new refresh the home page, and click a post title to display the post.
 
 !images/guide4-0!
 
-It’s great, but it lacks a link to go back to the home page. Edit the **/yabe/app/views/main.html** template to complete the title link:
+It’s great, but it lacks a link to go back to the home page. Edit the **/yabe/app/views/main.scala.html** template to complete the title link:
 
 bc. ...
 <div id="title">
     <span class="about">About this blog</span>
-    <h1><a href="@{Application.index()}">${blogTitle}</a></h1>
-    <h2>${blogBaseline}</h2>
+    <h1>
+        <a href="@action(controllers.Application.index)">
+            @play.Play.configuration.get("blog.title")
+        </a>
+    </h1>
+    <h2>@play.Play.configuration.get("blog.baseline")</h2>
 </div>
 ... 
 
@@ -113,38 +124,49 @@ bc. def prevNext = {
         """
     ).on("date" -> postedAt).as( 
         opt('pos.is("prev")~>Post.on("")) ~ opt('pos.is("next")~>Post.on("")) 
+        ^^ flatten
     )
 }
 
 Now, let's add this information to the *show.html* template:
 
 bc. def show(id: Long) = {
-    Post.byIdWithAuthorAndComments(id).map( p =>
-        Template(
-            'item -> new { val (post,author,comments) = p },
-            'pagination -> p._1.prevNext
-        )
-    ).getOrElse(NotFound("No such Post"))
+    Post.byIdWithAuthorAndComments(id).map { post =>
+        html.show(post, post._1.prevNext)
+    } getOrElse {
+        NotFound("No such Post")
+    }
 }
 
-We will call these methods several times during a request so they could be optimized, but they’re good enough for now. Also, add the pagination links at the top of the **show.html** template (before the **#{display/}** tag):
+We will call these methods several times during a request so they could be optimized, but they’re good enough for now. Also, add the pagination links at the top of the **show.scala.html** template:
 
-bc. <ul id="pagination">
-    #{if pagination._1}
-        <li id="previous">
-            <a href="@{show(pagination._1?.id)}">
-                ${pagination._1?.title}
-            </a>
-        </li>
-    #{/if}
-    #{if pagination._2}
-        <li id="next">
-            <a href="@{show(pagination._2?.id)}">
-                ${pagination._2?.title}
-            </a>
-        </li>
-    #{/if}
-</ul>
+bc. @(
+    post:(models.Post,models.User,Seq[models.Comment]),
+    pagination:(Option[models.Post],Option[models.Post])
+)
+ 
+@main(title = post._1.title) {
+    
+    <ul id="pagination">
+        @pagination._1.map { post =>
+            <li id="previous">
+                <a href="@action(controllers.Application.show(post.id()))">
+                    @post.title
+                </a>
+            </li>
+        }
+        @pagination._2.map { post =>
+            <li id="next">
+                <a href="@action(controllers.Application.show(post.id()))">
+                    @post.title
+                </a>
+            </li>
+        }
+    </ul>
+    
+    @display(post, mode = "full")
+    
+}
 
 It’s better now.
 
@@ -152,7 +174,9 @@ h2. <a>Adding the comment form</a>
 
 Now it’s time to set up a comments form. We’ll start by adding the **postComment** action method to the Application controller.
 
-bc. def postComment(postId:Long, author:String, content:String) = {
+bc. def postComment(postId:Long) = {
+    val author = params.get("author")
+    val content = params.get("content")
     Comment.create(Comment(postId, author, content))
     Action(show(postId))
 }
@@ -163,7 +187,7 @@ Let’s write the HTML form in the **show.html** template (after the **#{display
 
 bc. <h3>Post a comment</h3>
  
-#{form @postComment(item?.post.id)}
+@form(controllers.Application.postComment(post._1.id())) {
     <p>
         <label for="author">Your name: </label>
         <input type="text" name="author" />
@@ -175,7 +199,7 @@ bc. <h3>Post a comment</h3>
     <p>
         <input type="submit" value="Submit your comment" />
     </p>
-#{/form}
+}
 
 You can now try posting a new comment. It should just work.
 
@@ -183,14 +207,14 @@ You can now try posting a new comment. It should just work.
 
 h2. <a>Adding validation</a>
 
-Currently we don’t validate the form content before creating the comment. We would like to make both fields required. We can easily use the Play validation mechanism to ensure that the HTTP parameters are correctly filled in. Modify the **postComment** action to add **@Required** validation annotations and check that no error occurs:
+Currently we don’t validate the form content before creating the comment. We would like to make both fields required. We can easily use the Play validation mechanism to ensure that the HTTP parameters are correctly filled in. Modify the **postComment** action to some validation and check that no error occurs:
 
-bc. def postComment(
-    postId:Long, 
-    @Required author:String, 
-    @Required content:String) = {
-        
-    if(validation.hasErrors) {
+bc. def postComment(postId:Long) = {
+    val author = params.get("author")
+    val content = params.get("content")
+    Validation.required("author", author)
+    Validation.required("content", content)
+    if(Validation.hasErrors) {
         show(postId)
     } else {
         Comment.create(Comment(postId, author, content))
@@ -198,43 +222,55 @@ bc. def postComment(
     }
 }
 
-p(note). **Don’t forget** to import **play.data.validation.Annotations._** as well.
+p(note). **Don’t forget** to import **play.data.validation._** as well.
 
 As you can see, in case of validation errors, we re-display the post detail page. We have to modify the form code to display the error message:
 
 bc. <h3>Post a comment</h3>
  
-#{form @postComment(item?.post.id)}
- 
-    #{ifErrors}
+@form(controllers.Application.postComment(post._1.id())) {
+    
+    @if(errors) {
         <p class="error">
             All fields are required!
         </p>
-    #{/ifErrors}
- 
+    }
+    
     <p>
         <label for="author">Your name: </label>
-        <input type="text" name="author" value="${params.author}" />
+        <input type="text" name="author" value="@params.get("author")">
     </p>
     <p>
         <label for="content">Your message: </label>
-        <textarea name="content">${params.content}</textarea>
+        <textarea name="content">@params.get("content")</textarea>
     </p>
     <p>
         <input type="submit" value="Submit your comment" />
     </p>
-#{/form}
+}
 
-Note that we reuse the posted parameters to fill the HTML input values.
+Note that here we reference @errors@ and @params@. So we need to add them to the template parameters list, and we can even mark them as *implicit*:
+
+bc. @(
+    post:(models.Post,models.User,Seq[models.Comment]),
+    pagination:(Option[models.Post],Option[models.Post])
+)(
+    implicit 
+    params:play.mvc.Scope.Params,
+    flash:play.mvc.Scope.Flash,
+    errors:Map[String,play.data.validation.Error]
+)
+ 
+…
 
 To make the UI feedback more pleasant for the poster, we will add a little JavaScript to automatically set focus on the comment form in case of an error. As this script uses "JQuery Tools Expose":files/jquery.tools.min.js as support libraries, you have to include them. Download these two libraries to the **yabe/public/javascripts/** directory and modify the **main.html** template to include them:
 
 bc. …
-    <script src="@{'/public/javascripts/jquery-1.5.2.min.js'}"></script> 
-    <script src="@{'/public/javascripts/jquery.tools.min.js'}"></script>
+<script src="@asset("public/javascripts/jquery-1.5.2.min.js")"></script>
+<script src="@asset("public/javascripts/jquery.tools.min.js")"></script>
 …
 
-Now you can add this script to the **show.html** template (add it at the end of the page):
+Now you can add this script to the **show.scala.html** template (add it at the end of the page):
 
 bc. <script type="text/javascript" charset="utf-8">
     $(function() {         
@@ -259,12 +295,12 @@ First, we will display a success message after a comment is successfully posted.
 
 Modify the **postComment** action to add a success message:
 
-bc. def postComment(
-    postId:Long, 
-    @Required author:String, 
-    @Required content:String) = {
-        
-    if(validation.hasErrors) {
+bc. def postComment(postId:Long) = {
+    val author = params.get("author")
+    val content = params.get("content")
+    Validation.required("author", author)
+    Validation.required("content", content)
+    if(Validation.hasErrors) {
         show(postId)
     } else {
         Comment.create(Comment(postId, author, content))
@@ -276,9 +312,9 @@ bc. def postComment(
 and display the success message in **show.html** if present (add it at the top the page):
 
 bc. …
-#{if flash.success}
-    <p class="success">${flash.success}</p>
-#{/if}
+@if(flash.get("success")) {
+    <p class="success">@flash.get("success")</p>
+}
 …
 
 !images/guide4-3!
