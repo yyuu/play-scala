@@ -36,10 +36,8 @@ class IamADeveloper(unittest.TestCase):
         self.assert_(os.path.exists(os.path.join(self.working_directory, 'yop/app/controllers.scala')))
         self.assert_(os.path.exists(os.path.join(self.working_directory, 'yop/app/views')))
         self.assert_(os.path.exists(os.path.join(self.working_directory, 'yop/app/views/Application')))
-        self.assert_(os.path.exists(os.path.join(self.working_directory, 'yop/app/views/Application/index.html')))
-        self.assert_(os.path.exists(os.path.join(self.working_directory, 'yop/app/views/main.html')))
-        self.assert_(os.path.exists(os.path.join(self.working_directory, 'yop/app/views/errors/404.html')))
-        self.assert_(os.path.exists(os.path.join(self.working_directory, 'yop/app/views/errors/500.html')))
+        self.assert_(os.path.exists(os.path.join(self.working_directory, 'yop/app/views/Application/index.scala.html')))
+        self.assert_(os.path.exists(os.path.join(self.working_directory, 'yop/app/views/main.scala.html')))
         self.assert_(os.path.exists(os.path.join(self.working_directory, 'yop/conf')))
         self.assert_(os.path.exists(os.path.join(self.working_directory, 'yop/conf/routes')))
         self.assert_(os.path.exists(os.path.join(self.working_directory, 'yop/conf/messages')))
@@ -65,24 +63,24 @@ class IamADeveloper(unittest.TestCase):
         response = browser.open('http://localhost:9000/')
         self.assert_(waitFor(self.play, "Application 'YOP' is now started !"))
         self.assert_(browser.viewing_html())
-        self.assert_(browser.title() == 'Your application is ready !')
+        self.assert_(browser.title() == 'Your Scala application is ready!')
         
         html = response.get_data()
-        self.assert_(html.count('Your application is ready !'))
+        self.assert_(html.count('Your Scala application is ready!'))
         
         # Refresh
         step('Refresh home')
         
         response = browser.reload()
         self.assert_(browser.viewing_html())
-        self.assert_(browser.title() == 'Your application is ready !')        
+        self.assert_(browser.title() == 'Your Scala application is ready!')        
         html = response.get_data()
-        self.assert_(html.count('Your application is ready !'))
+        self.assert_(html.count('Your Scala application is ready!'))
         
         # Change index action result
         step('Change index action result')
         
-        edit(app, 'app/controllers.scala', 8, '        def index = Text("Coucou")')   
+        edit(app, 'app/controllers.scala', 11, '        Text("Coucou")')   
         response = browser.reload()
         html = response.get_data()
         self.assert_(html.count('Coucou'))
@@ -92,7 +90,7 @@ class IamADeveloper(unittest.TestCase):
         # Try return type inference
         step('Try return type inference')
         
-        edit(app, 'app/controllers.scala', 8, '     def index = "Bob"')    
+        edit(app, 'app/controllers.scala', 11, '     "Bob"')    
         response = browser.reload()
         html = response.get_data()
         self.assert_(html.count('Bob'))
@@ -102,7 +100,7 @@ class IamADeveloper(unittest.TestCase):
         # Change return type
         step('Change return type')
         
-        edit(app, 'app/controllers.scala', 8, ' def index = 9')   
+        edit(app, 'app/controllers.scala', 11, ' 9')   
         response = browser.reload()
         html = response.get_data()      
         self.assert_(html.count('9'))
@@ -112,7 +110,7 @@ class IamADeveloper(unittest.TestCase):
         # Change return type again
         step('Change return type again')
         
-        edit(app, 'app/controllers.scala', 8, '  def index = Some(9)')   
+        edit(app, 'app/controllers.scala', 11, '  Some(9)')   
         response = browser.reload()
         html = response.get_data()  
         self.assert_(html.count('Some(9)'))
@@ -134,7 +132,7 @@ class IamADeveloper(unittest.TestCase):
         # Use a model
         step('Use a model')
         
-        edit(app, 'app/controllers.scala', 8, ' def index = models.A.name')   
+        edit(app, 'app/controllers.scala', 11, ' models.A.name')   
         response = browser.reload()
         html = response.get_data()  
         self.assert_(html.count('COUCOU'))
@@ -164,16 +162,16 @@ class IamADeveloper(unittest.TestCase):
             html = ''.join(error.readlines())
             self.assert_(html.count('Compilation error'))
             self.assert_(html.count('value A is not a member of package models'))
-            self.assert_(html.count('In /app/controllers.scala (around line 8)'))          
+            self.assert_(html.count('In /app/controllers.scala (around line 11)'))          
             self.assert_(waitFor(self.play, 'ERROR ~'))
-            self.assert_(waitFor(self.play, 'Compilation error (In /app/controllers.scala around line 8)'))
+            self.assert_(waitFor(self.play, 'Compilation error (In /app/controllers.scala around line 11)'))
             self.assert_(waitFor(self.play, 'value A is not a member of package models'))
             self.assert_(waitFor(self.play, 'at Invocation.HTTP Request(Play!)'))
             
         # Update controller
         step('Update controller')    
         
-        edit(app, 'app/controllers.scala', 8, '  def index = models.AAA.name')   
+        edit(app, 'app/controllers.scala', 11, '  models.AAA.name')   
         response = browser.reload()
         html = response.get_data()  
         self.assert_(html.count('88'))
