@@ -31,10 +31,6 @@ The Scala version of Play framework share the same philosophy and concepts than 
 ### "Binding Option types":dataBinding#BindingOptiontypes
 ### "Using Scala default parameter values":dataBinding#UsingScaladefaultparametervalues
 ### "Binding case classes":dataBinding#Bindingcaseclasses
-## "Dealing with Scala types in Play templates":templates
-### "Boolean operations on Option and Seq types":templates#BooleanoperationsonOptionandSeqtypes
-### "Safe navigation for Option types":templates#SafenavigationforOptiontypes
-### "Litteral access to elements of a Seq":templates#LitteralaccesstoelementsofaSeq
 ## "Database access options":database
 ### "Using Anorm":database#UsingAnorm
 ### "Integrating other existing Database access librairies":database#IntegratingotherexistingDatabaseaccesslibrairies
@@ -44,6 +40,16 @@ The Scala version of Play framework share the same philosophy and concepts than 
 ### "Functional suite Style":test#FunctionalsuiteStyle
 ### "Specification Style":test#SpecificationStyle
 ### "Features list Style":test#FeatureslistStyle
+# "Scala templates":templates
+## "Overview":templates#Overview
+## "Syntax: the magic ‘@’ character":templates#Syntaxthemagiccharacter
+## "Template paramters":templates#Templateparameters
+## "Looping":templates#Looping
+## "If-Blocks":templates#IfBlocks
+## "Pattern Matching":templates#Patternmatching
+## "Declaring reusable blocks":templates#Declaringreusableblocks
+## "Import statements":templates#Importstatements
+## "Composing templates (tags, layouts, includes, etc.)":templates#Composingtemplatestagslayoutsincludesetc.
 # "Anorm, SQL data access with Play Scala":anorm
 ## "Overview":anorm#Overview
 ## "Executing SQL requests":anorm#ExecutingSQLrequests
