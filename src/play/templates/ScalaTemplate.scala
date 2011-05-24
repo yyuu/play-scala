@@ -461,7 +461,6 @@ package play.templates {
 
         }
 
-        @scala.annotation.tailrec
         def visit(elem:Seq[TemplateTree], previous:Seq[Any]):Seq[Any] = {
             elem match {
                 case head :: tail =>
@@ -635,6 +634,13 @@ package play.templates {
         implicit def optionToBoolean(x:Option[_]) = x != null && x.isDefined
         implicit def stringToBoolean(x:String) = x != null && !x.isEmpty
 
+        // --- JAVA
+        
+        implicit def javaCollectionToScala(x:java.lang.Iterable[_]) = {
+            import scala.collection.JavaConverters._
+            x.asScala
+        }
+        
         // --- DEFAULT
 
         case class Default(default:Any) {
