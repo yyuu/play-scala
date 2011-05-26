@@ -9,44 +9,44 @@ import scala.actors._
  */
 private[cache] object ScalaCache extends CacheDelegate {
 
+    import akka.actor._
+    import akka.actor.Actor._
+    import akka.config._
+    import akka.config.Supervision._
+
+    
+
+    class CacheActor extends Actor {
+        def receive = {
+          case CacheMessage(key, expiration, window, waitForEvaluation,f,isDesireable) => {
+              val flagWhileCaching = "___" + key
+              getFromCache1(flagWhileCaching).getOrElse {
+                  set(flagWhileCaching, Caching(), waitForEvaluation);
+                  get[Any](key,expiration,window)(f())(isDesireable)
+                  play.Logger.info("asynchronously recached: "+ key)
+                  _impl.delete(flagWhileCaching)
+              }
+          }
+
+          case unknown =>  play.Logger.warn( "received unknown message: "+unknown)
+        }
+
+      override def postRestart (reason: Throwable): Unit = play.Logger.warn(reason, "cache actor restarted after crash ...");
+    }
+
+    private lazy val cacheActor = {
+        val actor = actorOf[CacheActor]
+        Supervisor(
+            SupervisorConfig(
+                OneForOneStrategy(List(classOf[Exception]), 10, 10000),
+                Supervise(actor,Permanent) :: Nil) )
+        actor
+    }
+
     case class CacheMessage[A](key: String, expiration: String, window: String, waitForEvaluation: String = "10s", f:()=>A, isDesireable:A => Boolean)
     case class Caching()
     
     private def prefixed(key: String) = "__" + key
-    
-    private lazy val supervisor = actor {
-        self.trapExit = true
-        loop {
-            react { 
-                case Exit(from: Actor, exc: Exception) => {
-                    play.Logger.warn(exc, "cache actor crashed resstarting...");
-                    from.restart();
-                    play.Logger.warn("restarted cache actor")
-                }
-            }
-        }
-    }
-  
-    private lazy val cacheActor = actor {
-        self.link(supervisor)
-        loop {
-            react {
-                
-                case CacheMessage(key, expiration, window, waitForEvaluation,f,isDesireable) => {
-                    val flagWhileCaching = "___" + key
-                    getFromCache1(flagWhileCaching).getOrElse {
-                        set(flagWhileCaching, Caching(), waitForEvaluation);
-                        get[Any](key,expiration,window)(f())(isDesireable)
-                        play.Logger.info("asynchronously recached: "+ key)
-                        _impl.delete(flagWhileCaching)
-                    }
-
-                }
-          
-                case _ => None
-            }
-        }
-    }
 
     private def getFromCache[T](key: String) = getFromCache1(key).map(_.asInstanceOf[T])
 

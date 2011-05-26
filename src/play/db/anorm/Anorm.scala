@@ -123,6 +123,7 @@ package anorm {
             })
         }
 
+
         implicit def rowToBoolean: Column[Boolean] = {
             Column[Boolean](transformer = { (value, meta) =>
                 val MetaDataItem(qualified,nullable,clazz) = meta
@@ -536,7 +537,7 @@ package anorm {
 
         def spanM[B](b:Parser[B]) : Parser[List[B]] = span(b *)
 
-    }
+    } 
 
     trait MParser[T] extends ParserWithId[T] {
       mparser =>
@@ -988,5 +989,8 @@ package anorm {
         }
 
     }
+
+
+
 
 }
