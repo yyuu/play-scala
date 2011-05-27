@@ -360,6 +360,7 @@ package anorm {
             def using(tableName:Symbol) = this.copy(tableName=Some(tableName.name))
         }
 
+
         case class MagicSql[T] (override val tableName: Option[String] = None,
                                 override val conventions: PartialFunction[AnalyserInfo,String] = conv)
                                    (implicit val m:ClassManifest[T]) extends  MSql[T] {

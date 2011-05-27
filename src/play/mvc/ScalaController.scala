@@ -79,9 +79,11 @@ abstract class ScalaController extends ControllerDelegate with LocalVariablesSup
     def Action(action: => Any)                          = new ScalaAction(action)
     def Continue                                        = new NoResult()
 
+
     @deprecated def Suspend(s: String)                  = new ScalaSuspend(s)
     @deprecated def Suspend(t: Int)                     = new ScalaSuspend(t)
     @deprecated def WaitFor(tasks: Future[_])           = new ScalaWaitFor(tasks)
+
 
     /**
      * @returns a play request object
