@@ -352,19 +352,27 @@ package anorm {
 
     }
 
-    case class Convention(conv:PartialFunction[AnalyserInfo,String]){
-      case class Magic[T](override val tableName:Option[String]=None, override val conventions :  PartialFunction[AnalyserInfo,String]= conv)(implicit val m:ClassManifest[T]) extends M[T] {
-        def using(tableName:Symbol) = this.copy(tableName=Some(tableName.name))
-      }
-      case class MagicSql[T] ( override val tableName:Option[String]=None, override val conventions:  PartialFunction[AnalyserInfo,String] = conv)(implicit val m:ClassManifest[T]) extends  MSql[T] {
-        def using(tableName:Symbol) = this.copy(tableName=Some(tableName.name))
-    }
-      case class MagicParser[T] ( override val tableName:Option[String]=None, override val conventions: PartialFunction[AnalyserInfo,String] = conv)(implicit val m:ClassManifest[T]) extends  MParser[T] with Analyser[T] {
-        def using(tableName:Symbol) = this.copy(tableName=Some(tableName.name))
-      }
+    case class Convention(conv:PartialFunction[AnalyserInfo,String]) {
+
+        case class Magic[T](override val tableName: Option[String] = None,
+                            override val conventions: PartialFunction[AnalyserInfo,String] = conv)
+                               (implicit val m: ClassManifest[T]) extends M[T] {
+            def using(tableName:Symbol) = this.copy(tableName=Some(tableName.name))
+        }
+
+        case class MagicSql[T] (override val tableName: Option[String] = None,
+                                override val conventions: PartialFunction[AnalyserInfo,String] = conv)
+                                   (implicit val m:ClassManifest[T]) extends  MSql[T] {
+            def using(tableName:Symbol) = this.copy(tableName=Some(tableName.name))
+        }
+
+        case class MagicParser[T] (override val tableName: Option[String] = None,
+                                   override val conventions: PartialFunction[AnalyserInfo,String] = conv)
+                                      (implicit val m:ClassManifest[T]) extends  MParser[T] with Analyser[T] {
+            def using(tableName:Symbol) = this.copy(tableName=Some(tableName.name))
+        }
 
     }
-
 
     trait M[T] extends MParser[T] {
         self =>
@@ -472,7 +480,6 @@ package anorm {
     }
 
 
-
     trait MSql[T] {
         val conventions: PartialFunction[AnalyserInfo,String] = asIs
         val m:ClassManifest[T]
@@ -537,7 +544,7 @@ package anorm {
 
         def spanM[B](b:Parser[B]) : Parser[List[B]] = span(b *)
 
-    } 
+    }
 
     trait MParser[T] extends ParserWithId[T] {
       mparser =>
@@ -652,7 +659,9 @@ package anorm {
     case class ColumnC(typeName:String,fieldName:String) extends AnalyserInfo
     case class TableC(typeName:String) extends AnalyserInfo
 
-    case class Analyse[T](override val tableName:Option[String]=None, override val conventions :PartialFunction[AnalyserInfo,String] = asIs, val m:ClassManifest[T]) extends Analyser[T]
+    case class Analyse[T](override val tableName:Option[String]=None,
+                          override val conventions :PartialFunction[AnalyserInfo,String] = asIs,
+                          val m:ClassManifest[T]) extends Analyser[T]
 
     trait Analyser[T]{
 
@@ -661,12 +670,7 @@ package anorm {
         import scala.reflect.Manifest
         import scala.reflect.ClassManifest
 
-
-
         val conventions: PartialFunction[AnalyserInfo,String]
-
-
-
 
         val m:ClassManifest[T]
         val tableName:Option[String] = None
@@ -879,12 +883,12 @@ package anorm {
             case o => stmt.setObject(index,o)
           }
           stmt
-        }
+      }
 
       def filledStatement = getFilledStatement(connection)
 
       def execute(conn:java.sql.Connection=connection):Array[Int] = getFilledStatement(connection).executeBatch()
-    
+
     }
 
     trait Sql {
@@ -989,8 +993,6 @@ package anorm {
         }
 
     }
-
-
 
 
 }

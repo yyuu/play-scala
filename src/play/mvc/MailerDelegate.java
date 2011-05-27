@@ -13,7 +13,7 @@ import org.apache.commons.mail.*;
  */
 @Deprecated
 public abstract class MailerDelegate {
-    
+
     public void setSubject(String subject, Object... args) {
         Mailer.setSubject(subject, args);
     }

@@ -22,27 +22,27 @@ import play.WithEscape
 abstract class ScalaController extends ControllerDelegate with LocalVariablesSupport with ControllerSupport {
 
     /**
-     * implicit def to provider an easier way to render arguments 
+     * implicit def to provider an easier way to render arguments
      */
     implicit def richRenderArgs(x: RenderArgs) = new RichRenderArgs(x)
-    
+
     /**
-     * implicit def to provider an easier way to flash arguments 
+     * implicit def to provider an easier way to flash arguments
      */
     implicit def richFlash(x: Flash) = new RichFlash(x)
 
     /**
-     * implicit def to provide some extra syntatic sugar while dealing with Response objects 
+     * implicit def to provide some extra syntatic sugar while dealing with Response objects
      */
     implicit def richResponse(x: Response) = new RichResponse(x)
 
     /**
-     * implicit def to to provide some extra syntatic sugar while dealing with a sessions 
+     * implicit def to to provide some extra syntatic sugar while dealing with a sessions
      */
     implicit def richSession(x: Session) = new RichSession(x)
-    
+
     /**
-     * implicit def to to provide some extra syntatic sugar while dealing with validation 
+     * implicit def to to provide some extra syntatic sugar while dealing with validation
      */
     implicit def richValidation(x: Validation) = new RichValidation(x)
 
@@ -78,7 +78,7 @@ abstract class ScalaController extends ControllerDelegate with LocalVariablesSup
     def Template(name: String, args: (Symbol, Any)*)    = new Template(template = Some(name), args = ScalaControllerCompatibility.argsToParams(args: _*))
     def Action(action: => Any)                          = new ScalaAction(action)
     def Continue                                        = new NoResult()
-    
+
     // Deprecated
     def Suspend(s: String)                              = new ScalaSuspend(s)
     def Suspend(t: Int)                                 = new ScalaSuspend(t)
@@ -118,20 +118,20 @@ abstract class ScalaController extends ControllerDelegate with LocalVariablesSup
      * @returns Validation
      */
     implicit def validation = Validation.current()
-    
+
     implicit def validationErrors:Map[String,play.data.validation.Error] = {
         import scala.collection.JavaConverters._
         Map.empty[String,play.data.validation.Error] ++ Validation.errors.asScala.map( e => (e.getKey, e) )
-    } 
+    }
 
     def reverse(action: => Any): play.mvc.Router.ActionDefinition = {
         val actionDefinition = reverse()
         action
         actionDefinition
     }
-    
+
     def templateExists(name: String) = ControllerDelegate.templateExists(name)
-  
+
 }
 
 object ScalaControllerCompatibility {
@@ -139,5 +139,6 @@ object ScalaControllerCompatibility {
     def argsToParams(args: (Symbol,Any)*): Map[String,Any] = Map(args:_*).collect {
         case (key, value) => (key.name, value)
     }
-    
+
 }
+

@@ -14,24 +14,23 @@ private[cache] object ScalaCache extends CacheDelegate {
     import akka.config._
     import akka.config.Supervision._
 
-    
 
     class CacheActor extends Actor {
         def receive = {
-          case CacheMessage(key, expiration, window, waitForEvaluation,f,isDesireable) => {
-              val flagWhileCaching = "___" + key
-              getFromCache1(flagWhileCaching).getOrElse {
-                  set(flagWhileCaching, Caching(), waitForEvaluation);
-                  get[Any](key,expiration,window)(f())(isDesireable)
-                  play.Logger.info("asynchronously recached: "+ key)
-                  _impl.delete(flagWhileCaching)
-              }
-          }
-
-          case unknown =>  play.Logger.warn( "received unknown message: "+unknown)
+            case CacheMessage(key, expiration, window, waitForEvaluation,f,isDesireable) => {
+                val flagWhileCaching = "___" + key
+                getFromCache1(flagWhileCaching).getOrElse {
+                    set(flagWhileCaching, Caching(), waitForEvaluation);
+                    get[Any](key,expiration,window)(f())(isDesireable)
+                    play.Logger.info("asynchronously recached: "+ key)
+                    _impl.delete(flagWhileCaching)
+                }
+            }
+            case unknown =>  play.Logger.warn( "received unknown message: "+unknown)
         }
 
-      override def postRestart (reason: Throwable): Unit = play.Logger.warn(reason, "cache actor restarted after crash ...");
+        override def postRestart (reason: Throwable): Unit =
+            play.Logger.warn(reason, "cache actor restarted after crash ...");
     }
 
     private lazy val cacheActor = {
@@ -43,20 +42,24 @@ private[cache] object ScalaCache extends CacheDelegate {
         actor
     }
 
-    case class CacheMessage[A](key: String, expiration: String, window: String, waitForEvaluation: String = "10s", f:()=>A, isDesireable:A => Boolean)
+    case class CacheMessage[A](key: String,
+                               expiration: String,
+                               window: String,
+                               waitForEvaluation: String = "10s",
+                               f:()=>A,
+                               isDesireable:A => Boolean)
     case class Caching()
-    
+
     private def prefixed(key: String) = "__" + key
 
     private def getFromCache[T](key: String) = getFromCache1(key).map(_.asInstanceOf[T])
 
     private def getFromCache1(key: String): Option[_] = {
-
-      import scala.util.control.Exception._
-      catching(classOf[java.io.InvalidClassException])
-        .either(Option( _impl.get(key)))
-        .left.map( e => {delete(key);play.Logger.warn(e.getMessage());e} )
-        .right.toOption.flatMap(identity)
+        import scala.util.control.Exception._
+        catching(classOf[java.io.InvalidClassException])
+            .either(Option( _impl.get(key)))
+            .left.map( e => { delete(key); play.Logger.warn(e.getMessage()); e } )
+            .right.toOption.flatMap(identity)
     }
 
     /**
@@ -72,7 +75,10 @@ private[cache] object ScalaCache extends CacheDelegate {
         } else if (m.erasure.isAssignableFrom(v.asInstanceOf[AnyRef].getClass)) {
             Some(v.asInstanceOf[T])
         } else {
-            play.Logger.warn("Found a value in cache for key '%s' of type %s where %s was expected", key, v.asInstanceOf[AnyRef].getClass.getName, m.erasure.getName)
+            play.Logger.warn("Found a value in cache for key '%s' of type %s where %s was expected",
+                             key,
+                             v.asInstanceOf[AnyRef].getClass.getName,
+                             m.erasure.getName)
             None
         }
     }
@@ -93,8 +99,8 @@ private[cache] object ScalaCache extends CacheDelegate {
                 r
             }
         }
-        
     }
+
     // Refactor this, you need to have a specific type to avoid implicits conflicts
     object Instances {
         implicit def isDesirable[A](o: Option[A]): Boolean = o.isDefined
@@ -109,7 +115,10 @@ private[cache] object ScalaCache extends CacheDelegate {
     * @param waitForEvaluation
     * @return parameterized type
     */
-    def getAsync[A](key: String, expiration: String, window: String, waitForEvaluation: String = "10s")(getter: => A)(implicit isDesirable: A => Boolean): A = {
+    def getAsync[A](key: String,
+                    expiration: String,
+                    window: String,
+                    waitForEvaluation: String = "10s")(getter: => A)(implicit isDesirable: A => Boolean): A = {
 
         getFromCache[A](key).getOrElse(
             getFromCache[A](prefixed(key)).map(v => {
@@ -127,14 +136,16 @@ private[cache] object ScalaCache extends CacheDelegate {
     * @param getter
     * @return parameterized type
     */
-    def get[A](key: String, expiration: String, window: String)(getter: => A)(implicit isDesirable: A => Boolean): A = {
-        
+    def get[A](key: String,
+               expiration: String,
+               window: String)(getter: => A)(implicit isDesirable: A => Boolean): A = {
+
         val cacheIt = (v: A) => {
             set(prefixed(key), v, parseDuration(expiration) + parseDuration(window) + "s")
             set(key, v, expiration)
             v
         }
-        
+
         getFromCache[A](key).getOrElse({
             val result = getter;
             if (isDesirable(result)) {
@@ -143,7 +154,7 @@ private[cache] object ScalaCache extends CacheDelegate {
                 getFromCache[A](prefixed(key)).map({v=> set(key, v, "2min");v}).getOrElse(result)
             }
         })
-        
+
     }
-    
+
 }

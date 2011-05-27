@@ -24,7 +24,7 @@ case class ResponseBody(private val response: HttpResponse) {
 }
 
 case class FunctionalWebResponse(response: HttpResponse) {
-    
+
     def body = ResponseBody(response)
 
     def focusOnOK(): Either[UndesiredStatus, ResponseBody] = focusOn{case r@Status(2, 0, 0) => r.body}

@@ -9,9 +9,10 @@ class RichConfiguration(val conf: java.util.Properties) {
 }
 
 /**
-* provides auto-escaping 
+* provides auto-escaping
 */
 class WithEscape(val x: Any) {
     def escape = org.apache.commons.lang.StringEscapeUtils.escapeHtml(x.toString)
     def escapeHtml = escape
 }
+
