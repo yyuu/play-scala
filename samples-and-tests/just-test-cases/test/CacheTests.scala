@@ -35,7 +35,7 @@ class CacheTests extends UnitTestCase with ShouldMatchersForJUnit {
     }
  @Test def useTheCacheAPIAsync { 
   
-   val workingTime=100 //time the async "job" takes to excute
+   val workingTime=150 //time the async "job" takes to excute
    val nbRequests=100 //number of total requests
    val cacheTime=1000;val cacheTimePattern=cacheTime/1000+"s";
    val tolerenceWindow=cacheTime/100+"s";
