@@ -10,14 +10,14 @@ import models._
 import play.data.validation.Annotations._
 
 trait Defaults extends Controller {
-    
+
  @Before
  def setDefaults {
    renderArgs += "appTitle" -> configuration("app.title")
    renderArgs += "appBaseline" -> configuration("app.baseline")
    renderArgs += "email" -> session.get("username")
   }
-  
+
 }
 
 

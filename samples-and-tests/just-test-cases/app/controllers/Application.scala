@@ -1,4 +1,4 @@
-package controllers 
+package controllers
 
 import play._
 import play.mvc._
@@ -12,24 +12,24 @@ import models._
 import play.Logger._
 
 object Application extends Controller with Secure {
-    
+
     val before = new DateTime()
     var counter = 0
-    
+
     private def nuller:String = null
 
     @Before
     def check {
         renderArgs += ("kiki" -> 9)
     }
-    
-    def reload = "My Name is, " + Apple1.name 
 
-    
+    def reload = "My Name is, " + Apple1.name
+
+
     def elvis() = {
       ?(nuller.length) match  { case Some(s) =>s;case None=>"boo" }
     }
-    
+
 
     def urlcall() = {
       val res = fromURLPath("http://www.playframework.org/documentation/api/1.1/play/Play.html").mkString
