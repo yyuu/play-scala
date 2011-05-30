@@ -127,6 +127,32 @@ class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
     Task.find("where id={id}").on("id" -> 3).first() should be (None)
     SQL("select * from Task join Student on Task.id=Student.Task_Id").as(Task ~< Student) should be (SqlParser.~(new Task("some comment"),Student("1")))
   }
+  case class BBB(id:String,comment:String)
+  object BBB extends MParser2[String,String,BBB]
+
+
+  @Test def useSomeMagicSqlCompileTime{
+    
+     play.db.DB.execute("DROP TABLE IF EXISTS Task")
+      play.db.DB.execute("DROP TABLE IF EXISTS Student") 
+     play.db.DB.execute("""CREATE TABLE Task 
+                           (Id char(60) NOT NULL,
+                            Comment char(60) NOT NULL) """)
+         play.db.DB.execute("""CREATE TABLE Student 
+                           (Id char(60) NOT NULL,
+                            Task_Id char(60) NOT NULL) """)
+
+    play.db.DB.execute("""insert into Task Values('1','some comment')""")
+    play.db.DB.execute("""insert into Student Values('1','1')""")
+    object TT2 extends MParser2[String,String,(String,String)] {
+
+      def apply(id:String,comment:String) = (id,comment)
+
+    }
+
+
+    SQL("select * from Task ").as(BBB) should be (BBB("1","some comment"))
+  }
 
   @Test def trySomeMagicSqlFailure{
     

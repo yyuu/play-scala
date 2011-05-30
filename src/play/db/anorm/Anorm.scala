@@ -6,6 +6,10 @@ package object anorm {
     implicit def sqlToBatch(sql:SqlQuery): BatchSql = sql.asBatch
 
     implicit def implicitID[ID](id: Id[ID]): ID = id.id
+    
+
+    implicit def toParameterValue[A](a:A)(implicit p:ToStatement[A]):ParameterValue[A] =
+        ParameterValue(a,p)
 
     def SQL(stmt: String) = Sql.sql(stmt)
     val asIs :PartialFunction[AnalyserInfo,String] = {case ColumnC(_,f) => f; case TableC(typeName) => typeName}
@@ -377,6 +381,17 @@ package anorm {
 
     trait M[T] extends MParser[T] {
         self =>
+
+        protected def setAny(index:Int,value:Any,stmt:java.sql.PreparedStatement):java.sql.PreparedStatement = {
+          value match {
+            case bd:java.math.BigDecimal => stmt.setBigDecimal(index,bd)
+            case o => stmt.setObject(index,o)
+          }
+          stmt
+        }
+        def anyParameter = new ToStatement[Any]{
+            def set(s:java.sql.PreparedStatement,index:Int,aValue:Any):Unit = setAny(index, aValue, s)}
+ 
         override val conventions: PartialFunction[AnalyserInfo,String] = asIs
 
         val msql:MSql[T] = new MSql[T] {
@@ -420,24 +435,14 @@ package anorm {
 
             val toUpdate = toSet.map(_._1).map(n => n+" = "+"{"+n+"}").mkString(", ")
 
-            val query = sql("update "+analyser.name+" set "+toUpdate+" where "+ ids.map(_._1).map( n => n+" = "+"{"+n+"}").mkString(" and "))
-                .onParams(toSet.map(_._2) ++ ids.map(_._2).map {
-                    case Id(id) => id
-                    case other => throw new Exception("not set ids in the passed object")
-                } : _*)
-
-            val result = catching(classOf[java.sql.SQLException])
-                            .either(query.execute1(getGeneratedKeys=true))
-                            .left.map( e => IntegrityConstraintViolation(e.asInstanceOf[java.sql.SQLException].getMessage))
-
-            for {
-                r <- result;
-                val (statement,ok) = r;
-                val rs = statement.getGeneratedKeys();
-                val id=idParser(StreamReader(Sql.resultSetToStream(rs))).get
-                val params = names_attributes.map(_._2).map({case NotAssigned => Id(id); case other => other})
-            } yield analyser.c.newInstance(params:_*).asInstanceOf[T] //StreamReader(Sql.resultSetToStream(rs))
-
+            sql("update "+analyser.name+" set "+toUpdate+
+                " where "+ ids.map(_._1).map( n => n+" = "+"{"+n+"}").mkString(" and ") )
+                .onParams((toSet.map(_._2) ++
+                           ids.map(_._2).map(na => na  match {
+                               case Id(id) => id
+                               case other => throw new Exception("not set ids in the passed object")
+                           })).map(v => toParameterValue( v)(anyParameter)) : _* )
+                .executeUpdate()
         }
 
         def create(v:T): MayErr[IntegrityConstraintViolation,T] = {
@@ -456,7 +461,8 @@ package anorm {
             val query = sql("insert into `" + analyser.name + "`"
                             + " ( " + toInsert.map("`"+_+"`").mkString(", ") + " )"
                             + " values ( " + toInsert.map("{"+_+"}").mkString(", ")+")")
-                        .onParams(toSet.map(_._2):_*)
+                        .onParams(toSet.map(_._2).map(v => toParameterValue( v)(anyParameter)):_*)
+
 
             val result = catching(classOf[java.sql.SQLException])
                             .either(query.execute1(getGeneratedKeys=true))
@@ -486,7 +492,7 @@ package anorm {
 
             val query = sql("insert into `"+analyser.name+"` ( "
                       + toInsert.map("`"+_+"`").mkString(", ")+" ) values ( "+toInsert.map("{"+_+"}").mkString(", ")+")")
-                            .onParams(toSet.map(_._2):_*)
+                            .onParams(toSet.map(_._2).map(v => toParameterValue( v)(anyParameter)):_*)
 
             catching(classOf[java.sql.SQLException])
                 .either(query.execute())
@@ -561,6 +567,54 @@ package anorm {
         def spanM[B](b:Parser[B]) : Parser[List[B]] = span(b *)
 
     }
+
+import SqlParser._
+
+  //  object User extends MParser2[Int,String,User]
+
+/*
+    object User extends MParser2('id.of[Int], 'name.of[String]){
+      def apply(id:Int ,name:String) : Int = 1
+
+    }
+
+    abstract class  MParser2[A1,A2,R](implicit p1:ColumnTo[A1],p2:ColumnTo[A1]) extends ParserWithId[R] {
+
+
+    }
+*/
+
+    abstract class MParser2[A1,A2,R](implicit p1:ColumnTo[A1],p2:ColumnTo[A2]) extends ParserWithId[R] {
+
+      val r = implicitly[Manifest[this.type]]
+
+      import SqlParser._
+      import java.lang.reflect.Method
+
+      def apply(a1:A1,a2:A2):R
+
+
+      def getParametersNames(m:Method):Seq[String] = {
+        import scala.collection.JavaConversions._
+        play.classloading.enhancers.LocalvariablesNamesEnhancer.lookupParameterNames(m)
+      }
+
+      val (name1,name2) =
+        r.erasure
+         .getDeclaredMethods()
+         .filter(_.getName()=="apply").map(m => {println(getParametersNames(m));m})
+         .find(_.getParameterTypes().length == 2)
+         .map(getParametersNames)
+         .collect{case Seq(a1,a2) => (a1,a2)}.get
+
+
+      override def apply(input:Input):SqlParser.ParseResult[R] = 
+         (get[A1](name1) ~< get[A2](name2) ^^ {case a1 ~ a2 => apply(a1,a2)} )(input)
+          
+
+      val uniqueId : (Row=> MayErr[SqlRequestError,Any]) = null
+
+    } 
 
     trait MParser[T] extends ParserWithId[T] {
       mparser =>
@@ -839,14 +893,34 @@ package anorm {
             case Some((r, v)) => Stream.cons(r,unfold(v)(f))
         }
     }
+    trait ToStatement[A]{def set(s:java.sql.PreparedStatement,index:Int,aValue:A):Unit}
+    object ToStatement{
+
+      implicit def anyParameter[T >: Int with String with Double ] = new ToStatement[T]{
+       private def setAny(index:Int,value:Any,stmt:java.sql.PreparedStatement):java.sql.PreparedStatement = {
+          value match {
+            case bd:java.math.BigDecimal => stmt.setBigDecimal(index,bd)
+            case o => stmt.setObject(index,o)
+          }
+          stmt
+        }     
+
+       def set(s:java.sql.PreparedStatement,index:Int,aValue:T):Unit = setAny(index, aValue, s)
+    }
+
+    }
 
     import  SqlParser._
+    case class ParameterValue[A](private[anorm] aValue:A,private[anorm] statementSetter:ToStatement[A]){
+      def set(s:java.sql.PreparedStatement,index:Int) = statementSetter.set(s,index,aValue)
+    }
 
-    case class SimpleSql[T](sql:SqlQuery,params:Seq[(String,Any)], defaultParser:SqlParser.Parser[T]) extends Sql {
 
-        def on(args:(String,Any)*):SimpleSql[T] = this.copy(params=(this.params) ++ args)
+    case class SimpleSql[T](sql:SqlQuery,params:Seq[(String,ParameterValue[_])], defaultParser:SqlParser.Parser[T]) extends Sql {
 
-        def onParams(args:Any*):SimpleSql[T] = this.copy(params=(this.params) ++ sql.argsInitialOrder.zip(args))
+        def on(args:(String,ParameterValue[_])*):SimpleSql[T] = this.copy(params=(this.params) ++ args)
+
+        def onParams(args:ParameterValue[_]*):SimpleSql[T] = this.copy(params=(this.params) ++ sql.argsInitialOrder.zip(args))
 
         def list(conn:java.sql.Connection=connection):Seq[T] = as(defaultParser*)
 
@@ -864,20 +938,20 @@ package anorm {
             sql.argsInitialOrder.map(argsMap)
                .zipWithIndex
                .map(_.swap)
-               .foldLeft(s)((s,e) => {setAny(e._1+1,e._2,s)} )
+               .foldLeft(s)((s,e) => { e._2.set(s,e._1+1) ; s} )
         }
 
         def using[U](p:Parser[U]):SimpleSql[U] = SimpleSql(sql,params,p)
 
     }
 
-    case class BatchSql(sql:SqlQuery, params:Seq[Seq[(String,Any)]]) {
+    case class BatchSql(sql:SqlQuery, params:Seq[Seq[(String,ParameterValue[_])]]) {
 
-        def addBatch(args:(String,Any)*):BatchSql = this.copy(params=(this.params) :+ args)
+        def addBatch(args:(String,ParameterValue[_])*):BatchSql = this.copy(params=(this.params) :+ args)
 
         def connection = play.db.DB.getConnection
 
-        def addBatchParams(args:Any*):BatchSql = this.copy(params=(this.params) :+ sql.argsInitialOrder.zip(args))
+        def addBatchParams(args:ParameterValue[_]*):BatchSql = this.copy(params=(this.params) :+ sql.argsInitialOrder.zip(args))
 
         def getFilledStatement(connection:java.sql.Connection, getGeneratedKeys:Boolean=false) = {
             val statement= if(getGeneratedKeys) connection.prepareStatement(sql.query,java.sql.Statement.RETURN_GENERATED_KEYS)
@@ -889,17 +963,9 @@ package anorm {
                     .map(argsMap)
                     .zipWithIndex
                     .map(_.swap)
-                    .foldLeft(s)( (s,e) => {setAny(e._1+1,e._2,s)} )
+                    .foldLeft(s)((s,e) =>  { e._2.set(s,e._1+1) ; s} )
             })
         }
-
-      protected def setAny(index:Int,value:Any,stmt:java.sql.PreparedStatement):java.sql.PreparedStatement = {
-          value match {
-            case bd:java.math.BigDecimal => stmt.setBigDecimal(index,bd)
-            case o => stmt.setObject(index,o)
-          }
-          stmt
-      }
 
       def filledStatement = getFilledStatement(connection)
 
@@ -921,14 +987,6 @@ package anorm {
         def apply(conn:java.sql.Connection=connection) = Sql.resultSetToStream(resultSet(connection))
 
         def resultSet (conn:java.sql.Connection=connection) = (getFilledStatement(connection).executeQuery())
-
-        protected def setAny(index:Int,value:Any,stmt:java.sql.PreparedStatement):java.sql.PreparedStatement = {
-          value match {
-            case bd:java.math.BigDecimal => stmt.setBigDecimal(index,bd)
-            case o => stmt.setObject(index,o)
-          }
-          stmt
-        }
 
         import SqlParser._
 

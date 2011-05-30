@@ -143,3 +143,17 @@ object ScalaControllerCompatibility {
 
 }
 
+
+case class Promise[A]()
+abstract class Awaited[E,T]{
+  
+  def flatMap[U](f: T => Awaited[_,U]) : Awaited[_,U] ={
+   this match {
+      case Done(t) => f(t)
+      case a@Await(p,g) =>  Await(p, (e:E) =>(g(e).flatMap(f)))
+    }
+  }
+
+}
+case class Await[E,T](p:Promise[E],f: E => Awaited[_,T]) extends Awaited[E,T]
+case class Done[E,T](t:T) extends Awaited[E,T]
