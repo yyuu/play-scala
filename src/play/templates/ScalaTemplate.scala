@@ -294,6 +294,12 @@ package play.templates {
                     }
                 )
             }
+            
+            def squareBrackets:Parser[String] = {
+                "[" ~ (several((squareBrackets | not("]") ~> any))) ~ commit("]") ^^ {
+                    case p1~charList~p2 => p1 + charList.mkString + p2
+                }
+            }
 
             def parentheses:Parser[String] = {
                 "(" ~ (several((parentheses | not(")") ~> any))) ~ commit(")") ^^ {
@@ -327,8 +333,8 @@ package play.templates {
 
             def blockArgs:Parser[String] = """.*=>""".r
 
-            def methodCall:Parser[String] = identifier ~ (parentheses?) ^^ {
-                case methodName~args => methodName + args.getOrElse("")
+            def methodCall:Parser[String] = identifier ~ (squareBrackets?) ~ (parentheses?) ^^ {
+                case methodName~types~args => methodName + types.getOrElse("") + args.getOrElse("")
             }
 
             def expression:Parser[Display] = {
@@ -338,7 +344,7 @@ package play.templates {
             }
 
             def expressionPart:Parser[ScalaExpPart] = {
-                chainedMethods | block | (whiteSpaceNoBreak ~> scalaBlockChained) | elseCall
+                chainedMethods | block | (whiteSpaceNoBreak ~> scalaBlockChained) | elseCall | (parentheses ^^ {case code => Simple(code)})
             }
 
             def chainedMethods:Parser[Simple] = {
