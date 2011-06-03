@@ -378,6 +378,11 @@ package anorm {
         }
 
     }
+    abstract class M2[A1,A2,R](implicit p1:ColumnTo[A1],p2:ColumnTo[A2]) extends MParser2[A1,A2,R] {
+      def unapply(r:R):Option[(A1,A2)]
+
+
+    }
 
     trait M[T] extends MParser[T] {
         self =>
@@ -570,19 +575,6 @@ package anorm {
 
 import SqlParser._
 
-  //  object User extends MParser2[Int,String,User]
-
-/*
-    object User extends MParser2('id.of[Int], 'name.of[String]){
-      def apply(id:Int ,name:String) : Int = 1
-
-    }
-
-    abstract class  MParser2[A1,A2,R](implicit p1:ColumnTo[A1],p2:ColumnTo[A1]) extends ParserWithId[R] {
-
-
-    }
-*/
 
     abstract class MParser2[A1,A2,R](implicit p1:ColumnTo[A1],p2:ColumnTo[A2]) extends ParserWithId[R] {
 
