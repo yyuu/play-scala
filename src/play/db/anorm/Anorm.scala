@@ -440,7 +440,7 @@ package anorm {
             if(notSetIds.length > 1) throw new Exception("multi ids not supported")
             val toInsert = toSet.map(_._1)
 
-            val query = sql("insert into " + analyser.name
+            val query = sql("insert into `" + analyser.name + "`"
                             + " ( " + toInsert.map("`"+_+"`").mkString(", ") + " )"
                             + " values ( " + toInsert.map("{"+_+"}").mkString(", ")+")")
                         .onParams(toSet.map(_._2):_*)
@@ -471,7 +471,7 @@ package anorm {
 
             val toInsert = toSet.map(_._1)
 
-            val query = sql("insert into "+analyser.name+" ( "
+            val query = sql("insert into `"+analyser.name+"` ( "
                       + toInsert.map("`"+_+"`").mkString(", ")+" ) values ( "+toInsert.map("{"+_+"}").mkString(", ")+")")
                             .onParams(toSet.map(_._2):_*)
 
