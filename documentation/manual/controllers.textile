@@ -6,7 +6,7 @@ h2. Scala controllers are Objects
 
 A Controller is a Scala singleton object, hosted by the @controllers@ package, and subclassing @play.mvc.Controller@. In Scala you can declare as many controllers you want in the same file.
 
-This a classical controller definition:
+This is a classical controller definition:
 
 bc. package controllers {
     
@@ -26,15 +26,15 @@ bc. package controllers {
     
 }
 
-Because Scala provides the native notion of **Singleton objects** we don't need anymore to deal with Java static methods while keeping to ability to reference statically any action like @show(id)@.
+Because Scala provides the native notion of **Singleton objects** we don't need to deal with Java static methods while keeping the ability to reference statically any action like @show(id)@.
 
 h2. Action methods return values
 
-A Play controller usually uses imperative orders like @render(…)@ or @forbidden()@ to trigger the response generation. On the contrary an action methods written in Scala is seen as functions and must return a value. This value will be used by the framework to generate the HTTP response resulting of the request.
+A Play controller usually uses imperative orders like @render(…)@ or @forbidden()@ to trigger the response generation. On the contrary, action methods written in Scala are seen as functions and must return a value. This value will be used by the framework to generate the HTTP response.
 
-An action method can of course return several kind of values depending of the request (like for example a @Template@ or an @Forbidden@ value). 
+An action method can of course return several kinds of values depending on the request (like for example a @Template@ or an @Forbidden@ value). 
 
-Here are listed the typical return types:
+Listed below are the typical return types:
 
 <hr>
 
@@ -48,7 +48,7 @@ bc. def index = Ok
 
 h3. Html
 
-Returning an @Html@ value will generated a **200 OK** response filled with the HTML content. The response content type will be automatically set to **text/html**.
+Returning an @Html@ value will generate a **200 OK** response filled with the HTML content. The response content type will be automatically set to **text/html**.
 
 bc. def index = Html("<h1>Hello world!</h1>")
 
@@ -58,7 +58,7 @@ You can also generate Html by calling a template.
 
 h3. Xml
 
-Returning an @Xml@ value will generated a **200 OK** response filled with the XML content. The response content type will be automatically set to **text/xml**.
+Returning an @Xml@ value will generate a **200 OK** response filled with the XML content. The response content type will be automatically set to **text/xml**.
 
 bc. def index = Xml(<message>Hello world!</message>)
 
@@ -66,7 +66,7 @@ bc. def index = Xml(<message>Hello world!</message>)
 
 h3. Text
 
-Returning an @Text@ value will generated a **200 OK** response filled with the text content. The response content type will be automatically set to **text/plain**.
+Returning an @Text@ value will generate a **200 OK** response filled with the text content. The response content type will be automatically set to **text/plain**.
 
 bc. def index = Text("Hello world!")
 
@@ -74,7 +74,7 @@ bc. def index = Text("Hello world!")
 
 h3. Json
 
-Returning an @Json@ value will generated a **200 OK** response filled with the text content. The response content type will be automatically set to **application/json**.
+Returning an @Json@ value will generate a **200 OK** response filled with the text content. The response content type will be automatically set to **application/json**.
 
 bc. def index = Json("{message: 'Hello world'}")
 
