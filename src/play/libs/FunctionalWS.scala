@@ -18,7 +18,7 @@ case class UndesiredStatus(statusCode: Int, body: String) {
 }
 
 case class ResponseBody(private val response: HttpResponse) {
-    def getXml() = response.getXml()
+    def getXml() = xml.XML.loadString(response.getString())
     def getJson() = response.getJson()
     def getString() = response.getString()
 }
