@@ -3,7 +3,7 @@ import play.mvc.Http._
 import play.mvc.results._
 
 /**
-* stuffing a few scala specific helpers into play.mvc namespace
+* stuffing a few Scala specific helpers into play.mvc namespace
 *
 */
 package play {

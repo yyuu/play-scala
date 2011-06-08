@@ -7,7 +7,7 @@ import org.apache.commons.mail.*;
 /**
  * Creates a delegate which can be used to take over play.mvc.Mailer namespace with a type
  * alias. Extending from this class means that we can avoid circular references which would
- * occur if ScalaMailer was inhereted directly from @see play.mvc.Controller and we used a type alias
+ * occur if ScalaMailer was inherited directly from @see play.mvc.Controller and we used a type alias
  * to map ScalaMailer to play.mvc.Mailer
  * This class will be removed before 1.1
  */

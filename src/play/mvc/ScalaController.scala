@@ -22,27 +22,27 @@ import play.WithEscape
 abstract class ScalaController extends ControllerDelegate with LocalVariablesSupport with ControllerSupport {
 
     /**
-     * implicit def to provider an easier way to render arguments
+     * implicit definition to provider an easier way to render arguments
      */
     implicit def richRenderArgs(x: RenderArgs) = new RichRenderArgs(x)
 
     /**
-     * implicit def to provider an easier way to flash arguments
+     * implicit definition to provider an easier way to flash arguments
      */
     implicit def richFlash(x: Flash) = new RichFlash(x)
 
     /**
-     * implicit def to provide some extra syntatic sugar while dealing with Response objects
+     * implicit definition to provide some extra syntactic sugar while dealing with Response objects
      */
     implicit def richResponse(x: Response) = new RichResponse(x)
 
     /**
-     * implicit def to to provide some extra syntatic sugar while dealing with a sessions
+     * implicit definition to to provide some extra syntactic sugar while dealing with a sessions
      */
     implicit def richSession(x: Session) = new RichSession(x)
 
     /**
-     * implicit def to to provide some extra syntatic sugar while dealing with validation
+     * implicit definition to to provide some extra syntactic sugar while dealing with validation
      */
     implicit def richValidation(x: Validation) = new RichValidation(x)
 
@@ -79,10 +79,9 @@ abstract class ScalaController extends ControllerDelegate with LocalVariablesSup
     def Action(action: => Any)                          = new ScalaAction(action)
     def Continue                                        = new NoResult()
 
-    // Deprecated
-    def Suspend(s: String)                              = new ScalaSuspend(s)
-    def Suspend(t: Int)                                 = new ScalaSuspend(t)
-    def WaitFor(tasks: Future[_])                       = new ScalaWaitFor(tasks)
+    @deprecated def Suspend(s: String)                  = new ScalaSuspend(s)
+    @deprecated def Suspend(t: Int)                     = new ScalaSuspend(t)
+    @deprecated def WaitFor(tasks: Future[_])           = new ScalaWaitFor(tasks)
 
     /**
      * @returns a play request object

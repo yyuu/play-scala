@@ -1,17 +1,11 @@
 package play.mvc;
 
-import play.mvc.Controller;
-import play.mvc.Router.ActionDefinition;
+import java.util.Map;
+
 import play.exceptions.UnexpectedException;
 import play.mvc.Http.Request;
+import play.mvc.Router.ActionDefinition;
 import play.mvc.results.RenderTemplate;
-
-import java.io.InputStream;
-import java.io.File;
-
-import java.util.Map;
-import java.util.HashMap;
-import java.util.concurrent.Future;
 
 /**
  * Provides java interop

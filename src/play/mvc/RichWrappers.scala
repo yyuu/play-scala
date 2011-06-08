@@ -49,7 +49,7 @@ private[mvc] class RichFlash(val flash: Flash) {
 }
 
 /**
- * utility class to provide some extra syntatic sugar while dealing with a session
+ * utility class to provide some extra syntactic sugar while dealing with a session
  */
 private[mvc] class RichSession(val session: Session) {
     
@@ -73,7 +73,7 @@ private[mvc] class RichValidation(val validation: Validation) {
 }
 
 /**
-* utility class to provide some extra syntatic sugar while dealing with Response objects
+* utility class to provide some extra syntactic sugar while dealing with Response objects
 */
 private[mvc] class RichResponse(val response: Response) {
 

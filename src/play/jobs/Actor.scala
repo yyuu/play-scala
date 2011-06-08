@@ -6,8 +6,8 @@ import play._
 import play.exceptions._
 
 object Asyncs {
-    
-    //TODO:maybe it needs to be reimplemented to avoid using casting, but the interface is OK
+
+    //TODO:maybe it needs to be re-implemented to avoid using casting, but the interface is OK
     def awaitForAll[A](timeout: Long, futures: Seq[Future[A]]): Seq[Option[A]] = Futures.awaitAll(timeout, futures: _*).map(_.asInstanceOf[Option[A]])
 
 }
@@ -16,7 +16,7 @@ object Asyncs {
  * provides actor support for play, this can be used as a replacement for jobs
  */
 trait PlayActor extends Actor {
-    
+
     /**
     *  @param msg the message being sent
     *  @return  Future task

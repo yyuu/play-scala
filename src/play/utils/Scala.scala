@@ -4,7 +4,7 @@ trait Scala {
 
     /**
      * Adding timeout handling and fixing resource closing for scala.io.Source.fromURL
-     * @param String the url to read from
+     * @param String the URL to read from
      * @param readTimeout
      * @param connectionTimeOut
      */
