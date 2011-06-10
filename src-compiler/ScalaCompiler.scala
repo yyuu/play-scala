@@ -1,7 +1,7 @@
 package play.scalasupport.compiler
 
 import _root_.xsbt.boot.{AppID, Provider, Launcher, IvyOptions, Locks, AppConfiguration}
-import _root_.sbt.{Compiler => SbtCompiler, Level, CompileOrder, Logger => SbtLoggerAPI}
+import _root_.sbt.{Compiler => SbtCompiler, Level, CompileOrder, Logger => SbtLoggerAPI, ClasspathOptions}
 
 import java.io.{File, FileOutputStream}
 
@@ -32,7 +32,7 @@ class PlayScalaCompiler(app: File, libs: File, classpath: List[File], output: Fi
     val scalaProvider = sbt.getScala("2.8.1")
     val appProvider = scalaProvider.app(AppID("play", "application", "1.0", "", Array(), false, Array()))
     val appConfig = new AppConfiguration(Array(), app, appProvider)
-    val compilers = SbtCompiler.compilers(appConfig, SbtLogger)
+    val compilers = SbtCompiler.compilers(ClasspathOptions(bootLibrary=true, compiler=true, extra=true, autoBoot=true, filterLibrary=true))(appConfig, SbtLogger)
     
     @scala.annotation.tailrec private def classFile2className(f:File, suffix:String = ""):String = {
         (f, f.getName) match {
@@ -173,7 +173,7 @@ class PlayScalaCompiler(app: File, libs: File, classpath: List[File], output: Fi
             def testLoadClasses = Nil
             def target = null
             def failLabel = "Play Scala " + version
-            def lockFile = new File(tmpDirectory, "scala.lock")
+            def lockFile = None
             def extraClasspath = Array()
             override def app(id: xsbti.ApplicationID): xsbti.AppProvider = new AppProvider(id)
 
@@ -189,7 +189,7 @@ class PlayScalaCompiler(app: File, libs: File, classpath: List[File], output: Fi
                 def testLoadClasses = Nil
                 def target = null
                 def failLabel = "Application"
-                def lockFile = new File(tmpDirectory, "app.lock")
+                def lockFile = None
                 def mainClasspath = Array()
                 def extraClasspath = Array()
 
@@ -200,7 +200,7 @@ class PlayScalaCompiler(app: File, libs: File, classpath: List[File], output: Fi
 
                     def component(componentID: String) = {
                         componentID match {
-                            case "compiler-interface-bin_2.8.1.final" => Array(new File(libs, "../dlib/compiler-interface-bin-0.9.5.jar"))
+                            case "compiler-interface-bin_2.8.1.final" => Array(new File(libs, "../dlib/compiler-interface-bin-0.9.10.jar"))
                             case _ => Array[File]()
                         }
                     }
