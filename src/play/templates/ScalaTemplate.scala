@@ -94,39 +94,21 @@ package play.templates {
                 }
         }
 
-        def needRecompilation = {
-            if(file.exists) {
-                // A generated source already exists
-                if(source.isDefined) {
-                    // The source template still exists
-                    if(source.get.lastModified > file.lastModified) {
-                        // The source template has been modified
-                        true
-                    } else {
-                        if(meta("HASH") != Codec.hexSHA1(VirtualFile.open(source.get).contentAsString)) {
-                            // The HASH don't match
-                            true
-                        } else {
-                            false
-                        }
-                    }
-                } else {
-                    false
-                }
-            } else {
-                true
-            }
-        }
+        def needRecompilation = (
+            !file.exists ||
+             // A generated source already exist but
+             source.isDefined && ((source.get.lastModified > file.lastModified) || // the source has been modified
+                                  (meta("HASH") != Codec.hexSHA1(VirtualFile.open(source.get).contentAsString))) // or the hash don't match
+        )
 
         def mapPosition(generatedPosition:Int) = {
-            val i = matrix.findIndexOf(p => p._1 > generatedPosition)
-            if(i > 0) {
-                val pos = matrix(i-1)
-                pos._2 + (generatedPosition - pos._1)
-            } else {
-                if(i == 0) {
-                    0
-                } else {
+            matrix.findIndexOf(p => p._1 > generatedPosition) match {
+                case 0 => 0
+                case i if i > 0 => {
+                    val pos = matrix(i-1)
+                    pos._2 + (generatedPosition - pos._1)
+                }
+                case _ => {
                     val pos = matrix.takeRight(1)(0)
                     pos._2 + (generatedPosition - pos._1)
                 }
@@ -134,14 +116,13 @@ package play.templates {
         }
 
         def mapLine(generatedLine:Int) = {
-            val i = lines.findIndexOf(p => p._1 > generatedLine)
-            if(i > 0) {
-                val line = lines(i-1)
-                line._2 + (generatedLine - line._1)
-            } else {
-                if(i == 0) {
-                    0
-                } else {
+            lines.findIndexOf(p => p._1 > generatedLine) match {
+                case 0 => 0
+                case i if i > 0 => {
+                    val line = lines(i-1)
+                    line._2 + (generatedLine - line._1)
+                }
+                case _ => {
                     val line = lines.takeRight(1)(0)
                     line._2 + (generatedLine - line._1)
                 }
@@ -168,10 +149,8 @@ package play.templates {
         }
 
         def sync() {
-            if(file.exists) {
-                if(!source.isDefined) {
-                    file.delete()
-                }
+            if (file.exists && !source.isDefined) {
+                file.delete()
             }
         }
 
@@ -232,7 +211,7 @@ package play.templates {
 
         def generatedFile(template:File) = {
             val templateName = source2TemplateName(template).split('.')
-            templateName -> GeneratedSource(new File(generatedDirectory, templateName.mkString(".") + ".scala"))
+            templateName -> GeneratedSource(new File(generatedDirectory, templateName.mkString("_") + ".scala"))
         }
 
         @tailrec def source2TemplateName(f:File, suffix:String = ""):String = {
