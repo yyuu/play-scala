@@ -13,5 +13,5 @@ class ScalaWaitFor(tasks: Future[_]) extends Result {
     def apply(request: Http.Request , response:Http.Response) {
         throw delegate
     }
-  
+
 }

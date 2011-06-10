@@ -10,7 +10,7 @@ import org.scalatest.{Spec,WordSpec,FlatSpec,FunSuite, FeatureSpec}
  * wraps around FunctionalTest's browser specific methods
  */
 trait Browser {
-    
+
     //TODO: remove these wrappers after play-core refactoring
     val APPLICATION_X_WWW_FORM_URLENCODED = F.APPLICATION_X_WWW_FORM_URLENCODED
     val MULTIPART_FORM_DATA = F.MULTIPART_FORM_DATA
@@ -38,10 +38,10 @@ trait Browser {
 object Browser extends Browser
 
 /**
- * wraps around FunctionalTest's junit asserts 
+ * wraps around FunctionalTest's JUnit asserts 
  */
 trait Assertions {
-    
+
     //TODO:these wrappers will disappear after play-core refactoring
     def assertHeaderEquals(headerName: String, value: String, response: Response) = F.assertHeaderEquals(headerName,value,response)
     def assertContentType(contentType: String, response: Response) = F.assertContentType(contentType,response)
@@ -56,10 +56,10 @@ trait Assertions {
 
 object Assertions extends Assertions
 
-trait Matchers  {
-    
+trait Matchers {
+
     implicit def addTestMethods(response: Response) = new RichTestResponse(response)
-    
+
     private[test] class  RichTestResponse(response: Response) {
         def shouldBeOk() = Assertions.assertIsOk(response)
         def shouldNotBeFound() = Assertions.assertIsNotFound(response)
@@ -69,14 +69,14 @@ trait Matchers  {
         def charsetShouldBe(charset: String) =  Assertions.assertCharset(charset, response)
         def contentTypeShouldBe (contentType: String) = Assertions.assertContentType(contentType, response)
         def headerShouldBe (header: Tuple2[String,String]) =Assertions.assertHeaderEquals(header._1,header._2, response)
-    } 
-    
+    }
+
 }
 
 object Matchers extends Matchers
 
 trait FunctionalTestCase extends FunctionalTest with Browser with Assertions
-trait FunctionalSpec extends FunctionalTest with Spec with Browser with Matchers 
+trait FunctionalSpec extends FunctionalTest with Spec with Browser with Matchers
 trait FunctionalWordSpec extends FunctionalTest with WordSpec with Browser with Matchers
 trait FunctionalFlatSpec extends FunctionalTest with FlatSpec with Browser with Matchers
 trait FunctionalFeatureSpec extends FunctionalTest with FeatureSpec with Browser with Matchers
@@ -86,4 +86,4 @@ trait UnitSpec extends UnitTest with Spec
 trait UnitWordSpec extends UnitTest with WordSpec
 trait UnitFlatSpec extends UnitTest with FlatSpec
 trait UnitFeatureSpec extends UnitTest with FeatureSpec
-trait UnitFunSuite extends UnitTest with FunSuite 
+trait UnitFunSuite extends UnitTest with FunSuite

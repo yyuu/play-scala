@@ -21,7 +21,7 @@ object ScalaTestRunner {
                       result.name = "Test creation"
                       result.time = 0
                       result.error = e.getMessage
-                      
+
                       val tmpout = new java.io.StringWriter
                       e.printStackTrace(new java.io.PrintWriter(tmpout))
                       result.trace = tmpout.toString
@@ -37,20 +37,20 @@ object ScalaTestRunner {
                               break
                           }
                       } }
-                      
+
                       result.passed = false
                       results.passed = false
                       results add result
                       results
-                        
+
         }
     }
-    
+
     def runJunitClass(junitClass: Class[BaseTest]) = {
         val suite = new JUnitWrapperSuite(junitClass.getName, play.Play.classloader)
         run(suite)
     }
-    
+
     def run(suite: Suite) = {
         val reporter = new PlayReporter
         val dispatch = new DispatchReporter(List(reporter), System.out)
@@ -87,12 +87,12 @@ class PlayReporter extends Reporter {
                 result.time = duration.getOrElse(0)
                 result.passed = false
                 results.passed = false
-                
+
                 throwable match {
                     case Some(e) => result.error = e.getMessage
                     case None => result.error = message
                 }
-                
+
                 throwable match {
                     case Some(e: StackDepth) => val se = e.getStackTrace()(e.failedCodeStackDepth)
                                                result.sourceInfos = "In " + e.failedCodeFileNameAndLineNumberString.getOrElse("(unknow)").replace(":", ", ")
@@ -103,9 +103,9 @@ class PlayReporter extends Reporter {
                     case Some(e) => val tmpout = new java.io.StringWriter
                                     e.printStackTrace(new java.io.PrintWriter(tmpout))
                                     result.trace = tmpout.toString
-                                    
+
                                     import util.control.Breaks._
-                                    
+
                                     breakable { for(se <- e.getStackTrace) {
                                         if(se.getClassName.equals(suiteClassName.get) || se.getClassName.startsWith(suiteClassName.get+"$")) {
                                             result.sourceInfos = "In " + Play.classes.getApplicationClass(suiteClassName.get).javaFile.relativePath() + ", line " + se.getLineNumber

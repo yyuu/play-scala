@@ -1,10 +1,10 @@
 package play {
 
     package object test {
-        
-        // Helper to deal with Yaml fixtures in a type safe way
-        def Yaml[T](name: String)(implicit m: ClassManifest[T]) = {  
-            
+
+        // Helper to deal with YAML fixtures in a type safe way
+        def Yaml[T](name: String)(implicit m: ClassManifest[T]) = {
+
             val yamlParser = new org.yaml.snakeyaml.Yaml(
                 new org.yaml.snakeyaml.constructor.CustomClassLoaderConstructor(classOf[Object], play.Play.classloader) {
 
@@ -21,14 +21,14 @@ package play {
                         case n: ScalarNode if n.getTag.getClassName == "Id[Long]" => play.db.anorm.Id(java.lang.Long.parseLong(n.getValue, 10))
                         case n: ScalarNode if n.getTag.getClassName == "Id[Int]" => play.db.anorm.Id(java.lang.Integer.parseInt(n.getValue, 10))
                         case _ => super.constructObject(node)
-                    }                
+                    }
                 }
 
             })
             yamlParser.setBeanAccess(org.yaml.snakeyaml.introspector.BeanAccess.FIELD)
-                  
-            import scala.collection.JavaConversions._    
-                
+
+            import scala.collection.JavaConversions._
+
             m.erasure.getName match {
                 case "scala.collection.immutable.List" => play.test.Fixtures.loadYaml(name, yamlParser).asInstanceOf[java.util.List[Any]].toList.asInstanceOf[T]
                 case "scala.collection.immutable.Map"  => play.test.Fixtures.loadYaml(name, yamlParser).asInstanceOf[java.util.Map[Any,Any]].toMap[Any,Any].asInstanceOf[T]

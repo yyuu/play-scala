@@ -6,9 +6,7 @@ import play.mvc.Http
 case class Template(template: Option[String] = None, args: Map[String,Any] = Map()) extends Result {
 
     val delegate = {
-        
         import scala.collection.JavaConversions._
-        
         ControllerDelegate.renderTemplateForScala(template.orNull, args.asInstanceOf[Map[String,AnyRef]])
     }
 

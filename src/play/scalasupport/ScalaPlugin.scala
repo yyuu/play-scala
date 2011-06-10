@@ -21,21 +21,21 @@ import org.scalatest.{Suite, Assertions}
 import org.scalatest.tools.ScalaTestRunner
 
 class ScalaPlugin extends PlayPlugin {
-    
+
     override def onLoad {
         CustomGroovy()
         play.data.binding.Binder.register(classOf[play.db.anorm.Pk[_]], new PkBinder())
         play.data.binding.Binder.register(classOf[Option[_]], new OptionBinder())
         onConfigurationRead()
-        
+
         // Now scala is activated
         Logger.info("Scala support is active")
     }
-  
+
     override def onConfigurationRead() {
         Play.configuration.put("play.bytecodeCache", "false")
     }
-  
+
     override def overrideTemplateSource(template: BaseTemplate, source: String) = {
         if(template.isInstanceOf[GroovyTemplate]) {
             template.source.replace("?.", "?.safeNull()?.")
@@ -43,11 +43,11 @@ class ScalaPlugin extends PlayPlugin {
             null
         }
     }
-    
+
     override def addTemplateExtensions(): JList[String] = {
         List("play.templates.TemplateScalaExtensions")
     }
-    
+
     override def willBeValidated(o: Any) = {
         o match {
             case Some(v) => v.asInstanceOf[AnyRef]
@@ -55,7 +55,11 @@ class ScalaPlugin extends PlayPlugin {
         }
     }
 
-    override def bind(name:String, clazz:Class[_], t:java.lang.reflect.Type, annotations:Array[java.lang.annotation.Annotation] , params: java.util.Map[String, Array[String]])= {
+    override def bind(name:String,
+                      clazz:Class[_],
+                      t:java.lang.reflect.Type,
+                      annotations:Array[java.lang.annotation.Annotation],
+                      params: java.util.Map[String, Array[String]]) = {
         clazz match {
             case c if c == classOf[Option[_]] => {
                 val parameterClass = t.asInstanceOf[java.lang.reflect.ParameterizedType].getActualTypeArguments()(0)
@@ -75,7 +79,7 @@ class ScalaPlugin extends PlayPlugin {
             case _ => null
        }
     }
-    
+
     override def unBind(o:Any, name:String) = {
         o match {
             case play.db.anorm.Id(id) => Map(name -> id).asInstanceOf[Map[String,AnyRef]]
@@ -93,31 +97,31 @@ class ScalaPlugin extends PlayPlugin {
             case _ => null
         }
     }
-    
+
     override def compileSources = {
-        update() match {            
-            case Right(compiled) => updateInternalApplicationClasses(compiled)            
-            case Left(err) => throw compilationException(err)            
+        update() match {
+            case Right(compiled) => updateInternalApplicationClasses(compiled)
+            case Left(err) => throw compilationException(err)
         }
-        
+
         weHaveCompiled
     }
-    
-    override def detectClassesChange = {  
-        update() match {            
-            case Right((added,removed)) => {                
+
+    override def detectClassesChange = {
+        update() match {
+            case Right((added,removed)) => {
                 updateInternalApplicationClasses((added,removed))
-                
+
                 if(added.length + removed.length > 0) {
                     reload()
                 }
-            }            
-            case Left(err) => throw compilationException(err)      
+            }
+            case Left(err) => throw compilationException(err)
         }
-        
+
         weHaveCompiled
     }
-    
+
     def compilationException(compilationError: CompilationError) = {
         val CompilationError(_, message, source, line, marker) = compilationError
         if(source.isDefined) {
@@ -132,15 +136,15 @@ class ScalaPlugin extends PlayPlugin {
             new CompilationException(message)
         }
     }
-    
+
     def updateInternalApplicationClasses(compiled:(List[ClassDefinition], List[ClassDefinition])) {
         val (added,removed) = compiled
-        
+
         // Removed deleted classes
         removed.foreach { c =>
             Play.classes.remove(c.name)
         }
-        
+
         // Add new classes 
         added.foreach { c =>
             val appClass = new ApplicationClass
@@ -151,49 +155,47 @@ class ScalaPlugin extends PlayPlugin {
             Play.classes.add(appClass)
         }
     }
-    
-    def reload() = {
-        error("Reload needed")
-    }
-    
+
+    def reload() = error("Reload needed")
+
     def weHaveCompiled = true
-    
+
     // ----- Compiler interface
-    
+
     val compiler = new PlayScalaCompiler(
         Play.applicationPath, 
         new File(Play.modules("scala").getRealFile, "lib"), 
         System.getProperty("java.class.path").split(System.getProperty("path.separator")).map(new File(_)).toList, 
         Play.tmpDir
     )
-    
+
     def sources:Map[File,Long] = {
         import play.vfs.VirtualFile
         currentSources.empty ++ (for(p <- (Play.javaPath ++ Seq(VirtualFile.open(ScalaTemplateCompiler.generatedDirectory)))) 
             yield PlayScalaCompiler.scanFiles(p.getRealFile)).flatten.map(f => (f,f.lastModified))
     }
-    
+
     def templates:Seq[File] = {
         (for(p <- Play.javaPath) 
             yield PlayScalaCompiler.scanFiles(p.getRealFile, """^[^.].*[.]scala[.]html$""".r)).flatten
     }
-    
+
     def generated:Seq[GeneratedSource] = {
         ScalaTemplateCompiler.generatedDirectory.listFiles.map { f =>
             GeneratedSource(f)
         }
     }
-    
+
     var currentSources = Map[File,Long]()
-    
+
     def update() = {
-        
+
         // Sync generated
         generated.foreach(_.sync())
-        
+
         // Generate templates
         templates.foreach(ScalaTemplateCompiler.compile(_))
-        
+
         val newSources = sources
         if(currentSources != newSources) {
             compiler.update(newSources.keySet.toList).right.map( r => {currentSources = newSources; r} )
@@ -203,5 +205,4 @@ class ScalaPlugin extends PlayPlugin {
     }
 
 }
-
 

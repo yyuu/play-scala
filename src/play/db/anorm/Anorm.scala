@@ -408,7 +408,7 @@ package anorm {
             })
         }
 
-        def update(v:T) {
+        def update(v:T): MayErr[IntegrityConstraintViolation,T] = {
             val names_attributes = analyser.names_methods.map(nm => (nm._1, nm._2.invoke(v) ))
             val (ids,toSet) = names_attributes.map(na => (na._1, na._2 match {
                 case v:Option[_]=>v.getOrElse(null)
@@ -419,12 +419,24 @@ package anorm {
 
             val toUpdate = toSet.map(_._1).map(n => n+" = "+"{"+n+"}").mkString(", ")
 
-            sql("update "+analyser.name+" set "+toUpdate+" where "+ ids.map(_._1).map( n => n+" = "+"{"+n+"}").mkString(" and "))
+            val query = sql("update "+analyser.name+" set "+toUpdate+" where "+ ids.map(_._1).map( n => n+" = "+"{"+n+"}").mkString(" and "))
                 .onParams(toSet.map(_._2) ++ ids.map(_._2).map {
                     case Id(id) => id
                     case other => throw new Exception("not set ids in the passed object")
                 } : _*)
-            .executeUpdate()
+
+            val result = catching(classOf[java.sql.SQLException])
+                            .either(query.execute1(getGeneratedKeys=true))
+                            .left.map( e => IntegrityConstraintViolation(e.asInstanceOf[java.sql.SQLException].getMessage))
+
+            for {
+                r <- result;
+                val (statement,ok) = r;
+                val rs = statement.getGeneratedKeys();
+                val id=idParser(StreamReader(Sql.resultSetToStream(rs))).get
+                val params = names_attributes.map(_._2).map({case NotAssigned => Id(id); case other => other})
+            } yield analyser.c.newInstance(params:_*).asInstanceOf[T] //StreamReader(Sql.resultSetToStream(rs))
+
         }
 
         def create(v:T): MayErr[IntegrityConstraintViolation,T] = {
