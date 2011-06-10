@@ -68,10 +68,9 @@ package anorm {
 
             val all = ((v,hasId) match {
                 case (Self(a1,a2), (e1 |:| e2)) => 
-                    ( (e1,name1, toParameterValue(a1)(pt1._2)),
-                      (e2,name2, toParameterValue(a2)(pt2._2) ) ) 
-            }).productIterator
-               .map(_.asInstanceOf[(Option[_],String,ParameterValue[_])])
+                   List ( (e1,name1, toParameterValue(a1)(pt1._2)),
+                          (e2,name2, toParameterValue(a2)(pt2._2) ) ) 
+              })
 
             val (ids,toSet) = all.partition(_._1.isDefined)
             if(ids == all) throw new Exception("everything is a Pk, nothing left to set!")
@@ -82,9 +81,51 @@ package anorm {
 
             sql("update "+containerName +" set "+toUpdate+
                 " where "+ ids.map(_._2).map( n => n+" = "+"{"+n+"}").mkString(" and ") )
-                .onParams(all.map(v =>  v._3).toSeq: _* )
+                .on(all.map(v =>  (v._2,v._3)): _* )
                 .executeUpdate()
         }
+
+      def create(v:R)(implicit hasId: A1 <:< Pk[_] |:| A2 <:< Pk[_]) :  MayErr[IntegrityConstraintViolation,R] = {
+            val all = (v,hasId) match {
+                case (Self(a1,a2), (e1 |:| e2)) => 
+                    List( (e1,name1, toParameterValue(a1)(pt1._2)),
+                          (e2,name2, toParameterValue(a2)(pt2._2) ) ) 
+              }
+
+            val (notSetIds,toSet) = all.partition(e => e._1.isDefined && e._3.aValue==NotAssigned)
+
+            if(notSetIds.length > 1) throw new Exception("multi ids not supported")
+            val toInsert = toSet.map(_._2)
+
+            import Sql._
+            import scala.util.control.Exception._
+
+            val query = sql("insert into "+containerName+" ( "+toInsert.mkString(", ")+" ) values ( "+toInsert.map("{"+_+"}").mkString(", ")+")")
+                            .on(all.map(v =>  (v._2,v._3)): _* )
+
+            val result = catching(classOf[java.sql.SQLException])
+                            .either(query.execute1(getGeneratedKeys=true))
+                            .left.map( e => IntegrityConstraintViolation(e.asInstanceOf[java.sql.SQLException].getMessage))
+
+            import SqlParser._
+            val idParser:SqlParser.Parser[_] = {
+                SqlParser.RowParser(row =>
+                    row.asList.headOption.flatMap(a =>
+                        (if (a.isInstanceOf[Option[_]]) a else Option(a)).asInstanceOf[Option[_]]
+                    ).toRight(NoColumnsInReturnedResult)
+                )
+            }
+
+            for {
+                r <- result;
+                val (statement,ok) = r;
+                val rs = statement.getGeneratedKeys();
+                val id=idParser(StreamReader(Sql.resultSetToStream(rs))).get
+                val List(a1,a2) = all.map(_._3.aValue).map({case NotAssigned => Id(id); case other => other})
+            } yield  apply(a1.asInstanceOf[A1],a2.asInstanceOf[A2])
+
+      }
+
     }
 
 
