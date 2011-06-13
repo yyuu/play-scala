@@ -317,7 +317,7 @@ package anorm {
             })
         }
 
-        def update(v:T): MayErr[IntegrityConstraintViolation,T] = {
+        def update(v:T): MayErr[IntegrityConstraintViolation,Int] = {
             val names_attributes = analyser.names_methods.map(nm => (nm._1, nm._2.invoke(v) ))
             val (ids,toSet) = names_attributes.map(na => (na._1, na._2 match {
                 case v:Option[_]=>v.getOrElse(null)
