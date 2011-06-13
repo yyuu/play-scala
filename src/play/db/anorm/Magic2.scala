@@ -6,7 +6,6 @@ import play.utils.Scala.MayErr._
 package anorm {
 
     trait MParser2[A1,A2,R] extends ParserWithId[R] {
-     
         val p1:ColumnTo[A1]
         val p2:ColumnTo[A2]
         def apply(a1:A1,a2:A2):R
@@ -14,7 +13,7 @@ package anorm {
         val containerName:String
         val columnNames:(String,String)
       
-        val (name1,name2) = columnNames 
+        lazy val (name1,name2) = columnNames
 
         import SqlParser._
         override def apply(input:Input):SqlParser.ParseResult[R] = 
@@ -22,17 +21,18 @@ package anorm {
           
 
         val uniqueId : (Row=> MayErr[SqlRequestError,Any]) = null
-
     }
 
-    abstract class MagicParser2[A1,A2,R](names:Option[(String,String)] = None, tableName: Option[String]=None)
-      (implicit val p1:ColumnTo[A1],
-                val p2:ColumnTo[A2],
-                val r:Manifest[R]) extends MParser2[A1,A2,R] {
+    abstract class MagicParser2[A1,A2,R]( tableName: Option[String]=None,names:Option[(String,String)] = None)
+      (implicit c1:ColumnTo[A1],
+                c2:ColumnTo[A2],
+                r:Manifest[R]) extends MParser2[A1,A2,R] {
 
-          
+          lazy val p1 = c1
+          lazy val p2 = c2
+
           //needs clean
-          val containerName = tableName.getOrElse(r.erasure.getSimpleName)
+          lazy val containerName = tableName.getOrElse(r.erasure.getSimpleName)
 
           import java.lang.reflect.Method
           
@@ -41,12 +41,11 @@ package anorm {
               play.classloading.enhancers.LocalvariablesNamesEnhancer.lookupParameterNames(m)
           }
 
-          val columnNames = names.getOrElse {
+          lazy val columnNames = names.getOrElse {
               implicitly[Manifest[this.type]]
                   .erasure
                   .getDeclaredMethods()
                   .filter(_.getName()=="apply")
-                  .map(m => {println(getParametersNames(m));m})
                   .find(_.getParameterTypes().length == 2)
                   .map(getParametersNames)
                   .collect{case Seq(a1,a2) => (a1,a2)}.get
@@ -63,11 +62,10 @@ package anorm {
       
      // override val conventions: PartialFunction[AnalyserInfo,String] = asIs 
       
-      val Self= this
-      def update(v:R)(implicit hasId: A1 <:< Pk[_] |:| A2 <:< Pk[_]) {
+      def update(v:R)(implicit hasId: (A1 <:< Pk[_]) |:| (A2 <:< Pk[_])) {
 
             val all = ((v,hasId) match {
-                case (Self(a1,a2), (e1 |:| e2)) => 
+                case (self(a1,a2), (e1 |:| e2)) => 
                    List ( (e1,name1, toParameterValue(a1)(pt1._2)),
                           (e2,name2, toParameterValue(a2)(pt2._2) ) ) 
               })
@@ -85,9 +83,9 @@ package anorm {
                 .executeUpdate()
         }
 
-      def create(v:R)(implicit hasId: A1 <:< Pk[_] |:| A2 <:< Pk[_]) :  MayErr[IntegrityConstraintViolation,R] = {
+      def create(v:R)(implicit hasId: (A1 <:< Pk[_]) |:| (A2 <:< Pk[_])) :  MayErr[IntegrityConstraintViolation,R] = {
             val all = (v,hasId) match {
-                case (Self(a1,a2), (e1 |:| e2)) => 
+                case (self(a1,a2), (e1 |:| e2)) => 
                     List( (e1,name1, toParameterValue(a1)(pt1._2)),
                           (e2,name2, toParameterValue(a2)(pt2._2) ) ) 
               }
@@ -125,13 +123,14 @@ package anorm {
             } yield  apply(a1.asInstanceOf[A1],a2.asInstanceOf[A2])
 
       }
-
     }
 
 
-    abstract class Magic2[A1,A2,R](names:Option[(String,String)] = None, tableName: Option[String]=None)
-      (implicit val pt1:(ColumnTo[A1],ToStatement[A1]),
-                val pt2:(ColumnTo[A2],ToStatement[A2]),
-                r:Manifest[R]) extends MagicParser2[A1,A2,R](names,tableName)(pt1._1,pt2._1,r) with M2[A1,A2,R]
+    abstract class Magic2[A1,A2,R](tableName: Option[String]=None,names:Option[(String,String)] =None)(implicit ptt1:(ColumnTo[A1],ToStatement[A1]), ptt2:(ColumnTo[A2],ToStatement[A2]), r:Manifest[R])
+      extends MagicParser2[A1,A2,R](tableName,names)(ptt1._1,ptt2._1,r) with M2[A1,A2,R]{
+  
+        lazy val pt1= ptt1
+        lazy val pt2= ptt2
+      }
 
 }

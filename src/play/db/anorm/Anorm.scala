@@ -14,6 +14,9 @@ package object anorm {
     def SQL(stmt: String) = Sql.sql(stmt)
     val asIs :PartialFunction[AnalyserInfo,String] = {case ColumnC(_,f) => f; case TableC(typeName) => typeName}
     val defaults = Convention(asIs)
+
+//  implicit def statementInOut[A](implicit c:ColumnTo[A]):(ColumnTo[A],ToStatement[A]) = (c,null)
+
 }
 
 package anorm {
@@ -85,7 +88,7 @@ package anorm {
     }
 
     object ColumnTo {
-        implicit def rowToString: Column[String] = {
+        implicit val rowToString: ColumnTo[String] = {
             Column[String](transformer = { (value, meta) =>
                 val MetaDataItem(qualified,nullable,clazz) = meta
                 value match {
@@ -93,7 +96,7 @@ package anorm {
                     case clob:java.sql.Clob => Right(clob.getSubString(1,clob.length.asInstanceOf[Int]))
                     case _ => Left(TypeDoesNotMatch("Cannot convert " + value + " to String for column " + qualified))
                 }
-            })
+            }).asInstanceOf[ColumnTo[String]]
         }
 
         implicit def rowToInt: Column[Int] = {
@@ -351,8 +354,7 @@ package anorm {
             val query = sql("insert into `" + analyser.name + "`"
                             + " ( " + toInsert.map("`"+_+"`").mkString(", ") + " )"
                             + " values ( " + toInsert.map("{"+_+"}").mkString(", ")+")")
-                        .onParams(toSet.map(_._2).map(v => toParameterValue( v)(anyParameter)):_*)
-
+                          .onParams(toSet.map(_._2).map(v => toParameterValue( v)(anyParameter)) :_*)
 
             val result = catching(classOf[java.sql.SQLException])
                             .either(query.execute1(getGeneratedKeys=true))
@@ -754,6 +756,11 @@ package anorm {
 
        def set(s:java.sql.PreparedStatement,index:Int,aValue:T):Unit = setAny(index, aValue, s)
     }
+      implicit def pkToStatement[A](implicit ts:ToStatement[A]):ToStatement[Pk[A]] = new ToStatement[Pk[A]] {
+       def set(s:java.sql.PreparedStatement,index:Int,aValue:Pk[A]):Unit = ts.set(s,index,aValue.get.getOrElse(null)) 
+
+
+      }
 
     }
 
