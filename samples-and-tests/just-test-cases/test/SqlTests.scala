@@ -6,7 +6,7 @@ import org.scalatest._
 import org.scalatest.matchers._
 
 import play.db.anorm._
-import SqlParser._ 
+import SqlParser._
 import defaults._
 
 // Constructors with unspported type of parameter won't be picked
@@ -22,16 +22,16 @@ object Student extends Magic[Student]
 class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
   def meta(items:(String,(Boolean,Class[_]))*)=MetaData(items.toList.map(i=>MetaDataItem(i._1,i._2._1,i._2._2.getName)))
 
-  @Test def useTheMagicParser { 
+  @Test def useTheMagicParser {
       val metaData=meta("TASK.COMMENT"->(true,classOf[String]),
                         "TASK.NAME"->(false,classOf[String]))
-   
+
       val in= StreamReader(Stream.range(1,2).map(i => MockRow(List("comment no:"+i, "nameb"),metaData)))
      // commit((str("COMMENT1")))* (in) should be (Error(ColumnNotFound("COMMENT1").toString,in))
 
       val Error(msg,next) = commit((str("COMMENT1")))* (in)
       next should be (PError(ColumnNotFound("COMMENT1").toString,in).next)
-      
+
       ((str("COMMENT1")) ?)(in).get should be (None)
 
       (str("COMMENT1"))+ (in) should be (PFailure(ColumnNotFound("COMMENT1").toString,in))
@@ -53,7 +53,7 @@ class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
       (Task* (in)).get should be(Success(List(Task(None,"comment no:1")),in).get)
       ((Task)+ (in)).get should be((Success(List(Task(None,"comment no:1")),in).get))
 
-      
+
 
       val metaData1=meta("TASK.COMMENT"->(false,classOf[String]),
                         "TASK.NAME"->(false,classOf[String]))
@@ -70,35 +70,35 @@ class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
      val in= StreamReader(Stream.range(1,100).map(i=>MockRow(List( if(i % 2 ==0) i else null),metaData)))
      println(commit((get[Option[Int]]("PERSON.ID")) +)(in) )
   }
- 
+
   @Test def testNullInNonNullable {
     import play.db.anorm.Row._
      val metaData=meta("PERSON.ID"->(false,classOf[java.lang.Integer]))
      val in= StreamReader(Stream.range(1,2).map(i=>MockRow(List(null),metaData)))
      println(commit((get[Int]("PERSON.ID")) +)(in) )
   }
- 
+
   @Test def useSqlParserForGroupBys {
     val metaData=meta("PERSON.ID"->(false,classOf[Int]),
                       "PERSON.NAME"->(false,classOf[String]),
                       "PERSON.AGE"->(true,classOf[Int]),
                       "COMMENT.ID"->(false,classOf[Int]),
                       "COMMENT.TEXT"->(false,classOf[String]))
-   
+
     val in= Stream.range(1,4)
-                  .flatMap(i => 
+                  .flatMap(i =>
                     Stream.range(1,4)
                            .map(j =>
                              MockRow(List(i, "person"+i, 13, j, "comment"+j),metaData)))
     // manual groupBy
-   
+
     val groupByPerson=spanM(by=int("PERSON.ID"),(str("COMMENT.TEXT")))* ;
     groupByPerson(StreamReader(in)).get should be (
       List.fill(3)(List.range(1,4).map("comment"+_)))
-    
+
     // "magical" groupBy
     import Magic._
-    val parsePeople = Person ~< (Person spanM Comment) ^^ 
+    val parsePeople = Person ~< (Person spanM Comment) ^^
                       {case  p ~ cs  => p.copy(comments=cs) } *;
 
     ( parsePeople (StreamReader(in)) get ) should be (
@@ -107,15 +107,15 @@ class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
               j=> Comment(j,"comment"+j) ))))
 
   }
-  
+
   @Test def useSomeMagicSql{
-    
+
      play.db.DB.execute("DROP TABLE IF EXISTS Task")
-      play.db.DB.execute("DROP TABLE IF EXISTS Student") 
-     play.db.DB.execute("""CREATE TABLE Task 
+      play.db.DB.execute("DROP TABLE IF EXISTS Student")
+     play.db.DB.execute("""CREATE TABLE Task
                            (Id char(60) NOT NULL,
                             Comment char(60) NOT NULL) """)
-         play.db.DB.execute("""CREATE TABLE Student 
+         play.db.DB.execute("""CREATE TABLE Student
                            (Id char(60) NOT NULL,
                             Task_Id char(60) NOT NULL) """)
 
@@ -133,13 +133,13 @@ class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
 
 
   @Test def useSomeMagicSqlCompileTime{
-    
+
      play.db.DB.execute("DROP TABLE IF EXISTS Task")
-      play.db.DB.execute("DROP TABLE IF EXISTS Student") 
-     play.db.DB.execute("""CREATE TABLE Task 
+      play.db.DB.execute("DROP TABLE IF EXISTS Student")
+     play.db.DB.execute("""CREATE TABLE Task
                            (Id char(60) NOT NULL,
                             Comment char(60) NOT NULL) """)
-         play.db.DB.execute("""CREATE TABLE Student 
+         play.db.DB.execute("""CREATE TABLE Student
                            (Id char(60) NOT NULL,
                             Task_Id char(60) NOT NULL) """)
 
@@ -164,31 +164,31 @@ class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
 
 
   @Test def useSomeMagicSqlCompileTime1{
-    
+
      play.db.DB.execute("DROP TABLE IF EXISTS Task")
-     play.db.DB.execute("""CREATE TABLE Task 
+     play.db.DB.execute("""CREATE TABLE Task
                            (Id INTEGER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
                             Comment char(60) NOT NULL) """)
-    (AAA.create(AAA(NotAssigned,"comment")).get) should be (AAA(Id(1),"comment"))
+    (AAA.create(AAA(NotAssigned,"comment"))) should be (AAA(Id(1),"comment"))
     SQL("select * from Task ").as(AAA) should be (AAA(Id(1),"comment"))
   }
 
 
   @Test def trySomeMagicSqlFailure{
-    
+
      play.db.DB.execute("DROP TABLE IF EXISTS Task")
-      play.db.DB.execute("DROP TABLE IF EXISTS Student") 
-     play.db.DB.execute("""CREATE TABLE Task 
+      play.db.DB.execute("DROP TABLE IF EXISTS Student")
+     play.db.DB.execute("""CREATE TABLE Task
                            (Id char(60) NOT NULL,
                             Comment1 char(60) NOT NULL) """)
-         play.db.DB.execute("""CREATE TABLE Student 
+         play.db.DB.execute("""CREATE TABLE Student
                            (Id char(60) NOT NULL,
                             Task_Id char(60) NOT NULL) """)
 
     play.db.DB.execute("""insert into Task Values('1','some comment')""")
     play.db.DB.execute("""insert into Student Values('1','1')""")
-   
-    val t = evaluating { Task.find("where id={id}").on("id" -> 1).first() } should produce [RuntimeException] 
+
+    val t = evaluating { Task.find("where id={id}").on("id" -> 1).first() } should produce [RuntimeException]
     t.getMessage should equal ("ColumnNotFound(Task.comment)")
 
     val thrown = evaluating { Task.find().list() } should produce [RuntimeException]
@@ -199,18 +199,18 @@ class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
         .as(Task ~< Student)
       }  should produce [RuntimeException]
     thrown1.getMessage should equal ("ColumnNotFound(Task.comment)")
-  }  
+  }
 
   @Test def testAlternate(){
     play.db.DB.execute("DROP TABLE IF EXISTS Post")
 
-    play.db.DB.execute("""CREATE TABLE Post 
+    play.db.DB.execute("""CREATE TABLE Post
                        (Id char(60) NOT NULL,
                        Type char(60) NOT NULL,
                        Title char(60) NOT NULL,
                        URL char(200)  DEFAULT 'non' NOT Null,
                        Body char(360) DEFAULT 'non' NOT Null) """)
-      
+
     play.db.DB.execute("""insert into Post Values('1','Link','zengularity','http://www.zengularity.com','non')""")
     play.db.DB.execute("""insert into Post Values('1','Text','Functional Web','non','It rocks!')""")
     play.db.DB.execute("""insert into Post Values('1','Text','Functional Web','non','It rocks!')""")
@@ -225,22 +225,22 @@ class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
   }
   @Test def insertAnEntity(){
     play.db.DB.execute("DROP TABLE IF EXISTS User2")
-      
-    play.db.DB.execute("""CREATE TABLE User2 
+
+    play.db.DB.execute("""CREATE TABLE User2
                        (Id INTEGER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY ,
                        Address char(60) NOT NULL,
                        Name char(60) NOT NULL) """)
-    User2.create(User2(NotAssigned,"Paul","Address")).right.get should be (User2(Id(1),"Paul","Address"))
+    User2.create(User2(NotAssigned,"Paul","Address")) should be (User2(Id(1),"Paul","Address"))
   }
 
   @Test def batchInsertAnEntity(){
     play.db.DB.execute("DROP TABLE IF EXISTS User2")
-      
-    play.db.DB.execute("""CREATE TABLE User2 
+
+    play.db.DB.execute("""CREATE TABLE User2
                        (Id INTEGER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY ,
                        Address char(60) NOT NULL,
                        Name char(60) NOT NULL) """)
-    
+
    SQL("insert into User2 (Address, Name) values( {address}, {name})")
       .addBatch("address" -> "sss","name" -> "name1")
       .addBatch("address" -> "sss","name" -> "name1").execute()
@@ -252,19 +252,19 @@ class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
 
   @Test def updateAnEntity(){
     play.db.DB.execute("DROP TABLE IF EXISTS User2")
-      
-    play.db.DB.execute("""CREATE TABLE User2 
+
+    play.db.DB.execute("""CREATE TABLE User2
                        (Id INTEGER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY ,
                        Address char(60) NOT NULL,
                        Name char(60) NOT NULL) """)
-    val newUser:User2 = User2.create(User2(NotAssigned,"Paul","Address")).right.get 
-    User2.update(newUser.copy(name="new name")) should be ()
+    val newUser:User2 = User2.create(User2(NotAssigned,"Paul","Address"))
+    User2.update(newUser.copy(name="new name")) should be (1)
   }
 
   @Test def count(){
     play.db.DB.execute("DROP TABLE IF EXISTS User2")
-      
-    play.db.DB.execute("""CREATE TABLE User2 
+
+    play.db.DB.execute("""CREATE TABLE User2
                        (Id INTEGER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY ,
                        Address char(60) NOT NULL,
                        Name char(60) NOT NULL) """)
@@ -291,6 +291,6 @@ case class Person(id: Int,name:String,comments:Seq[Comment]) {
   def this(id:Int,name:String)=this(id,name,List())
 }
 object Person extends Magic[Person]
-case class Comment(id: Int,text:String) 
-object Comment extends Magic[Comment] 
+case class Comment(id: Int,text:String)
+object Comment extends Magic[Comment]
 

@@ -1,15 +1,15 @@
 import play._
 import play.test._
- 
+
 import org.scalatest._
 import org.scalatest.junit._
 import org.scalatest.matchers._
- 
+
 class BasicTests extends UnitFlatSpec with ShouldMatchers with BeforeAndAfterEach {
-    
-    import models._    
+
+    import models._
     import play.db.anorm._
-    
+
     override def beforeEach() {
         Fixtures.deleteDatabase()
     }
@@ -26,7 +26,7 @@ class BasicTests extends UnitFlatSpec with ShouldMatchers with BeforeAndAfterEac
         bob.get.fullname should be ("Bob")
 
     }
-    
+
     it should "connect a User" in {
 
         User.create(User(NotAssigned, "bob@gmail.com", "secret", "Bob", false))
@@ -36,12 +36,12 @@ class BasicTests extends UnitFlatSpec with ShouldMatchers with BeforeAndAfterEac
         User.connect("tom@gmail.com", "secret") should be (None)
 
     }
-    
+
     import java.util.{Date}
-    
+
     it should "create a Post" in {
 
-        User.create(User(Id(1), "bob@gmail.com", "secret", "Bob", false))     
+        User.create(User(Id(1), "bob@gmail.com", "secret", "Bob", false))
         Post.create(Post(NotAssigned, "My first post", "Hello!", new Date, 1))
 
         Post.count().single() should be (1)
@@ -58,7 +58,7 @@ class BasicTests extends UnitFlatSpec with ShouldMatchers with BeforeAndAfterEac
         firstPost.get.content should be ("Hello!")
 
     }
-    
+
     it should "retrieve Posts with author" in {
 
         User.create(User(Id(1), "bob@gmail.com", "secret", "Bob", false)) 
@@ -73,7 +73,7 @@ class BasicTests extends UnitFlatSpec with ShouldMatchers with BeforeAndAfterEac
         post.title should be ("My 1st post")
         author.fullname should be ("Bob")
     }
-    
+
     it should "support Comments" in {
 
         User.create(User(Id(1), "bob@gmail.com", "secret", "Bob", false))  
@@ -94,10 +94,10 @@ class BasicTests extends UnitFlatSpec with ShouldMatchers with BeforeAndAfterEac
         comments(1).author should be ("Tom")
 
     }
-    
+
     it should "load a complex graph from Yaml" in {
 
-        Yaml[List[Any]]("data.yml").foreach { 
+        Yaml[List[Any]]("data.yml").foreach {
             _ match {
                 case u:User => User.create(u)
                 case p:Post => Post.create(p)
@@ -116,27 +116,29 @@ class BasicTests extends UnitFlatSpec with ShouldMatchers with BeforeAndAfterEac
 
         val allPostsWithAuthorAndComments = Post.allWithAuthorAndComments
 
-        allPostsWithAuthorAndComments.length should be (3) 
+        allPostsWithAuthorAndComments.length should be (3)
 
         val (post,author,comments) = allPostsWithAuthorAndComments(2)
         post.title should be ("About the model layer")
         author.fullname should be ("Bob")
         comments.length should be (2)
 
-        // We have a referential integrity error error
-        User.delete("email={email}")
-            .on("email"->"bob@gmail.com").executeUpdate().isLeft should be (true)
+        // We have a referential integrity error
+        evaluating {
+            User.delete("email={email}")
+                .on("email"->"bob@gmail.com").executeUpdate()
+        } should produce [java.sql.SQLException]
 
         Post.delete("author_id={id}")
-            .on("id"->1).executeUpdate().isRight should be (true)
+            .on("id"->1).executeUpdate() should be (2)
 
         User.delete("email={email}")
-            .on("email"->"bob@gmail.com").executeUpdate().isRight should be (true)
+            .on("email"->"bob@gmail.com").executeUpdate() should be (1)
 
         User.count().single() should be (1)
         Post.count().single() should be (1)
         Comment.count().single() should be (0)
 
     }
- 
+
 }

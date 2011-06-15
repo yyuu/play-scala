@@ -13,7 +13,7 @@
         <pathelement path="${play.path}/framework/classes"/>
         <fileset dir="${play.path}/framework/lib">
             <include name="*.jar"/>
-        </fileset> 
+        </fileset>
         <fileset dir="${play.path}/framework">
             <include name="*.jar"/>
         </fileset>
@@ -64,7 +64,7 @@
         <javac srcdir="src" destdir="tmp/classes" debug="true">
             <classpath refid="play.classpath" />
             <classpath refid="project.classpath" />
-        </javac> 
+        </javac>
 
         <copy todir="tmp/classes">
             <fileset dir="src">

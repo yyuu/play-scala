@@ -6,7 +6,6 @@ package object anorm {
     implicit def sqlToBatch(sql:SqlQuery): BatchSql = sql.asBatch
 
     implicit def implicitID[ID](id: Id[ID]): ID = id.id
-    
 
     implicit def toParameterValue[A](a:A)(implicit p:ToStatement[A]):ParameterValue[A] =
         ParameterValue(a,p)
@@ -262,7 +261,7 @@ package anorm {
     }
     object |:| extends LeastPriority{
         implicit def both[A1,A2](implicit a1:A1, a2:A2) : |:|[A1,A2] = Both(a1,a2)
-    
+
         def unapply[A1,A2](or: |:|[A1,A2]):Option[(Option[A1],Option[A2])] =
             Some( or match {
                 case LeftSide(a1) => (Some(a1),None)
@@ -284,7 +283,7 @@ package anorm {
         }
         def anyParameter = new ToStatement[Any]{
             def set(s:java.sql.PreparedStatement,index:Int,aValue:Any):Unit = setAny(index, aValue, s)}
- 
+
         override val conventions: PartialFunction[AnalyserInfo,String] = asIs
 
         val msql:MSql[T] = new MSql[T] {
@@ -309,7 +308,7 @@ package anorm {
 
         import scala.util.control.Exception._
 
-        def delete(stmt:String):SqlQuery = {
+        def delete(stmt:String): SqlQuery = {
             sql(stmt match {
                 case s if s.startsWith("delete") => s
                 case s if s.startsWith("where") => "delete from " + analyser.name + " " + s
@@ -317,7 +316,10 @@ package anorm {
             })
         }
 
-        def update(v:T): MayErr[IntegrityConstraintViolation,Int] = {
+        /**
+         * Perform an UPDATE query and return the number of rows modified.
+         */
+        def update(v:T): Int = {
             val names_attributes = analyser.names_methods.map(nm => (nm._1, nm._2.invoke(v) ))
             val (ids,toSet) = names_attributes.map(na => (na._1, na._2 match {
                 case v:Option[_]=>v.getOrElse(null)
@@ -338,7 +340,10 @@ package anorm {
                 .executeUpdate()
         }
 
-        def create(v:T): MayErr[IntegrityConstraintViolation,T] = {
+        /**
+         * Perform a CREATE query, and return the inserted object
+         */
+        def create(v:T): T = {
             val names_attributes = analyser.names_methods.map(nm => (nm._1, nm._2.invoke(v) ))
             val (notSetIds,toSet) = names_attributes.map(na =>
                 (na._1, na._2 match {
@@ -356,21 +361,17 @@ package anorm {
                             + " values ( " + toInsert.map("{"+_+"}").mkString(", ")+")")
                           .onParams(toSet.map(_._2).map(v => toParameterValue( v)(anyParameter)) :_*)
 
-            val result = catching(classOf[java.sql.SQLException])
-                            .either(query.execute1(getGeneratedKeys=true))
-                            .left.map( e => IntegrityConstraintViolation(e.asInstanceOf[java.sql.SQLException].getMessage))
-
-            for {
-                r <- result;
-                val (statement,ok) = r;
-                val rs = statement.getGeneratedKeys();
-                val id=idParser(StreamReader(Sql.resultSetToStream(rs))).get
-                val params = names_attributes.map(_._2).map({case NotAssigned => Id(id); case other => other})
-            } yield analyser.c.newInstance(params:_*).asInstanceOf[T] //StreamReader(Sql.resultSetToStream(rs))
-
+            val (statement, ok) = query.execute1(getGeneratedKeys=true)
+            val rs = statement.getGeneratedKeys();
+            val id = idParser(StreamReader(Sql.resultSetToStream(rs))).get
+            val params = names_attributes.map(_._2).map({case NotAssigned => Id(id); case other => other})
+            analyser.c.newInstance(params:_*).asInstanceOf[T]
         }
 
-        def insert(v:T):MayErr[IntegrityConstraintViolation,Boolean] = {
+        /**
+         * Perform an INSERT query
+         */
+        def insert(v:T): Boolean = {
             val names_attributes = analyser.names_methods.map(nm => (nm._1, nm._2.invoke(v) ))
             val (notSetIds,toSet) = names_attributes.map(na =>
                 ( na._1, na._2 match {
@@ -382,17 +383,11 @@ package anorm {
 
             val toInsert = toSet.map(_._1)
 
-            val query = sql("insert into `"+analyser.name+"` ( "
+            sql("insert into `"+analyser.name+"` ( "
                       + toInsert.map("`"+_+"`").mkString(", ")+" ) values ( "+toInsert.map("{"+_+"}").mkString(", ")+")")
-                            .onParams(toSet.map(_._2).map(v => toParameterValue( v)(anyParameter)):_*)
-
-            catching(classOf[java.sql.SQLException])
-                .either(query.execute())
-                .left.map(e => IntegrityConstraintViolation(e.asInstanceOf[java.sql.SQLException].getMessage))
-
+                            .onParams(toSet.map(_._2).map(v => toParameterValue( v)(anyParameter)):_*).execute()
         }
     }
-
 
     trait MSql[T] {
         val conventions: PartialFunction[AnalyserInfo,String] = asIs
@@ -462,8 +457,6 @@ package anorm {
 
     import SqlParser._
 
-
- 
 
     trait MParser[T] extends ParserWithId[T] {
       mparser =>
@@ -745,14 +738,14 @@ package anorm {
     trait ToStatement[A]{def set(s:java.sql.PreparedStatement,index:Int,aValue:A):Unit}
     object ToStatement{
 
-      implicit def anyParameter[T >: Int with String with Double ] = new ToStatement[T]{
+      implicit def anyParameter[T] = new ToStatement[T]{
        private def setAny(index:Int,value:Any,stmt:java.sql.PreparedStatement):java.sql.PreparedStatement = {
           value match {
             case bd:java.math.BigDecimal => stmt.setBigDecimal(index,bd)
             case o => stmt.setObject(index,o)
           }
           stmt
-        }     
+        }
 
        def set(s:java.sql.PreparedStatement,index:Int,aValue:T):Unit = setAny(index, aValue, s)
     }
@@ -785,7 +778,7 @@ package anorm {
         def first(conn:java.sql.Connection=connection):Option[T] = parse((guard(acceptMatch("not at end",{case Right(_) => Unit})) ~> commit(defaultParser) )?)
 
         def getFilledStatement(connection:java.sql.Connection, getGeneratedKeys:Boolean=false) = {
-            val s =if(getGeneratedKeys) connection.prepareStatement(sql.query,java.sql.Statement.RETURN_GENERATED_KEYS)
+            val s = if(getGeneratedKeys) connection.prepareStatement(sql.query,java.sql.Statement.RETURN_GENERATED_KEYS)
                    else connection.prepareStatement(sql.query)
 
             val argsMap=Map(params:_*)
@@ -855,17 +848,15 @@ package anorm {
             (statement, {statement.executeUpdate()} )
         }
 
-        def executeUpdate(conn:java.sql.Connection=connection):MayErr[IntegrityConstraintViolation,Int] = {
-            catching(classOf[java.sql.SQLException])
-                .either(getFilledStatement(connection).executeUpdate())
-                .left.map(e => IntegrityConstraintViolation(e.asInstanceOf[java.sql.SQLException].getMessage))
-        }
+        def executeUpdate(conn:java.sql.Connection=connection): Int =
+            getFilledStatement(connection).executeUpdate()
 
     }
 
     case class SqlQuery(query:String,argsInitialOrder:List[String]=List.empty) extends Sql {
 
-        def getFilledStatement(connection:java.sql.Connection, getGeneratedKeys: Boolean = false):java.sql.PreparedStatement = asSimple().getFilledStatement(connection,getGeneratedKeys)
+        def getFilledStatement(connection:java.sql.Connection, getGeneratedKeys: Boolean = false):java.sql.PreparedStatement =
+            asSimple().getFilledStatement(connection,getGeneratedKeys)
 
         private def defaultParser : Parser[Row] = acceptMatch("not end.", { case Right(r) => r } )
 
@@ -878,12 +869,15 @@ package anorm {
 
     object Sql {
 
-        def sql(inSql:String):SqlQuery={val (sql,paramsNames)= SqlStatementParser.parse(inSql);SqlQuery(sql,paramsNames)}
+        def sql(inSql: String): SqlQuery = {
+            val (sql,paramsNames) = SqlStatementParser.parse(inSql)
+            SqlQuery(sql,paramsNames)
+        }
 
         import java.sql._
         import java.sql.ResultSetMetaData._
 
-        def metaData(rs:java.sql.ResultSet) = {
+        def metaData(rs: java.sql.ResultSet) = {
             val meta = rs.getMetaData()
             val nbColumns = meta.getColumnCount()
             MetaData(List.range(1,nbColumns+1).map(i =>
