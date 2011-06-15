@@ -313,6 +313,8 @@ val c:Option[Country] = Country.find("code = {c}").on("c" -> "FRA").first()
 
 bc. Country.update(Country(Id("FRA"), "France", 59225700, Some("Nicolas S.")))
 
+p(note). The @create@ method performs an INSERT into the database and try to retrieve the primary key from the ResultSet statement. This is usefull for an auto_increment primary key field. However, if your application sets the primary key id value and not the database, you must use the @insert@ method.
+
 Finally, let's write the missing @City@ and @CountryLanguage@ case classes, and make a more complex query:
 
 bc. case class Country(
@@ -349,3 +351,5 @@ val headOfState = country.headOfState.getOrElse("No one?")
 val officialLanguage = languages.collect { 
                            case CountryLanguage(lang, "T") => lang 
                        }.headOption.getOrElse("No language?")
+
+
