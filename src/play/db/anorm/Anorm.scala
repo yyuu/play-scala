@@ -341,7 +341,10 @@ package anorm {
         }
 
         /**
-         * Perform a CREATE query, and return the inserted object
+         * Perform an INSERT query, and return the inserted object
+         * for you to know the primary key (useful for auto increment).
+         * If the object you pass includes the primary key, you should
+         * use insert(v:T) instead.
          */
         def create(v:T): T = {
             val names_attributes = analyser.names_methods.map(nm => (nm._1, nm._2.invoke(v) ))
@@ -369,7 +372,9 @@ package anorm {
         }
 
         /**
-         * Perform an INSERT query
+         * Perform an INSERT query. If you need to retrieve the generated
+         * key (typically for an auto-increment),
+         * you should use create(v:T)
          */
         def insert(v:T): Boolean = {
             val names_attributes = analyser.names_methods.map(nm => (nm._1, nm._2.invoke(v) ))
