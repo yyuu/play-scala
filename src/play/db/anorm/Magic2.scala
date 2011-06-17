@@ -16,19 +16,24 @@ package anorm {
 
         import SqlParser._
         override def apply(input:Input):SqlParser.ParseResult[R] = 
-            (get[A1](containerName+"."+name1)(p1) ~< get[A2](containerName+"."+name2)(p2) ^^ {case a1 ~ a2 => apply(a1,a2)} )(input)
+            (get[A1](name1)(p1) ~< get[A2](name2)(p2) ^^ {case a1 ~ a2 => apply(a1,a2)} )(input)
 
         val uniqueId : (Row=> MayErr[SqlRequestError,Any]) = null
     }
 
-    abstract class MagicParser2[A1,A2,R]( tableName: Option[String]=None,names:Option[(String,String)] = None)
+    abstract class MagicParser2[A1,A2,R]( 
+        conventions: PartialFunction[AnalyserInfo,String] = asIs,
+        table: Option[String]=None,
+        columns:Option[(String,String)] = None)
         (implicit c1:ColumnTo[A1], c2:ColumnTo[A2], r:Manifest[R]) extends MParser2[A1,A2,R] {
 
         lazy val p1 = c1
         lazy val p2 = c2
-
+         
         //needs clean
-        lazy val containerName = tableName.getOrElse(r.erasure.getSimpleName)
+
+        lazy val typeName = r.erasure.getSimpleName
+        lazy val containerName = table.orElse(conventions.lift(TableC(typeName))).getOrElse(typeName)
 
         import java.lang.reflect.Method
 
@@ -37,14 +42,17 @@ package anorm {
             play.classloading.enhancers.LocalvariablesNamesEnhancer.lookupParameterNames(m)
         }
 
-        lazy val columnNames = names.getOrElse {
+        lazy val columnNames = columns.getOrElse {
             implicitly[Manifest[this.type]]
                        .erasure
                        .getDeclaredMethods()
                        .filter(_.getName()=="apply")
                        .find(_.getParameterTypes().length == 2)
                        .map(getParametersNames)
-                       .collect{case Seq(a1,a2) => (a1,a2)}.get
+                       .map( _.map(c =>  conventions.lift(ColumnC(typeName,c)).getOrElse(typeName + "." + c) ))
+                       .collect{case Seq(a1,a2) => (a1,a2)}
+                       .get
+
         }
     }
 
@@ -53,6 +61,8 @@ package anorm {
 
         val pt1:(ColumnTo[A1],ToStatement[A1])
         val pt2:(ColumnTo[A2],ToStatement[A2])
+
+        
 
         def unapply(r:R):Option[(A1,A2)]
 
@@ -63,7 +73,7 @@ package anorm {
             val all = ((v,hasId) match {
             case (self(a1,a2), (e1 |:| e2)) => 
                 List ( (e1,name1, toParameterValue(a1)(pt1._2)),
-                (e2,name2, toParameterValue(a2)(pt2._2)))
+                       (e2,name2, toParameterValue(a2)(pt2._2)))
             })
 
             val (ids,toSet) = all.partition(_._1.isDefined)
@@ -83,7 +93,7 @@ package anorm {
             val all = (v,hasId) match {
                 case (self(a1,a2), (e1 |:| e2)) => 
                 List( (e1,name1, toParameterValue(a1)(pt1._2)),
-                (e2,name2, toParameterValue(a2)(pt2._2) ) ) 
+                      (e2,name2, toParameterValue(a2)(pt2._2) ) ) 
             }
 
             val (notSetIds,toSet) = all.partition(e => e._1.isDefined && e._3.aValue==NotAssigned)
@@ -115,8 +125,8 @@ package anorm {
     }
 
 
-    abstract class Magic2[A1,A2,R](tableName: Option[String]=None,names:Option[(String,String)] =None)(implicit ptt1:(ColumnTo[A1],ToStatement[A1]), ptt2:(ColumnTo[A2],ToStatement[A2]), r:Manifest[R])
-    extends MagicParser2[A1,A2,R](tableName,names)(ptt1._1,ptt2._1,r) with M2[A1,A2,R]{
+    abstract class Magic2[A1,A2,R](table: Option[String]=None,names:Option[(String,String)] =None)(implicit ptt1:(ColumnTo[A1],ToStatement[A1]), ptt2:(ColumnTo[A2],ToStatement[A2]), r:Manifest[R])
+    extends MagicParser2[A1,A2,R](table = table,columns = names)(ptt1._1,ptt2._1,r) with M2[A1,A2,R]{
 
         lazy val pt1= ptt1
         lazy val pt2= ptt2
