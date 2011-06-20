@@ -469,7 +469,7 @@ package anorm {
         val conventions: PartialFunction[AnalyserInfo,String] = asIs
         val m:ClassManifest[T]
         val tableName:Option[String] = None
-        def extendExtractor[C](f:(Manifest[C] => Option[ColumnTo[C]]), ma:Manifest[C]):Option[ColumnTo[C]] = None
+        def extendExtractor[C](f:(Manifest[C] => Option[ColumnTo[C]])) :PartialFunction[Manifest[C],Option[ColumnTo[C]]] = { case _ if false => None }
         val analyser = new Analyse[T](tableName,conventions,m) {
 
             import java.lang.reflect._
@@ -482,6 +482,7 @@ package anorm {
         import scala.reflect.ClassManifest
 
         def getExtractor[C](m:Manifest[C]):Option[ColumnTo[C]] = (m match {
+            case m if extendExtractor(getExtractor[C] _).isDefinedAt(m) => extendExtractor(getExtractor[C] _)(m)
             case m if m == Manifest.classType(classOf[String])   => Some(implicitly[ColumnTo[String]])
             case m if m == Manifest.Int =>Some(implicitly[ColumnTo[Int]])
             case m if m == Manifest.Long => Some(implicitly[ColumnTo[Long]])
@@ -507,7 +508,7 @@ package anorm {
                                 .getOrElse( implicitly[Manifest[Any]] )
                 getExtractor(typeParam).map( mapper => ColumnTo.rowToPk(mapper) )
             }
-            case m => extendExtractor[C](getExtractor[C] _,m)
+            case _ => None
         }).asInstanceOf[Option[ColumnTo[C]]]
 
         import SqlParser._
@@ -739,6 +740,7 @@ package anorm {
             case None => Stream.Empty
             case Some((r, v)) => Stream.cons(r,unfold(v)(f))
         }
+
     }
     trait ToStatement[A]{def set(s:java.sql.PreparedStatement,index:Int,aValue:A):Unit}
     object ToStatement{
