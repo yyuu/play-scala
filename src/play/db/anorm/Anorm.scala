@@ -624,8 +624,8 @@ package anorm {
             val coherent = paramTypes.length == paramNames.length
 
             val names_types =  paramNames.zip(paramTypes).map( nt =>
-                (getQualifiedColumnName(conventions.lift(ColumnC(typeName,clean(nt._1)))
-                                                   .getOrElse(clean(nt._1))),nt._2)
+                (conventions.lift(ColumnC(typeName,clean(nt._1)))
+                            .getOrElse(getQualifiedColumnName(clean(nt._1))),nt._2)
             )
 
             if(!coherent && names_types.map(_._1).exists(_.contains("outer")))
