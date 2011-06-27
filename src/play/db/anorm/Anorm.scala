@@ -311,8 +311,8 @@ package anorm {
         def delete(stmt:String): SqlQuery = {
             sql(stmt match {
                 case s if s.startsWith("delete") => s
-                case s if s.startsWith("where") => "delete from " + analyser.name + " " + s
-                case s => "delete from " + analyser.name + " where " + s
+                case s if s.startsWith("where") => "delete from `" + analyser.name + "` " + s
+                case s => "delete from `" + analyser.name + "` where " + s
             })
         }
 
@@ -328,10 +328,10 @@ package anorm {
 
             if(ids == Nil) throw new Exception("cannot update without Ids, no Ids found on "+analyser.typeName)
 
-            val toUpdate = toSet.map(_._1).map(n => n+" = "+"{"+n+"}").mkString(", ")
+            val toUpdate = toSet.map(_._1).map(n => "`"+n+"` = "+"{"+n+"}").mkString(", ")
 
             sql("update "+analyser.name+" set "+toUpdate+
-                " where "+ ids.map(_._1).map( n => n+" = "+"{"+n+"}").mkString(" and ") )
+                " where "+ ids.map(_._1).map( n => "`"+n+"` = "+"{"+n+"}").mkString(" and ") )
                 .onParams((toSet.map(_._2) ++
                            ids.map(_._2).map(na => na  match {
                                case Id(id) => id
