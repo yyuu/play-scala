@@ -330,7 +330,7 @@ package anorm {
 
             val toUpdate = toSet.map(_._1).map(n => "`"+n+"` = "+"{"+n+"}").mkString(", ")
 
-            sql("update "+analyser.name+" set "+toUpdate+
+            sql("update `"+analyser.name+"` set "+toUpdate+
                 " where "+ ids.map(_._1).map( n => "`"+n+"` = "+"{"+n+"}").mkString(" and ") )
                 .onParams((toSet.map(_._2) ++
                            ids.map(_._2).map(na => na  match {
@@ -405,17 +405,17 @@ package anorm {
 
         def find(stmt:String=""):SimpleSql[Row] = sql(stmt.trim() match {
             case s if s.startsWith("select") => s
-            case s if s.startsWith("where") => "select * from " + analyser.name + " " + s
-            case s if s.startsWith("order by") => "select * from " + analyser.name + " " + s
-            case "" => "select * from " + analyser.name
-            case s => "select * from " + analyser.name + " where " + s
+            case s if s.startsWith("where") => "select * from `" + analyser.name + "` " + s
+            case s if s.startsWith("order by") => "select * from `" + analyser.name + "` " + s
+            case "" => "select * from `" + analyser.name + "`"
+            case s => "select * from `" + analyser.name + "` where " + s
         }).asSimple
 
         def count(stmt:String=""):SimpleSql[Row] = sql(stmt.trim() match {
             case s if s.startsWith("select") => s
-            case s if s.startsWith("where") => "select count(*) from " + analyser.name + " " + s
-            case "" => "select count(*) from " + analyser.name
-            case s => "select count(*) from " + analyser.name + " where " + s
+            case s if s.startsWith("where") => "select count(*) from `" + analyser.name + "` " + s
+            case "" => "select count(*) from `" + analyser.name + "`"
+            case s => "select count(*) from `" + analyser.name + "` where " + s
         }).asSimple
 
     }
