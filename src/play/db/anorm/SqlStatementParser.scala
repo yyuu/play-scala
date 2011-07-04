@@ -13,8 +13,8 @@ object SqlStatementParser extends JavaTokenParsers{
 
     def literal = (stringLiteral | simpleQuotes) ^^ {case s => (s,None)}
 
-    def variable = "{"~>ident<~"}" ^^ {
-        case s => ("?":String,Some(s))
+    def variable = "{"~>(ident ~ (("." ~> ident)?) ) <~"}" ^^ {
+        case i1 ~ i2  => ("?":String,Some(i1 + i2.map("."+_).getOrElse("")))
     }
 
     def other = """.""".r ^^ {

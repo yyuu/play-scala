@@ -11,7 +11,8 @@ package object anorm {
         ParameterValue(a,p)
 
     def SQL(stmt: String) = Sql.sql(stmt)
-    val asIs :PartialFunction[AnalyserInfo,String] = {case ColumnC(_,f) => f; case TableC(typeName) => typeName}
+
+    val asIs :PartialFunction[AnalyserInfo,String] = {case ColumnC(t,f) => t+"."+f; case TableC(typeName) => typeName}
     val defaults = Convention(asIs)
 
 //  implicit def statementInOut[A](implicit c:ColumnTo[A]):(ColumnTo[A],ToStatement[A]) = (c,null)
@@ -87,7 +88,7 @@ package anorm {
     }
 
     object ColumnTo {
-        implicit val rowToString: ColumnTo[String] = {
+        implicit def rowToString: Column[String] = {
             Column[String](transformer = { (value, meta) =>
                 val MetaDataItem(qualified,nullable,clazz) = meta
                 value match {
@@ -95,7 +96,7 @@ package anorm {
                     case clob:java.sql.Clob => Right(clob.getSubString(1,clob.length.asInstanceOf[Int]))
                     case _ => Left(TypeDoesNotMatch("Cannot convert " + value + " to String for column " + qualified))
                 }
-            }).asInstanceOf[ColumnTo[String]]
+            })
         }
 
         implicit def rowToInt: Column[Int] = {
@@ -624,8 +625,7 @@ package anorm {
             val coherent = paramTypes.length == paramNames.length
 
             val names_types =  paramNames.zip(paramTypes).map( nt =>
-                (conventions.lift(ColumnC(typeName,clean(nt._1)))
-                            .getOrElse(getQualifiedColumnName(clean(nt._1))),nt._2)
+                (conventions(ColumnC(name,clean(nt._1))),nt._2)
             )
 
             if(!coherent && names_types.map(_._1).exists(_.contains("outer")))

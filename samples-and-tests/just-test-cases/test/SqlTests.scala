@@ -129,7 +129,7 @@ class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
   }
 
   case class BBB(id:String,comment:String)
-  object BBB extends MagicParser2[String,String,BBB](table=Some("Task"))
+  object BBB extends MagicParser2[String,String,BBB](Some(Description("Task")))
 
 
   @Test def useSomeMagicSqlCompileTime{
@@ -145,15 +145,14 @@ class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
 
     play.db.DB.execute("""insert into Task Values('1','some comment')""")
     play.db.DB.execute("""insert into Student Values('1','1')""")
-    object TT2 extends MagicParser2[String,String,(String,String)](table=Some("Task")) {
+    object TT2 extends MagicParser2[String,String,(String,String)](Some(Description("Task"))) {
 
       def apply(id:String,comment:String) = (id,comment)
 
     }
 
-
     SQL("select * from Task ").as(BBB) should be (BBB("1","some comment"))
-    SQL("select * from Task ").as(TT2) should be (("1","some comment"))
+    SQL("select * from Task ").as(TT2) should be (("1","some comment")) 
   }
 
  implicit def statementInOut[A](implicit c:ColumnTo[A], ts:ToStatement[A]):(ColumnTo[A],ToStatement[A]) = (c,ts)
