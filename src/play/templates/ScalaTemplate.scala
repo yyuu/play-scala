@@ -182,9 +182,16 @@ package play.templates {
             val (templateName,generatedSource) = generatedFile(source)
             if(generatedSource.needRecompilation) {
                 val templateSource = VirtualFile.open(source)
+
                 val generated = templateParser.parser(new CharSequenceReader(templateSource.contentAsString)) match {
                     case templateParser.Success(parsed, rest) if rest.atEnd => {
-                         generateFinalTemplate(
+                         val templateType = templateName.takeRight(2).head
+                         val generator = templateType match {
+                             case "html" => generateFinalTemplate _
+                             case "txt" => generateFinalTemplate1 _
+                             case other => error("unsupported extension :"+other)
+                         }
+                         generator(
                              templateSource,
                              templateName.dropRight(1).mkString("."),
                              templateName.takeRight(1).mkString,
@@ -481,6 +488,34 @@ package play.templates {
             Nil :+ imports :+ "\n" :+ defs :+ "\n" :+ visit(template.content, Nil)
         }
 
+      def generateFinalTemplate1(template: VirtualFile, packageName: String, name: String, root:Template) = {
+
+            val generated = {
+                Nil :+ """
+                    package """ :+ packageName :+ """
+
+                    import play.templates._
+                    import play.templates.TemplateMagic._
+
+                    object """ :+ name :+ """ extends BaseScalaTemplate[Plain,Format[Plain]](PlainFormat) {
+
+                        def apply""" :+ Source(root.params.str, root.params.pos) :+ """:Plain = {
+                            try {
+                                _display_ {""" :+ templateCode(root) :+ """}
+                            } catch {
+                                case e:TemplateExecutionError => throw e
+                                case e => throw Reporter.toHumanException(e)
+                            }
+                        }
+
+                    }
+
+                """
+            }
+
+            Source.finalSource(template, generated)
+        }
+
         def generateFinalTemplate(template: VirtualFile, packageName: String, name: String, root:Template) = {
 
             val generated = {
@@ -591,6 +626,26 @@ package play.templates {
         def raw(text:String) = Html(text)
         def escape(text:String) = Html(text.replace("<","&lt;"))
     }
+
+
+    case class Plain(text:String) extends Appendable[Plain] {
+
+        var buffer = new StringBuilder(text)
+
+        def +(other:Plain) = {
+            buffer.append(other.buffer)
+            this
+        }
+      override def toString = buffer.toString
+    }
+
+    object PlainFormat extends Format[Plain] {
+        def raw(text:String) = Plain(text)
+        def escape(text:String) = Plain(text)
+    }
+
+
+    
 
     case class BaseScalaTemplate[T<:Appendable[T],F<:Format[T]](format: F) {
 

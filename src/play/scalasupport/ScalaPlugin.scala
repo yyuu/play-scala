@@ -177,7 +177,7 @@ class ScalaPlugin extends PlayPlugin {
 
     def templates:Seq[File] = {
         (for(p <- Play.javaPath) 
-            yield PlayScalaCompiler.scanFiles(p.getRealFile, """^[^.].*[.]scala[.]html$""".r)).flatten
+            yield PlayScalaCompiler.scanFiles(p.getRealFile, """^[^.].*[.]scala[.](html|txt)$""".r)).flatten
     }
 
     def generated:Seq[GeneratedSource] = {
@@ -194,7 +194,7 @@ class ScalaPlugin extends PlayPlugin {
         generated.foreach(_.sync())
 
         // Generate templates
-        templates.foreach(ScalaTemplateCompiler.compile(_))
+        templates.foreach(ScalaTemplateCompiler.compile)
 
         val newSources = sources
         if(currentSources != newSources) {
