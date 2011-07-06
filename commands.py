@@ -34,10 +34,12 @@ def before(**kargs):
     env = kargs.get("env")
 
     if command == 'run' or command == 'test' or command == 'auto-test':
-        args.append('-Xms512m')
-        args.append('-Xmx512m')
-        args.append('-XX:PermSize=256m')
-        args.append('-XX:MaxPermSize=256m')
+        # Only add JVM params if they aren't already set
+        if len([p for p in args if '-Xmx' in p]) == 0:
+            args.append('-Xms512m')
+            args.append('-Xmx512m')
+            args.append('-XX:PermSize=256m')
+            args.append('-XX:MaxPermSize=256m')
 
 def after(**kargs):
 
