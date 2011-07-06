@@ -1,6 +1,7 @@
 package play.libs.ws
 
 import play.libs.WS.HttpResponse
+import scala.collection.Map
 
 object FunctionalWebResponse {
     implicit def httpResponse2FunctionalWebReponse(response: HttpResponse) = FunctionalWebResponse(response)
@@ -18,9 +19,15 @@ case class UndesiredStatus(statusCode: Int, body: String) {
 }
 
 case class ResponseBody(private val response: HttpResponse) {
+    import scala.collection.JavaConversions
+    import dispatch.json.Js
+
     def getXml() = xml.XML.loadString(response.getString())
-    def getJson() = response.getJson()
+    def getJson() = Js(response.getString())
     def getString() = response.getString()
+
+    lazy val contentType = response.getContentType()
+    lazy val queryString: Map[String, String] = JavaConversions.asScalaMap[String,String](response.getQueryString())
 }
 
 case class FunctionalWebResponse(response: HttpResponse) {

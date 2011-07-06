@@ -675,7 +675,7 @@ package play.templates {
         implicit def stringToBoolean(x:String) = x != null && !x.isEmpty
 
         // --- JAVA
-        
+
         implicit def javaCollectionToScala(x:java.lang.Iterable[_]) = {
             import scala.collection.JavaConverters._
             x.asScala

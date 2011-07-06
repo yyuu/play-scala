@@ -5,6 +5,9 @@ import scala.xml.NodeSeq
 import scala.io.Source
 //import scala.collection.JavaConversions._
 
+import dispatch.json.JsValue
+import sjson.json.Writes
+
 import java.io.InputStream
 import java.util.concurrent.Future
 
@@ -69,7 +72,8 @@ abstract class ScalaController extends ControllerDelegate with LocalVariablesSup
     def Xml(document: org.w3c.dom.Document)             = new RenderXml(document)
     def Xml(xml: Any)                                   = new RenderXml( if(xml != null) xml.toString else "<empty/>" )
     def Json(json: String)                              = new RenderJson(json)
-    def Json(o: Any)                                    = new RenderJson(new com.google.gson.Gson().toJson(o))
+    def Json(jsvalue: JsValue)                          = new RenderJson(jsvalue.toString())
+    def Json[T](o: T)(implicit tjs: Writes[T])          = new RenderJson(tjs.writes(o).toString())
     def Text(content: Any)                              = new RenderText(if(content != null) content.toString else "")
     def Redirect(url: String)                           = new Redirect(url)
     def Redirect(url: String, permanent: Boolean)       = new Redirect(url, permanent)
@@ -78,7 +82,6 @@ abstract class ScalaController extends ControllerDelegate with LocalVariablesSup
     def Template(name: String, args: (Symbol, Any)*)    = new Template(template = Some(name), args = ScalaControllerCompatibility.argsToParams(args: _*))
     def Action(action: => Any)                          = new ScalaAction(action)
     def Continue                                        = new NoResult()
-
 
     @deprecated def Suspend(s: String)                  = new ScalaSuspend(s)
     @deprecated def Suspend(t: Int)                     = new ScalaSuspend(t)
