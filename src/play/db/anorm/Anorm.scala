@@ -671,7 +671,7 @@ package anorm {
          ms.map(m => (m.column.toUpperCase(),(m.column,m.nullable,m.clazz))).toMap
 
        private lazy val dictionary2:Map[String,(String,Boolean,String)] = {
-            ms.map(m => {val Array(table,column)=m.column.split('.');
+            ms.map(m => {val column=m.column.split('.').last;
             (column.toUpperCase(),(m.column,m.nullable,m.clazz))}).toMap
         }
 
