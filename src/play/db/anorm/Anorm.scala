@@ -94,7 +94,7 @@ package anorm {
                 value match {
                     case string:String => Right(string)
                     case clob:java.sql.Clob => Right(clob.getSubString(1,clob.length.asInstanceOf[Int]))
-                    case _ => Left(TypeDoesNotMatch("Cannot convert " + value + " to String for column " + qualified))
+                    case _ => Left(TypeDoesNotMatch("Cannot convert " + value + ":" + value.asInstanceOf[AnyRef].getClass + " to String for column " + qualified))
                 }
             })
         }
@@ -104,7 +104,7 @@ package anorm {
                 val MetaDataItem(qualified,nullable,clazz) = meta
                 value match {
                     case int:Int => Right(int)
-                    case _ => Left(TypeDoesNotMatch("Cannot convert " + value + " to Int for column " + qualified))
+                    case _ => Left(TypeDoesNotMatch("Cannot convert " + value +  ":" + value.asInstanceOf[AnyRef].getClass + " to Int for column " + qualified))
                 }
             })
         }
@@ -114,7 +114,7 @@ package anorm {
                 val MetaDataItem(qualified,nullable,clazz) = meta
                 value match {
                     case d:Double => Right(d)
-                    case _ => Left(TypeDoesNotMatch("Cannot convert " + value + " to Double for column " + qualified))
+                    case _ => Left(TypeDoesNotMatch("Cannot convert " + value + ":" + value.asInstanceOf[AnyRef].getClass + " to Double for column " + qualified))
                 }
             })
         }
@@ -125,7 +125,7 @@ package anorm {
                 val MetaDataItem(qualified,nullable,clazz) = meta
                 value match {
                     case short:Short => Right(short)
-                    case _ => Left(TypeDoesNotMatch("Cannot convert " + value + " to Short for column " + qualified))
+                    case _ => Left(TypeDoesNotMatch("Cannot convert " +  value + ":" + value.asInstanceOf[AnyRef].getClass + " to Short for column " + qualified))
                 }
             })
         }
@@ -136,7 +136,7 @@ package anorm {
                 val MetaDataItem(qualified,nullable,clazz) = meta
                 value match {
                      case bool:Boolean => Right(bool)
-                     case _ => Left(TypeDoesNotMatch("Cannot convert " + value + " to Boolean for column " + qualified))
+                     case _ => Left(TypeDoesNotMatch("Cannot convert " + value + ":" + value.asInstanceOf[AnyRef].getClass +  " to Boolean for column " + qualified))
                 }
             })
         }
@@ -147,7 +147,7 @@ package anorm {
                 value match {
                     case int:Int => Right(int:Long)
                     case long:Long => Right(long)
-                    case _ => Left(TypeDoesNotMatch("Cannot convert " + value + " to Long for column " + qualified))
+                    case _ => Left(TypeDoesNotMatch("Cannot convert " + value + ":" + value.asInstanceOf[AnyRef].getClass +  " to Long for column " + qualified))
                 }
             })
         }
@@ -160,7 +160,7 @@ package anorm {
                     case bi:BigInteger => Right(bi)
                     case int:Int => Right(BigInteger.valueOf(int))
                     case long:Long => Right(BigInteger.valueOf(long))
-                    case _ => Left(TypeDoesNotMatch("Cannot convert " + value + " to BigInteger for column " + qualified))
+                    case _ => Left(TypeDoesNotMatch("Cannot convert " + value + ":" + value.asInstanceOf[AnyRef].getClass +  " to BigInteger for column " + qualified))
                 }
             })
         }
@@ -172,7 +172,7 @@ package anorm {
                 value match {
                     case bi:java.math.BigDecimal => Right(bi)
                     case double:Double => Right(new java.math.BigDecimal(double))
-                    case _ => Left(TypeDoesNotMatch("Cannot convert " + value + " to BigDecimal for column " + qualified))
+                    case _ => Left(TypeDoesNotMatch("Cannot convert " + value + ":" + value.asInstanceOf[AnyRef].getClass + " to BigDecimal for column " + qualified))
                 }
             })
         }
@@ -182,7 +182,7 @@ package anorm {
                 val MetaDataItem(qualified,nullable,clazz) = meta
                 value match {
                      case date:Date => Right(date)
-                     case _ => Left(TypeDoesNotMatch("Cannot convert " + value + " to Date for column " + qualified))
+                     case _ => Left(TypeDoesNotMatch("Cannot convert " + value + ":" + value.asInstanceOf[AnyRef].getClass + " to Date for column " + qualified))
                  }
             })
         }
