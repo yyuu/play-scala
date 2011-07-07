@@ -10,44 +10,54 @@ import play.utils.Scala.MayErr._
  
 package anorm {
  
-    trait MParser2[ A1, A2, R] extends ParserWithId[R] {
+    trait MParser4[ A1, A2, A3, A4, R] extends ParserWithId[R] {
     
         val p1:ColumnTo[A1]
  
         val p2:ColumnTo[A2]
  
-        def apply(a1:A1, a2:A2 ):R
+        val p3:ColumnTo[A3]
+ 
+        val p4:ColumnTo[A4]
+ 
+        def apply(a1:A1, a2:A2, a3:A3, a4:A4 ):R
  
         val containerName:String
-        val columnNames:(String, String)
+        val columnNames:(String, String, String, String)
  
-        lazy val (name1 ,name2) = columnNames
+        lazy val (name1 ,name2 ,name3 ,name4) = columnNames
  
         import SqlParser._
         override def apply(input:Input):SqlParser.ParseResult[R] = 
             (
              get[A1](name1)(p1) ~< 
-             get[A2](name2)(p2) ^^ { case a1 ~ a2 => apply(a1, a2)} )(input)
+             get[A2](name2)(p2) ~< 
+             get[A3](name3)(p3) ~< 
+             get[A4](name4)(p4) ^^ { case a1 ~ a2 ~ a3 ~ a4 => apply(a1, a2, a3, a4)} )(input)
  
         val uniqueId : (Row=> MayErr[SqlRequestError,Any]) = null
     }
  
-        trait M2[ A1, A2, R] {
-            self: MParser2[ A1, A2,R] =>
+        trait M4[ A1, A2, A3, A4, R] {
+            self: MParser4[ A1, A2, A3, A4,R] =>
             
             val pt1:(ColumnTo[A1],ToStatement[A1])
             val pt2:(ColumnTo[A2],ToStatement[A2])
+            val pt3:(ColumnTo[A3],ToStatement[A3])
+            val pt4:(ColumnTo[A4],ToStatement[A4])
  
-            def unapply(r:R):Option[( A1, A2)]
+            def unapply(r:R):Option[( A1, A2, A3, A4)]
             def unqualify(columnName:String) = columnName.split('.').last
  
-            def update(v:R)(implicit hasId: (A1 <:< Pk[_])|:|(A2 <:< Pk[_]) ) = {
+            def update(v:R)(implicit hasId: (A1 <:< Pk[_])|:|(A2 <:< Pk[_])|:|(A3 <:< Pk[_])|:|(A4 <:< Pk[_]) ) = {
  
                 val all = ((v,hasId) match {
-                        case (self( a1, a2), ( e1 |:| e2)) => 
+                        case (self( a1, a2, a3, a4), ( e1 |:| e2 |:| e3 |:| e4)) => 
                             List ( 
                                    (e1, unqualify(name1), toParameterValue(a1)(pt1._2)), 
-                                   (e2, unqualify(name2), toParameterValue(a2)(pt2._2)))
+                                   (e2, unqualify(name2), toParameterValue(a2)(pt2._2)), 
+                                   (e3, unqualify(name3), toParameterValue(a3)(pt3._2)), 
+                                   (e4, unqualify(name4), toParameterValue(a4)(pt4._2)))
                 })
  
                 val (ids,toSet) = all.partition(_._1.isDefined)
@@ -64,13 +74,15 @@ package anorm {
         
             }
  
-           def create(v:R)(implicit hasId: (A1 <:< Pk[_])|:|(A2 <:< Pk[_]) ) :R = {
+           def create(v:R)(implicit hasId: (A1 <:< Pk[_])|:|(A2 <:< Pk[_])|:|(A3 <:< Pk[_])|:|(A4 <:< Pk[_]) ) :R = {
  
                 val all = ((v,hasId) match {
-                        case (self( a1, a2), ( e1 |:| e2)) => 
+                        case (self( a1, a2, a3, a4), ( e1 |:| e2 |:| e3 |:| e4)) => 
                             List ( 
                                    (e1, unqualify(name1), toParameterValue(a1)(pt1._2)), 
-                                   (e2, unqualify(name2), toParameterValue(a2)(pt2._2)))
+                                   (e2, unqualify(name2), toParameterValue(a2)(pt2._2)), 
+                                   (e3, unqualify(name3), toParameterValue(a3)(pt3._2)), 
+                                   (e4, unqualify(name4), toParameterValue(a4)(pt4._2)))
                 })
  
                 val (notSetIds,toSet) = all.partition(i => i._1.isDefined && i._3.aValue==NotAssigned)
@@ -96,8 +108,8 @@ package anorm {
                 val rs = statement.getGeneratedKeys();
                 val id = idParser(StreamReader(Sql.resultSetToStream(rs))).get
  
-                val List( a1, a2) = all.map(_._3.aValue).map({case NotAssigned => Id(id); case other => other})
-                apply(a1.asInstanceOf[A1], a2.asInstanceOf[A2])
+                val List( a1, a2, a3, a4) = all.map(_._3.aValue).map({case NotAssigned => Id(id); case other => other})
+                apply(a1.asInstanceOf[A1], a2.asInstanceOf[A2], a3.asInstanceOf[A3], a4.asInstanceOf[A4])
  
         
         }
