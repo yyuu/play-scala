@@ -1,0 +1,43 @@
+h1. Working with JSON data
+
+Play Scala provides JSON support using the sjson and dispatch-json libraries.
+
+h2. Producing JSON output
+
+The simpliest way to produce JSON output is to use the @tojson@ function:
+
+bc. import play.libs.JSON.tojson
+val out = tojson(List[10, 20, 30, 40])
+
+The result is a @dispatch.json.JsValue@, that can be converted to a JSON string with the @toString()@ method.
+
+To avoid runtime errors, no reflection is used and the tojson method will work with any type where a serializer is defined. For example, Map[String, List[Int]] will be serializable, but Map[String, Any] will not: the tojson function doesn't know how to serialize Any.
+
+A @jsobject@ function is provided to produce heterogeneous objects:
+
+bc. import play.libs.JSON.{tojson, jsobject}
+val obj = jsobject("name" -> tojson("John"), "age" -> tojson(21))
+
+Similarly, you can create heterogeneous arrays with @jsarray@:
+val arr = jsarray(tojson("john"), tojson(21))
+
+h2. Working with JSON data
+
+When receiving a JSON string from a request in a controller or from a web service call, you will need to parse it. The first thing to do is to convert the string to a @JsValue@ using:
+
+bc. import dispatch.json.{JsValue, Js}
+val value:JsValue = Js(input)
+
+@dispatch.json.JsValue@ provides an API to query it, and Play extends it to make it simpler:
+
+bc. val name = (value \ "user" \ "name").as[String]
+
+When you know the type of the returning data, you can use the @fromjson@ method to deserialize it:
+
+bc. val response:Map[String, String] = fromjson[Map[String, String]](value)
+
+h2. Implementing Reads, Writes and Format
+
+To use @tojson@ and @fromjson@ with your business objects, you can implement the @Reads@, @Writes@ or @Format@ traits.
+
+See sjson's documentation for more information: https://github.com/debasishg/sjson/wiki/Typeclass-based-JSON-Serialization

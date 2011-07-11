@@ -78,13 +78,11 @@ Returning an @Json@ value will generate a **200 OK** response filled with the te
 
 bc. def index = Json("{message: 'Hello world'}")
 
-You can also try to pass any Scala object and Play will try to serialize it to JSON:
+You can also try to pass any Scala object and Play will serialize it to JSON:
 
 bc. def index = Json(users)
 
-p(note). However currently the JSON serialization mechanism comes from Java and can not work as exepected with complex Scala structures. 
- 
-A workaround is to use a Scala dedicated JSON serialization library, for example "Lift JSON":https://github.com/jonifreeman/liftweb/tree/master/lift-json/, and use it as @Json(JsonAST.render(users))@
+Play is able to serialize default Scala types such as List[String] or Map[String, String]. To serialize your business objects, you need to implement the play.libs.Json.Writes trait. See the documentation related to JSON for more information.
 
 <hr>
 

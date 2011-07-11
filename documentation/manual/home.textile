@@ -40,6 +40,7 @@ The Scala version of Play framework share the same philosophy and concepts than 
 ### "Functional suite Style":test#FunctionalsuiteStyle
 ### "Specification Style":test#SpecificationStyle
 ### "Features list Style":test#FeatureslistStyle
+## "Working with JSON data":json
 # "Scala templates":templates
 ## "Overview":templates#Overview
 ## "Syntax: the magic ‘@’ character":templates#Syntaxthemagiccharacter

@@ -1,32 +1,39 @@
-package play.libs.json
+package play.libs
 
 import dispatch.json.{JsValue, JsObject, JsArray, JsString, JsNumber, JsNull}
-import sjson.json.{Format, Reads}
-import sjson.json.JsonSerialization.{fromjson, tojson}
 
-/**
- * Extends the default protocol to add formatting for Anorm's Pk[T] and identity
- */
-trait Protocol extends sjson.json.DefaultProtocol {
-    import play.db.anorm.{Pk, Id, NotAssigned}
+object JSON {
 
-    implicit def PkFormat[T](implicit f:Format[T]):Format[Pk[T]] = new Format[Pk[T]] {
-        def reads(json: JsValue): Pk[T] = json match {
-            case JsNull => NotAssigned
-            case JsNumber(n) if n == -1 => NotAssigned
-            case _ => Id(f.reads(json))
-        }
-        def writes(id: Pk[T]): JsValue = id match {
-            case NotAssigned => JsNull
-            case Id(n) => f.writes(n)
+    // Repeat items from sjson.json to simplify imports
+
+    trait Format[T] extends sjson.json.Format[T]
+    trait Reads[T] extends sjson.json.Reads[T]
+    trait Writes[T] extends sjson.json.Writes[T]
+    def tojson[T](o: T)(implicit tjs: Writes[T]): JsValue = tjs.writes(o)
+    def fromjson[T](json: JsValue)(implicit fjs: Reads[T]): T = fjs.reads(json)
+
+    /**
+     * Extends the default protocol to add formatting for Anorm's Pk[T] and identity
+     */
+    trait Protocol extends sjson.json.DefaultProtocol {
+        import play.db.anorm.{Pk, Id, NotAssigned}
+
+        implicit def PkFormat[T](implicit f:Format[T]):Format[Pk[T]] = new Format[Pk[T]] {
+            def reads(json: JsValue): Pk[T] = json match {
+                case JsNull => NotAssigned
+                case JsNumber(n) if n == -1 => NotAssigned
+                case _ => Id(f.reads(json))
+            }
+            def writes(id: Pk[T]): JsValue = id match {
+                case NotAssigned => JsNull
+                case Id(n) => f.writes(n)
+            }
         }
     }
 
-}
+    object Protocol extends Protocol
 
-object Protocol extends Protocol
-
-object Json {
+    // Extend the JsValue and JsObject API for easier parsing
 
     implicit def dispatchJsObject2playJsObject(jsobject: JsObject) = PlayJsObject(jsobject)
     implicit def dispatchJsValue2playJsValue(jsvalue: JsValue) = PlayJsValue(jsvalue)

@@ -6,7 +6,7 @@ import scala.io.Source
 //import scala.collection.JavaConversions._
 
 import dispatch.json.JsValue
-import sjson.json.Writes
+import play.libs.JSON.Writes
 
 import java.io.InputStream
 import java.util.concurrent.Future
