@@ -1,16 +1,9 @@
 package play.libs
 
 import dispatch.json.{JsValue, JsObject, JsArray, JsString, JsNumber, JsNull}
+import sjson.json.{Reads, Writes, Format}
 
 object JSON {
-
-    // Repeat items from sjson.json to simplify imports
-
-    trait Format[T] extends sjson.json.Format[T]
-    trait Reads[T] extends sjson.json.Reads[T]
-    trait Writes[T] extends sjson.json.Writes[T]
-    def tojson[T](o: T)(implicit tjs: Writes[T]): JsValue = tjs.writes(o)
-    def fromjson[T](json: JsValue)(implicit fjs: Reads[T]): T = fjs.reads(json)
 
     /**
      * Extends the default protocol to add formatting for Anorm's Pk[T] and identity
