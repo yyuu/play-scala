@@ -624,7 +624,7 @@ package play.templates {
 
     object HtmlFormat extends Format[Html] {
         def raw(text:String) = Html(text)
-        def escape(text:String) = Html(text.replace("<","&lt;"))
+        def escape(text:String) = Html(play.utils.HTML.htmlEscape(text))
     }
 
 
