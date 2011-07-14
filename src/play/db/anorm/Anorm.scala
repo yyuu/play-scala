@@ -26,11 +26,15 @@ package anorm {
     import java.util.Date
 
     abstract class SqlRequestError
-    case class ColumnNotFound(columnName:String) extends SqlRequestError
+    case class ColumnNotFound(columnName:String, possibilities:List[String]) extends SqlRequestError {
+        override def toString=columnName + " not found, available columns : "+possibilities.map{p=>p.dropWhile(c => c == '.')}
+                . mkString(", ")
+    }
     case class TypeDoesNotMatch(message:String) extends SqlRequestError
     case class UnexpectedNullableFound(on:String) extends SqlRequestError
     case object NoColumnsInReturnedResult extends SqlRequestError
     case class IntegrityConstraintViolation(message:String) extends SqlRequestError
+
 
     abstract class Pk[+ID] {
         def isAssigned:Boolean = this match {
@@ -59,6 +63,8 @@ package anorm {
         def transform(row: Row, columnName: String): MayErr[SqlRequestError,A]
     }
 
+
+
     case class Column[A] (
 
         nullHandler: Function2[Any,MetaDataItem,Option[SqlRequestError]] = (value, meta) => {
@@ -78,7 +84,7 @@ package anorm {
         def transform(row:Row, columnName:String): MayErr[SqlRequestError,A] = {
             for(
                 meta <- row.metaData.get(columnName)
-                                    .toRight(ColumnNotFound(columnName));
+                                    .toRight(ColumnNotFound(columnName, row.metaData.availableColumns ));
                 value <- row.get1(columnName);
                 _ <- nullHandler(value, MetaDataItem(meta._1, meta._2, meta._3)).toLeft(value);
                 result <- transformer(value, MetaDataItem(meta._1, meta._2, meta._3))
@@ -213,11 +219,11 @@ package anorm {
     case class TupleFlattener[F](f:F)
 
     trait PriorityOne {
-        implicit def flattenerTo2[T1,T2] = TupleFlattener[(T1 ~ T2) => (T1,T2)]{case (t1 ~ t2 ) => (t1,t2) }
+        implicit def flattenerTo2[T1,T2]  :TupleFlattener[(T1 ~ T2) =>(T1,T2)]= TupleFlattener[(T1 ~ T2) => (T1,T2)]{case (t1 ~ t2 ) => (t1,t2) }
     }
 
     trait PriorityTwo extends PriorityOne {
-        implicit def flattenerTo3[T1,T2,T3] = TupleFlattener[(T1 ~ T2 ~ T3) =>(T1,T2,T3)]{case (t1 ~ t2 ~ t3) => (t1,t2,t3) }
+        implicit def flattenerTo3[T1,T2,T3]  :TupleFlattener[(T1 ~ T2 ~T3) =>(T1,T2,T3)]= TupleFlattener[(T1 ~ T2 ~ T3) =>(T1,T2,T3)]{case (t1 ~ t2 ~ t3) => (t1,t2,t3) }
     }
 
     trait PriorityThree extends PriorityTwo {
@@ -225,7 +231,7 @@ package anorm {
     }
 
     object TupleFlattener extends PriorityThree {
-        implicit def flattenerTo5[T1,T2,T3,T4,T5] = TupleFlattener[(T1 ~ T2 ~ T3 ~ T4 ~ T5) => (T1,T2,T3,T4,T5)]{ case (t1~t2~t3~t4~t5) => (t1,t2,t3,t4,t5) }
+        implicit def flattenerTo5[T1,T2,T3,T4,T5] :TupleFlattener[(T1 ~ T2 ~T3 ~ T4 ~ T5) =>(T1,T2,T3,T4,T5)] = TupleFlattener[(T1 ~ T2 ~ T3 ~ T4 ~ T5) => (T1,T2,T3,T4,T5)]{ case (t1~t2~t3~t4~t5) => (t1,t2,t3,t4,t5) }
     }
 
     case class Convention(conv:PartialFunction[AnalyserInfo,String]) {
@@ -675,6 +681,8 @@ package anorm {
             (column.toUpperCase(),(m.column,m.nullable,m.clazz))}).toMap
         }
 
+       lazy val availableColumns:List[String]=ms.map(i => i.column)
+
     }
 
     trait Row {
@@ -702,9 +710,9 @@ package anorm {
         private lazy val ColumnsDictionary:Map[String,Any] = metaData.ms.map(_.column.toUpperCase()).zip(data).toMap
         private[anorm] def get1(a:String):MayErr[SqlRequestError,Any] = {
             for(
-                meta <- metaData.get(a).toRight(ColumnNotFound(a));
+                meta <- metaData.get(a).toRight(ColumnNotFound(a, metaData.availableColumns));
                 val (qualified,nullable,clazz) = meta;
-                result <- ColumnsDictionary.get(qualified.toUpperCase()).toRight(ColumnNotFound(qualified))
+                result <- ColumnsDictionary.get(qualified.toUpperCase()).toRight(ColumnNotFound(qualified, metaData.availableColumns))
             ) yield result
         }
 
