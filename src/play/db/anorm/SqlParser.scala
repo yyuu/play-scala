@@ -58,6 +58,14 @@ package anorm {
         case class RowParser[A](f: (Row=>MayErr[SqlRequestError,A])) extends Parser[A] {
             lazy val parser=rowFunctionToParser(f)
             def apply(in:Input) = parser(in)
+            def ~<[B](b:RowParser[B]):RowParser[A ~ B] = RowParser[A ~ B](r =>
+                f(r).flatMap(a =>
+                    b.f(r).map(c =>
+                        new ~(a,c)
+                    )
+                )
+            )
+            def ~<[B](b:Parser[B]):Parser[A ~ B] = extendParser(this) ~< b
         }
 
         def str(columnName:String): RowParser[String] = get[String](columnName)(implicitly[ColumnTo[String]])
