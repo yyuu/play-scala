@@ -10,7 +10,7 @@ p(note). **All the code** included in this tutorial can be used for your project
 
 h2. <a>The project</a>
 
-We have chosen to create yet another blog engine. It’s not a very imaginative choice but it will allow us to explore most of the functionality needed by a modern web application. 
+We have chosen to create yet another blog engine. It’s not a very imaginative choice but it will allow us to explore most of the functionality needed by a modern web application.
 
 To make things a bit more interesting, we will include the ability to manage several users with different roles (editor, admin).
 
@@ -54,7 +54,7 @@ bc. $ play install scala
 
 h2. <a>Project creation</a>
 
-Now that Play is correctly installed, it’s time to create the blog application. Creating a Play application is pretty easy and fully managed by the play command line utility. This allows for standard project layouts between all Play applications. 
+Now that Play is correctly installed, it’s time to create the blog application. Creating a Play application is pretty easy and fully managed by the play command line utility. This allows for standard project layouts between all Play applications.
 
 Open a new command line and type:
 
@@ -100,7 +100,7 @@ You can see the new application by opening a browser to "http://localhost:9000":
 
 !images/guide1-2!
 
-Let’s see how the new application displays this page. 
+Let’s see how the new application displays this page.
 
 The main entry point of your application is the **conf/routes** file. This file defines all accessible URLs for the application. If you open the generated routes file you will see this first ‘route’:
 
@@ -153,7 +153,7 @@ bc. @(title:String)
     
 }
 
-The template content seems pretty light. In fact, this is because it calls other templates to generate the welcome page. 
+The template content seems pretty light. In fact, this is because it calls other templates to generate the welcome page.
 
 The first line defines the template parameters: a template is a function that generates a *play.template.Html* return value. In this case, the template has a single @title@ parameter of type @String@, so the type of this template is @(String) => Html@.
 
@@ -211,7 +211,7 @@ bc. def index = {
 
 h2. <a>Setting-up the database</a>
 
-One more thing before we start coding: for the blog engine, we are going to need a database. For development purposes, Play comes with a stand alone SQL database management system called H2. This is the best way to start a project before switching to a more robust database (if needed). You can choose to have either an in-memory database or a filesystem database that will keep your data between application restarts. 
+One more thing before we start coding: for the blog engine, we are going to need a database. For development purposes, Play comes with a stand alone SQL database management system called H2. This is the best way to start a project before switching to a more robust database (if needed). You can choose to have either an in-memory database or a filesystem database that will keep your data between application restarts.
 
 Becuase we will be initially doing a lot of testing and changes in the application model, it’s probably better to use an in-memory database so we always start with a fresh data set.
 
