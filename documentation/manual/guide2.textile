@@ -4,19 +4,19 @@ Here we will start to write the model for our blog engine.
 
 h2. <a>Introduction to Anorm</a>
 
-The model layer has a central position in a Play application (and in fact in all well-designed applications). It is the domain-specific representation of the information on which the application operates. As we want to create a blog engine, the model layer will certainly contain classes like User, Post and Comment.
+The model layer has a central position in a Play application (and in fact in all well-designed applications). It is the domain-specific representation of the information on which the application operates. As we want to create a blog engine, the model layer will contain classes like User, Post and Comment.
 
 Because most model objects need to survive between application restarts, we have to save them in a persistent datastore. A common choice is to use a relational database. 
 
 The Scala module includes a brand new data access layer called "Anorm":anorm that uses plain SQL to make your database requests and provides several API to parse and transform the resulting dataset. 
 
-There are several ways to use *Anorm*, depending of your needs. In this tutorial we will use the most advanced one where we will automatically map the result of our SQL queries to a set of *case classes* representing our data.
+There are several ways to use *Anorm*, depending on your needs. In this tutorial we will use the most advanced one where we will automatically map the result of our SQL queries to a set of *case classes* representing our data.
 
 h2. <a>The User model</a>
 
-We will start to code the blog engine by creating the User model.
+Let's start coding our blog engine by creating the User model.
 
-First we need to create the *User* table in the database. We will use the Play *evolutions* feature to organize our SQL schema modification: create a new evolution file *db/evolutions/1.sql* that contains the following SQL script:
+First we need to create the *User* table in the database. We will use the Play *evolutions* feature to organize our SQL schema modification: create a new evolution file *yabe/db/evolutions/1.sql* that contains the following SQL script:
 
 bc. # Users schema
  
@@ -55,9 +55,9 @@ case class User(
     email: String, password: String, fullname: String, isAdmin: Boolean
 )
 
-As you see, this User *case class* match our User table definition; it will help us to parse the result of our SQL queries involving the User table.
+As you see, this User *case class* matches our User table definition; and will help us to parse the result of our SQL queries involving the User table.
 
-Now we will also define a *companion object* for the User class:
+Now, in the same file, we will also define a *companion object* for the User class:
 
 bc. object User extends Magic[User]
 
@@ -69,9 +69,9 @@ You can now refresh the application home page to see the result. In fact, unless
 
 h2. <a>Writing the first test</a>
 
-A good way to test the newly created User class is to write a test case. It will allows you to incrementally complete the application model and ensure that all is fine.
+A good way to test the newly created User class is to write a test case. This will allow you to incrementally complete the application model and ensure that everything is working properly.
 
-To run a test case, you need to start the application in a special “test” mode. Stop the currently running application, open a command line and type:
+To run a test case, you need to start the application in a special “test” mode. First stop the currently running application, then open a command line and type:
 
 bc. ~$ play test
 
@@ -79,7 +79,7 @@ The **play test** command is almost the same as **play run**, except that it loa
 
 p(note). When you run a Play application in **test mode**, Play will automatically switch to the **test** framework ID and load the **application.conf** file accordingly. Check the "framework ID documentation":ids for more information.
 
-Open a browser to the "http://localhost:9000/@tests":http://localhost:9000/@tests URL to see the test runner. Try to select all the default tests and run them; all should be green… But these default tests don’t really test anything.
+Open a browser to the "http://localhost:9000/@tests":http://localhost:9000/@tests URL to see the test runner. Try to select all the default tests and run them; they should all be green… though,these default tests don’t really test anything.
 
 !images/guide2-1!
 
@@ -104,7 +104,7 @@ class BasicTests extends UnitFlatSpec with ShouldMatchers {
  
 }
 
-Remove the useless default test (**it should "run this dumb test"**) and create a test that tries to create a new user and retrieve it:
+Remove the useless default test (**it should "run this dumb test"**) and create a test that tries to create and retrieve a new user (the imports reside inside the BasicTests class):
 
 bc. import models._    
 import play.db.anorm._
@@ -124,13 +124,13 @@ it should "create and retrieve a User" in {
 
 As you can see, the User companion object gives us the @create(u:User)@ and @find(sql:String)@ methods. 
 
-Note also that we use @NotAssigned@ as id value because the User table declare the *id* column as auto-generated.
+Note also that we use @NotAssigned@ as id value because the User table declares the *id* column to be auto-generated.
 
 p(note). You can read more about the Magic methods in the Play manual’s "Anorm":anorm chapter.
 
-Select the **BasicTests** in the test runner, click start and check that all is green. 
+Select the **BasicTests** in the test runner, click start and check we're all green. 
 
-We will need a method on the User class that checks if a user with a specified username and password exists. Let’s write it and test it.
+Now for some functionality. We want a method on the User class that checks if a user with a specified username and password exists. Let’s write it and test it.
 
 In the **models.scala** source file, add the **connect()** method to the @User@ object:
 
@@ -144,7 +144,7 @@ bc. object User extends Magic[User] {
     
 }
 
-And now the test case:
+And the corresponding test case:
 
 bc. it should "connect a User" in {
     
@@ -156,13 +156,13 @@ bc. it should "connect a User" in {
     
 }
 
-Each time you make a modification you can run all the tests from the Play test runner to make sure you didn’t break anything. 
+Now each time you make a modification to your code, you can easily run all the tests from the Play test runner and be sure you haven't broken anything. 
 
 h2. <a>The Post model</a>
 
 The **Post** model will represent blog posts. 
 
-As for User, we need to create the Post table in the database. It will be our second database evolution. So create the *db/evolutions/2.sql* with the following script:
+We need to create the Post table in the database, with our second database evolution. So create the *yabe/db/evolutions/2.sql* with the following script:
 
 bc. # --- !Ups
  
@@ -184,7 +184,7 @@ This time, as our database is not empty anymore, Play will ask you before applyi
 
 !images/guide2-12!
 
-Now, we will map this table to a Scala class:
+Now, we can map this table to a Scala class:
 
 bc. case class Post(
     id: Pk[Long], 
@@ -193,13 +193,13 @@ bc. case class Post(
  
 object Post extends Magic[Post]
 
-p(note). As the @Post@ class use it, you need to import @java.util.Date@ in the scope:
+p(note). As the @Post@ class uses it, you need to import @java.util.Date@ in to scope in both the model and test pages:
  
 @import java.util.{Date}@
 
-We will write a new test case to check that the **Post** model works as expected. But before writing more tests, we need to do something in our test. In the current test, the database content is never deleted, so each new run creates more and more objects. This will soon become problematic, when more advanced tests will count objects to check that all is fine.
+We will also write a new test case to check that the **Post** model works as expected. But before we go on we need to fix a problem with our old tests. Currently the database content is never deleted, so each new run creates more and more objects. This will soon become problematic when our more advanced tests start using object counts when checking that all is well.
 
-So we need to delete the database before each test. Mix your test class with the @BeforeAndAfterEach@ trait, and override the @beforeEach@ method definition:
+So we need to delete the database before each test. To do this we mix our test class with the @BeforeAndAfterEach@ trait, and override the @beforeEach@ method definition:
 
 bc. … extends UnitFlatSpec with ShouldMatchers with BeforeAndAfterEach {
     
@@ -212,7 +212,7 @@ bc. … extends UnitFlatSpec with ShouldMatchers with BeforeAndAfterEach {
     
     …
 
-As you can see, the **Fixtures** class is a helper to deal with your database during tests. Run the test again to check that you haven’t broken anything, and start to write the next test:
+As you can see, the **Fixtures** class is a helper that deals with your database during tests. Run the test again to check that you haven’t broken anything, then we can write the new test:
 
 bc. it should "create a Post" in {
     
@@ -234,7 +234,7 @@ bc. it should "create a Post" in {
     
 }
 
-Now if we think about our use case we probably want to fetch each post with his author to be able to display this information on the home page. So let's create a new method in the *Post* object that allows to fetch Post and corresponding User objects in a single query.
+Now if we think about our use case we probably want to fetch each post with its author as to display this information on the home page. So let's create a new method in the *Post* object that allows us to fetch Post items and corresponding User objects in a single query.
 
 First, here is the SQL query we need:
 
@@ -242,11 +242,11 @@ bc. select * from Post p
 join User u on p.author_id = u.id 
 order by p.postedAt desc
 
-It is a simple join on the *author_id* column.
+It's a simple join on the *author_id* column.
 
-p(note). If you want to test SQL statements, you can open "http://localhost:9000/@db":http://localhost:9000/@db to access the SQL console.
+p(note). If you want to test SQL statements, you can open "http://localhost:9000/@db":http://localhost:9000/@db and access the SQL console.
 
-Let's add a Scala method that executes this query to the @Post@ object:
+Let's add a Scala method that executes this query on the @Post@ object:
 
 bc. def allWithAuthor:List[(Post,User)] = 
     SQL(
@@ -257,10 +257,10 @@ bc. def allWithAuthor:List[(Post,User)] =
         """
     ).as( Post ~< User ^^ flatten * )
 
-Here we use a *parser* to parse and transform the JDBC result set as a @List[(Post,User)]@ structure. The parser here is pretty simple:
+Here we use a *parser* to parse and transform the JDBC result set as a @List[(Post,User)]@ structure. The parser here might look confusing at first, but it's actually pretty simple:
 
 * For each row it parses a @Post@ followed by a @User@
-* @flatten@ transforms @Post~User@ into a simpler @(Post,User)@ structure (it will be simpler to use in our templates)
+* @flatten@ transforms @Post~User@ into a simpler @(Post,User)@ structure (which will be easier to use in our templates)
 * We repeat this for each row using @*@
 
 The final parser is written @Post ~< User ^^ flatten *@.
@@ -284,9 +284,9 @@ bc. it should "retrieve Posts with author" in {
 
 h2. <a>Adding Comments</a>
 
-The last thing that we need to add to this first model draft is the ability to attach comments to posts.
+The last thing that we need to add to our first model draft is the ability to add comments to posts.
 
-As usual, create an evolution script to update your database schema, *db/evolutions/3.sql*:
+As usual, create an evolution script to update your database schema, */yabe/db/evolutions/3.sql*:
 
 bc. # --- !Ups
  
@@ -325,9 +325,9 @@ bc. def allWithAuthorAndComments:List[(Post,User,List[Comment])] =
         """
     ).as( Post ~< User ~< Post.spanM( Comment ) ^^ flatten * )
 
-Here our parser it a bit more complicated. @Post.spanM( Comment )@ will span several rows and extract the comments list for each post.
+Here our parser is a bit more complicated. @Post.spanM( Comment )@ will span several rows and extract the comments list for each post.
 
-And then another method that returns an @Option[(Post,User,List[Comment])]@ from a Post id:
+We'll also add another method that returns an @Option[(Post,User,List[Comment])]@ from a Post id:
 
 bc. def byIdWithAuthorAndComments(id: Long):Option[(Post,User,List[Comment])] = 
     SQL(
@@ -339,7 +339,7 @@ bc. def byIdWithAuthorAndComments(id: Long):Option[(Post,User,List[Comment])] =
         """
     ).on("id" -> id).as( Post ~< User ~< Post.spanM( Comment ) ^^ flatten ? )
 
-Now it's time to test these new methods by writing a test case:
+The more parsers you write, the easier they'll get! But for now it's time to test these new methods by writing a test case:
 
 bc. it should "support Comments" in {
     
@@ -362,7 +362,7 @@ bc. it should "support Comments" in {
     
 }
 
-Is it green?
+Is it green? Hopefully now you're starting to get the hang of writing tests for everything you do: it'll save you a lot of time in the long run.
 
 Finally, we will add a helper method to the **Comment** object to simplify adding comments:
 
@@ -376,9 +376,9 @@ bc. object Comment extends Magic[Comment] {
 
 h2. <a>Using Fixtures to write more complicated tests</a>
 
-When you start to write more complex tests, you often need a set of data to test on. Fixtures let you describe your model in a "YAML":http://en.wikipedia.org/wiki/Yaml file and load it at any time before a test.
+When you start to write more complex tests, you often need a set of data to test with. Fixtures let you describe your model in a "YAML":http://en.wikipedia.org/wiki/Yaml file and load it at any time before a test.
 
-Edit the **/yabe/test/data.yml** file and start to describe a User:
+Edit the **/yabe/test/data.yml** file - here we'll start to describe a User:
 
 bc. 
 - !!models.User
@@ -390,9 +390,9 @@ bc.
  
 ...
 
-Well, because the **data.yml** file is a litle big, you can "download it here":files/data.yml.
+Actually, because the **data.yml** file is a litle big, you can "download it here":files/data.yml.
 
-Loading this Yaml file is pretty easy:
+Once we have the dummy data ready, loading it in is pretty easy:
 
 bc. Yaml[List[Any]]("data.yml").foreach { 
     _ match {
@@ -402,9 +402,9 @@ bc. Yaml[List[Any]]("data.yml").foreach {
     }
 }
 
-The @Yaml@ helper transforms the Yaml data into class instances, and we use than the @Magic@ objects to insert these instances into the database.
+The @Yaml@ helper transforms the Yaml data into actual class instances, which can then be inserted into the database using the @Magic@ objects.
 
-Now we create a test case that loads these data and runs some assertions over it:
+Now we'll create a test case that loads in all the test data and runs some assertions over it:
 
 bc. it should "load a complex graph from Yaml" in {
     
@@ -452,6 +452,6 @@ bc. it should "load a complex graph from Yaml" in {
 
 <hr>
 
-We have now finished a huge part of the blog engine. Now that we have created and tested all these things, we can start to develop the web application itself.
+We have now finished a huge part of the blog engine. With the guts of the application built and tested, we can move on to developing the web application itself.
 
 p(note). Go to the %(next)"Building the first screen":guide3%. 
