@@ -30,14 +30,14 @@ class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
      // commit((str("COMMENT1")))* (in) should be (Error(ColumnNotFound("COMMENT1").toString,in))
 
       val Error(msg,next) = commit((str("COMMENT1")))* (in)
-      next should be (PError(ColumnNotFound("COMMENT1").toString,in).next)
+      val expectedError = ColumnNotFound("COMMENT1", List("TASK.COMMENT", "TASK.NAME"))
+      next should be (PError(expectedError.toString,in).next)
 
       ((str("COMMENT1")) ?)(in).get should be (None)
 
-      (str("COMMENT1"))+ (in) should be (PFailure(ColumnNotFound("COMMENT1").toString,in))
+      (str("COMMENT1"))+ (in) should be (PFailure(expectedError.toString,in))
 
-
-      commit((str("COMMENT1")))* (in) should be (PError(ColumnNotFound("COMMENT1").toString,in))
+      commit((str("COMMENT1")))* (in) should be (PError(expectedError.toString,in))
 
       val inWithNull= StreamReader(Stream(MockRow(List(null, "nameb"),metaData)))
 
@@ -128,8 +128,11 @@ class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
     SQL("select * from Task join Student on Task.id=Student.Task_Id").as(Task ~< Student) should be (SqlParser.~(new Task("some comment"),Student("1")))
   }
 
+  val withDef = new play.db.anorm.WithDefaults()
+  import withDef._
+
   case class BBB(id:String,comment:String)
-  object BBB extends MagicParser2[String,String,BBB](Some(Description("Task")))
+  object BBB extends MagicParser2[String,String,BBB](Some(Description2("Task")))
 
 
   @Test def useSomeMagicSqlCompileTime{
@@ -145,7 +148,7 @@ class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
 
     play.db.DB.execute("""insert into Task Values('1','some comment')""")
     play.db.DB.execute("""insert into Student Values('1','1')""")
-    object TT2 extends MagicParser2[String,String,(String,String)](Some(Description("Task"))) {
+    object TT2 extends MagicParser2[String,String,(String,String)](Some(Description2("Task"))) {
 
       def apply(id:String,comment:String) = (id,comment)
 
@@ -157,7 +160,7 @@ class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
 
  implicit def statementInOut[A](implicit c:ColumnTo[A], ts:ToStatement[A]):(ColumnTo[A],ToStatement[A]) = (c,ts)
 
-  object AAA extends Magic2[Pk[Int],String,AAA]
+  object AAA extends Magic2[Pk[Int],String,AAA]()
   case class AAA(id:Pk[Int],comment:String)
 
 
@@ -193,16 +196,16 @@ class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
     play.db.DB.execute("""insert into Student Values('1','1')""")
 
     val t = evaluating { Task.find("where id={id}").on("id" -> 1).first() } should produce [RuntimeException]
-    t.getMessage should equal ("ColumnNotFound(Task.comment)")
+    t.getMessage should equal ("Task.comment not found, available columns : TASK.ID, TASK.COMMENT1")
 
     val thrown = evaluating { Task.find().list() } should produce [RuntimeException]
-    thrown.getMessage should equal ("ColumnNotFound(Task.comment)")
+    thrown.getMessage should equal ("Task.comment not found, available columns : TASK.ID, TASK.COMMENT1")
 
     val thrown1 = evaluating {
       SQL("select * from Task join Student on Task.id=Student.Task_Id")
         .as(Task ~< Student)
       }  should produce [RuntimeException]
-    thrown1.getMessage should equal ("ColumnNotFound(Task.comment)")
+    thrown1.getMessage should equal ("Task.comment not found, available columns : TASK.ID, TASK.COMMENT1, STUDENT.ID, STUDENT.TASK_ID")
   }
 
   @Test def testAlternate(){

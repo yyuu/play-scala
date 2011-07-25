@@ -18,7 +18,7 @@ case class WithDefaults(defaultConvention: PartialFunction[AnalyserInfo,String] 
  
  
     abstract class MagicParser2[ A1, A2,R]( 
-        tableDescription:Option[Description2],
+        tableDescription:Option[Description2] = None,
         conventions: PartialFunction[AnalyserInfo,String] = defaultConvention)
         (implicit c1:ColumnTo[A1], c2:ColumnTo[A2], r:Manifest[R]) extends MParser2[ A1, A2, R] {
         
@@ -44,7 +44,7 @@ case class WithDefaults(defaultConvention: PartialFunction[AnalyserInfo,String] 
     }
  
     abstract class Magic2[ A1, A2, R](
-        tableDescription:Option[Description2],
+        tableDescription:Option[Description2] = None,
         conventions: PartialFunction[AnalyserInfo,String] = defaultConvention)
        (implicit ptt1:(ColumnTo[A1],ToStatement[A1]), ptt2:(ColumnTo[A2],ToStatement[A2]), r:Manifest[R]) extends MagicParser2[ A1, A2, R](tableDescription = tableDescription, conventions = conventions)(
 ptt1._1, ptt2._1,r) with  M2[ A1, A2, R]{
