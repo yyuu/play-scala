@@ -73,7 +73,7 @@ abstract class ScalaController extends ControllerDelegate with LocalVariablesSup
     def Xml(xml: Any)                                   = new RenderXml( if(xml != null) xml.toString else "<empty/>" )
     def Json(json: String)                              = new RenderJson(json)
     def Json(jsvalue: JsValue)                          = new RenderJson(jsvalue.toString())
-    def Json[T](o: T)(implicit tjs: Writes[T])          = new RenderJson(tjs.writes(o).toString())
+    def Json(o: AnyRef)                                 = new RenderJson(new com.google.gson.Gson().toJson(o))
     def Text(content: Any)                              = new RenderText(if(content != null) content.toString else "")
     def Redirect(url: String)                           = new Redirect(url)
     def Redirect(url: String, permanent: Boolean)       = new Redirect(url, permanent)

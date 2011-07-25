@@ -14,7 +14,7 @@ class RenderMethodsTest extends FunctionalTestCase with Matchers{
         response charsetShouldBe("utf-8")
         response contentShouldBe("{'name':'guillaume'}")
     }
-    
+
     @Test
     def testSecondRenderJSON {
         var response = GET("/application/json2") 
@@ -32,7 +32,7 @@ class RenderMethodsTest extends FunctionalTestCase with Matchers{
         assertCharset("utf-8", response)
         assertContentEquals("<h1>Yop</h1>", response)
     }
-    
+
     @Test
     def testSecondRender {
         var response = GET("/application/complexNameBinding")
@@ -41,13 +41,13 @@ class RenderMethodsTest extends FunctionalTestCase with Matchers{
         assertCharset("utf-8", response)
         assertContentEquals("<h1>Yop</h1>", response)
     }
-    
+
     @Test
     def bugWithSomePrivateMethods {
         var response = GET("/test/tst")
         assertIsOk(response)
     }
-   
+
     @Test
     def testActionChainging{ 
       val response = GET("/Application/goJojo")
@@ -61,7 +61,8 @@ class RenderMethodsTest extends FunctionalTestCase with Matchers{
       response shouldBeOk()
       response contentShouldBe ("<h1>Hello world</h1>")
     }
-    @Test 
+
+    @Test
     def testDirectRendering {
       val response = GET("/Application/hello?name=peter")
       response contentTypeShouldBe ("text/html")
@@ -75,7 +76,6 @@ class RenderMethodsTest extends FunctionalTestCase with Matchers{
       response contentTypeShouldBe ("text/html")
       response shouldBeOk()
       response contentShouldBe ("boo")
-      
     }
 
     @Test 
@@ -93,7 +93,7 @@ class RenderMethodsTest extends FunctionalTestCase with Matchers{
       response shouldBeOk()
       response contentShouldBe ("true")
     }
-    
+
     @Test
     def testCatchAnnotation {
       val response = GET("/CatchAnnotation/index")
@@ -101,7 +101,7 @@ class RenderMethodsTest extends FunctionalTestCase with Matchers{
       response shouldBeOk()
       response contentShouldBe ("Oops, got / by zero")
     }
-    
+
     @Test
     def testReverseByName {
       val response = GET("/Application/reverseByName")
