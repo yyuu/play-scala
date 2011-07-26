@@ -5,7 +5,7 @@ package object anorm {
     implicit def sqlToSimple(sql:SqlQuery): SimpleSql[Row] = sql.asSimple
     implicit def sqlToBatch(sql:SqlQuery): BatchSql = sql.asBatch
 
-    implicit def implicitID[ID](id: Id[ID]): ID = id.id
+    implicit def implicitID[ID](id: Id[ID] with NotNull ): ID = id.id
 
     implicit def toParameterValue[A](a:A)(implicit p:ToStatement[A]):ParameterValue[A] =
         ParameterValue(a,p)
@@ -750,31 +750,47 @@ package anorm {
         }
 
     }
+
     trait ToStatement[A]{def set(s:java.sql.PreparedStatement,index:Int,aValue:A):Unit}
     object ToStatement{
 
-      implicit def anyParameter[T] = new ToStatement[T]{
-       private def setAny(index:Int,value:Any,stmt:java.sql.PreparedStatement):java.sql.PreparedStatement = {
-          value match {
-            case bd:java.math.BigDecimal => stmt.setBigDecimal(index,bd)
-            case o => stmt.setObject(index,o)
-          }
-          stmt
+        implicit def anyParameter[T] = new ToStatement[T]{
+            private def setAny(index:Int,value:Any,stmt:java.sql.PreparedStatement):java.sql.PreparedStatement = {
+                value match {
+                    case Some(bd:java.math.BigDecimal) => stmt.setBigDecimal(index,bd)
+                    case Some(o) => stmt.setObject(index, o)
+                    case None => stmt.setObject(index, null)
+                    case bd:java.math.BigDecimal => stmt.setBigDecimal(index,bd)
+                    case o => stmt.setObject(index,o)
+                }
+                stmt
+            }
+
+            def set(s:java.sql.PreparedStatement,index:Int,aValue:T):Unit = setAny(index, aValue, s)
         }
 
-       def set(s:java.sql.PreparedStatement,index:Int,aValue:T):Unit = setAny(index, aValue, s)
-    }
-      implicit def pkToStatement[A](implicit ts:ToStatement[A]):ToStatement[Pk[A]] = new ToStatement[Pk[A]] {
-       def set(s:java.sql.PreparedStatement,index:Int,aValue:Pk[A]):Unit = ts.set(s,index,aValue.get.getOrElse(null)) 
+        implicit def optionToStatement[A](implicit ts:ToStatement[A]):ToStatement[Option[A]] = new ToStatement[Option[A]] {
+            def set(s:java.sql.PreparedStatement,index:Int,aValue:Option[A]):Unit = {
+                aValue match {
+                    case Some(o) => ts.set(s,index, o)
+                    case None => s.setObject(index, null)
+                }
+            }
+        }
 
-
-      }
+        implicit def pkToStatement[A](implicit ts:ToStatement[A]):ToStatement[Pk[A]] = new ToStatement[Pk[A]] {
+            def set(s:java.sql.PreparedStatement,index:Int,aValue:Pk[A]):Unit =
+                aValue match {
+                    case Id(id) => ts.set(s,index, id)
+                    case NotAssigned => s.setObject(index, null)
+                }
+        }
 
     }
 
     import  SqlParser._
-    case class ParameterValue[A](private[anorm] aValue:A,private[anorm] statementSetter:ToStatement[A]){
-      def set(s:java.sql.PreparedStatement,index:Int) = statementSetter.set(s,index,aValue)
+    case class ParameterValue[A](aValue:A,statementSetter:ToStatement[A]){
+        def set(s:java.sql.PreparedStatement,index:Int) = statementSetter.set(s,index,aValue)
     }
 
 
