@@ -7,7 +7,7 @@ import play.db.jpa.Annotations._
 import play.data.validation.Annotations._
 
 @Entity
-@Table(uniqueConstraints=Array(new UniqueConstraint(columnNames=Array("email"))))
+@Table(uniqueConstraints=Array(new UniqueConstraint(columnNames=Array("email"))), name="useraccount")
 class User(
 
     @Email
