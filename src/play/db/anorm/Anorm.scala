@@ -318,8 +318,8 @@ package anorm {
         def delete(stmt:String): SqlQuery = {
             sql(stmt match {
                 case s if s.startsWith("delete") => s
-                case s if s.startsWith("where") => "delete from `" + analyser.name + "` " + s
-                case s => "delete from `" + analyser.name + "` where " + s
+                case s if s.startsWith("where") => "delete from " + analyser.name + " " + s
+                case s => "delete from " + analyser.name + " where " + s
             })
         }
 
@@ -335,10 +335,10 @@ package anorm {
 
             if(ids == Nil) throw new Exception("cannot update without Ids, no Ids found on "+analyser.typeName)
 
-            val toUpdate = toSet.map(_._1).map(n => "`"+n+"` = "+"{"+n+"}").mkString(", ")
+            val toUpdate = toSet.map(_._1).map(n => n+" = "+"{"+n+"}").mkString(", ")
 
-            sql("update `"+analyser.name+"` set "+toUpdate+
-                " where "+ ids.map(_._1).map( n => "`"+n+"` = "+"{"+n+"}").mkString(" and ") )
+            sql("update "+analyser.name+" set "+toUpdate+
+                " where "+ ids.map(_._1).map( n => n+" = "+"{"+n+"}").mkString(" and ") )
                 .onParams((toSet.map(_._2) ++
                            ids.map(_._2).map(na => na  match {
                                case Id(id) => id
@@ -366,8 +366,8 @@ package anorm {
             if(notSetIds.length > 1) throw new Exception("multi ids not supported")
             val toInsert = toSet.map(_._1)
 
-            val query = sql("insert into `" + analyser.name + "`"
-                            + " ( " + toInsert.map("`"+_+"`").mkString(", ") + " )"
+            val query = sql("insert into " + analyser.name
+                            + " ( " + toInsert.mkString(", ") + " )"
                             + " values ( " + toInsert.map("{"+_+"}").mkString(", ")+")")
                           .onParams(toSet.map(_._2).map(v => toParameterValue( v)(anyParameter)) :_*)
 
@@ -395,8 +395,8 @@ package anorm {
 
             val toInsert = toSet.map(_._1)
 
-            sql("insert into `"+analyser.name+"` ( "
-                      + toInsert.map("`"+_+"`").mkString(", ")+" ) values ( "+toInsert.map("{"+_+"}").mkString(", ")+")")
+            sql("insert into "+analyser.name+" ( "
+                      + toInsert.mkString(", ")+" ) values ( "+toInsert.map("{"+_+"}").mkString(", ")+")")
                             .onParams(toSet.map(_._2).map(v => toParameterValue( v)(anyParameter)):_*).execute()
         }
     }
@@ -412,17 +412,17 @@ package anorm {
 
         def find(stmt:String=""):SimpleSql[Row] = sql(stmt.trim() match {
             case s if s.startsWith("select") => s
-            case s if s.startsWith("where") => "select * from `" + analyser.name + "` " + s
-            case s if s.startsWith("order by") => "select * from `" + analyser.name + "` " + s
-            case "" => "select * from `" + analyser.name + "`"
-            case s => "select * from `" + analyser.name + "` where " + s
+            case s if s.startsWith("where") => "select * from " + analyser.name + " " + s
+            case s if s.startsWith("order by") => "select * from " + analyser.name + " " + s
+            case "" => "select * from " + analyser.name
+            case s => "select * from " + analyser.name + " where " + s
         }).asSimple
 
         def count(stmt:String=""):SimpleSql[Row] = sql(stmt.trim() match {
             case s if s.startsWith("select") => s
-            case s if s.startsWith("where") => "select count(*) from `" + analyser.name + "` " + s
-            case "" => "select count(*) from `" + analyser.name + "`"
-            case s => "select count(*) from `" + analyser.name + "` where " + s
+            case s if s.startsWith("where") => "select count(*) from " + analyser.name + " " + s
+            case "" => "select count(*) from " + analyser.name
+            case s => "select count(*) from " + analyser.name + " where " + s
         }).asSimple
 
     }
