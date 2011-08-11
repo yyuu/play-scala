@@ -255,10 +255,9 @@ package anorm {
     }
 
     object TupleFlattener extends PriorityNine {
-        implicit def flattenerTo11[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11]: TupleFlattener[(T1 ~ T2 ~ T3 ~ T4 ~ T5 ~ T6 ~ T7 ~ T8 ~ T9 ~ T10 ~ T11) => (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11)] = TupleFlattener[(T1 ~ T2 ~ T3 ~ T4 ~ T5 ~ T6 ~ T7 ~ T8 ~ T9 ~ T10 ~ T11) => (T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11)] {
-            case (t1 ~ t2 ~ t3 ~ t4 ~ t5 ~ t6 ~ t7 ~ t8 ~ t9 ~ t10) => (t1, t2, t3, t4, t5, t6, t7, t8, t9, t10,t11)
-        }
+        implicit def flattenerTo11[T1,T2,T3,T4,T5,T6,T7,T8,T9,T10,T11] :TupleFlattener[(T1 ~ T2 ~T3 ~ T4 ~ T5 ~ T6 ~ T7 ~ T8 ~ T9 ~ T10 ~ T11) =>(T1,T2,T3,T4,T5,T6,T7,T8,T9,T10,T11)] = TupleFlattener[(T1 ~ T2 ~ T3 ~ T4 ~ T5 ~ T6 ~ T7 ~ T8 ~ T9 ~ T10 ~ T11) => (T1,T2,T3,T4,T5,T6,T7,T8,T9,T10,T11)]{ case (t1~t2~t3~t4~t5~t6~t7~t8~t9~t10~t11) => (t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11) }
     }
+
 
     case class Convention(conv:PartialFunction[AnalyserInfo,String]) {
 
