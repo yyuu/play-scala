@@ -232,7 +232,7 @@ bc. @Before def logRequests {
 
 You see that here, the @logRequests@ method does not return any value. So the request execution will continue by invoking the next interceptors and eventually the action method.
 
-But you can also write some interceptor that return a value:
+But you can also write an interceptor that returns a value:
 
 bc. @Before def protectActions = {
     Forbidden
