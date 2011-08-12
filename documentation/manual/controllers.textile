@@ -160,7 +160,7 @@ Returning the @Unauthorized@ value will generate an empty **401 Unauthorized** r
 
 bc. def index = Unauthorized
 
-You can optionnaly specify a realm name:
+You can optionally specify a realm name:
 
 bc. def index = Unauthorized("Administration area")
 
