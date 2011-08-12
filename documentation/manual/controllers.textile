@@ -172,9 +172,9 @@ Returning the @Forbidden@ value will generate an empty **403 Forbidden** respons
 
 bc. def index = Forbidden
 
-You can optionnaly specify an error message:
+You can optionally specify an error message:
 
-bc. def index = Forbidden("Unsufficient permissions")
+bc. def index = Forbidden("Insufficient permissions")
 
 <hr>
 
