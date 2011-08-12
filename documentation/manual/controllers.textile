@@ -26,11 +26,11 @@ bc. package controllers {
     
 }
 
-Because Scala provides the native notion of **Singleton objects** we don't need to deal with Java static methods while keeping the ability to reference statically any action like @show(id)@.
+Because Scala provides the native notion of **Singleton objects** we don't need to deal with Java static methods while keeping the ability to reference statically an action like @show(id)@.
 
 h2. Action methods return values
 
-A Play controller usually uses imperative orders like @render(…)@ or @forbidden()@ to trigger the response generation. On the contrary, action methods written in Scala are seen as functions and must return a value. This value will be used by the framework to generate the HTTP response.
+A Play controller in Java usually uses imperative orders like @render(…)@ or @forbidden()@ to trigger response generation. However, action methods written in Scala are seen as functions and must return a value. This value will be used by the framework to generate the HTTP response.
 
 An action method can of course return several kinds of values depending on the request (like for example a @Template@ or an @Forbidden@ value). 
 
