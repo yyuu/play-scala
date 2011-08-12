@@ -128,7 +128,7 @@ Returning the @Redirect@ value will generate an empty **301 Moved Permanently** 
 
 bc. def index = Redirect("http://www.google.com")
 
-You can optionnaly specify a second argument to switch between **301** and **302** response status code.
+You can optionally specify a second argument to switch between the **301** and **302** response status code.
 
 bc. def index = Redirect("http://www.google.com", false)
 
