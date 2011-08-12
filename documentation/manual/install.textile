@@ -73,7 +73,7 @@ require:
 
 h2. Starting a Scala application
 
-Like for any other Play application, you simply start your newly created application by typing @play run@:
+As for any other Play application, you simply start your newly created application by typing @play run@:
 
 bc. $ play run myScalaApp
 ~        _            _ 
