@@ -184,7 +184,7 @@ Returning the @NotFound@ value will generate an empty **404 Not Found** response
 
 bc. def index = NotFound
 
-You can optionnaly specify a resource name:
+You can optionally specify a resource name:
 
 bc. def index = NotFound("Article not found")
 
@@ -200,7 +200,7 @@ Returning the @Error@ value will generate an empty **500 Internal Server Error**
 
 bc. def index = Error
 
-You can optionnaly specify an error message:
+You can optionally specify an error message:
 
 bc. def index = Error("Oops…")
 
