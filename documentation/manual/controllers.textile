@@ -1,6 +1,6 @@
 h1. Writing Play controllers in Scala
 
-Play controllers are the most important part of any Play applications. A Play Scala application share the same concepts than a classical Play application but use a more functional way to describe actions.
+Play controllers are the most important part of any Play application. A Play Scala application has the same concepts as a classical Play application but uses a more functional way to describe actions.
 
 h2. Scala controllers are Objects
 
