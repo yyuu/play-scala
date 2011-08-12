@@ -224,7 +224,7 @@ bc. def index = Images.captcha
 
 h2. Controller interceptors
 
-Controller interceptors work almost the same way than for Java controller. You simply have to annotate any controller method with the corresponding interceptor annotation:
+Controller interceptors work almost the same way as for Java controllers. You simply have to annotate any controller method with the corresponding interceptor annotation:
 
 bc. @Before def logRequests {
     println("New request…")
