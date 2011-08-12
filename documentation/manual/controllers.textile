@@ -74,7 +74,7 @@ bc. def index = Text("Hello world!")
 
 h3. Json
 
-Returning an @Json@ value will generate a **200 OK** response filled with the text content. The response content type will be automatically set to **application/json**.
+Returning a @Json@ value will generate a **200 OK** response filled with the text content. The response content type will be automatically set to **application/json**.
 
 bc. def index = Json("{message: 'Hello world'}")
 
@@ -112,7 +112,7 @@ bc. def index = NoContent
 
 h3. Action
 
-If an action method return a @Action@ value, Play will redirect the Browser to the corresponding action, using the action method arguments to properly resolve the proper URL.
+If an action method returns a @Action@ value, Play will redirect the Browser to the corresponding action, using the action method arguments to properly resolve the URL.
 
 bc. def index = Action(show(3))
 
