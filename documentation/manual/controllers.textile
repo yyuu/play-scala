@@ -118,7 +118,7 @@ bc. def index = Action(show(3))
 
 Note that here @show(3)@ is a **by-name** parameter, and the corresponding method will not be invoked. Play will resolve this call as a URL (typically something like **users/3**), and will issue an HTTP redirect to this URL. The action will then be invoked in a new request context.
 
-p(note). In a Java controller you achieve the same result by calling directly the corresponding action method. Using Scala **call by name** concept allow to keep the compiler checked and typesafe redirection without any language hack.
+p(note). In a Java controller you achieve the same result by directly calling the corresponding action method. Using Scala's **call by name** concept allows compiler checking and typesafe redirection without any language hacks.
 
 <hr>
 
