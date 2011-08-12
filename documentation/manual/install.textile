@@ -36,7 +36,7 @@ h2. Creating a new Scala application
 
 Now that you have the Scala module locally installed, you can ask Play to create a new application with the Scala module enabled. Use the @play new --with scala@ command for that.
 
-p(note). The **--with** option of the **play new** command allow to automatically configure a set of locally installed module during application creation.
+p(note). The **--with** option of the **play new** command allows you to automatically configure a set of locally installed modules during application creation.
 
 bc. $ play new myScalaApp --with scala
 ~        _            _ 
