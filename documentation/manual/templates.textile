@@ -51,7 +51,7 @@ bc. val page:play.template.Html = views.Application.html.index(
 
 h2. Syntax: the magic '@' character
 
-The Scala template uses *'@'* as single special character. Each time this character is encountered, it indicates the begining of a Scala statement. It does not require you to explicitly close the code-block, and will infer it from your code:
+The Scala template uses *'@'* as a single special character. Each time this character is encountered, it indicates the beginning of a Scala statement. It does not require you to explicitly close the code-block, and will infer it from your code:
 
 bc. Hello @customer.name!
       ^^^^^^^^^^^^^^
