@@ -293,7 +293,7 @@ Now let's create an object that extends @Magic@ to automatically get a parser fo
 
 bc. object Country extends Magic[Country]
 
-p(note). If you want to break the convention here and use a different table name to for the @Country@ case class, you can specify it:
+p(note). If you want to break convention here and use a different table name to for the @Country@ case class, you can specify it:
 
 @object Country extends Magic[Country]().using("Countries")@
 
