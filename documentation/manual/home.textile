@@ -18,7 +18,7 @@ Add Scala support to your existing Play installation.
 
 h2. Manual
 
-The Scala version of Play framework share the same philosophy and concepts than the Java version. Here are the Scala specific features deeply explained.
+The Scala version of Play framework uses the same philosophy and concepts as the Java version. Here are the Scala specific features deeply explained.
 
 # "‘Play Scala’ for Play Java developers":controllers
 ## "Writing Play controllers in Scala":controllers
