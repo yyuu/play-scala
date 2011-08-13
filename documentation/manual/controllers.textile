@@ -252,9 +252,9 @@ bc. @Before def protectActions = {
 
 h2. Mixing controllers using Traits
 
-Scala Traits can be used to compose controller more effeciently by mixing several aspects. You can define both action methods and interceptors in a controller Trait.
+Scala Traits can be used to compose controller more efficiently by mixing several aspects. You can define both action methods and interceptors in a controller Trait.
 
-For example the following **Secure** trait add a seucrity interceptor to any controller applying the Trait:
+For example the following **Secure** trait adds a security interceptor to any controller applying the Trait:
 
 bc. trait Secure {
     self:Controller =>
@@ -283,4 +283,4 @@ bc. object Application extends Controller with Secure {
 
 <hr>
 
-There is also small differences about %(next)"Data binding":dataBinding%
+There are also small differences about %(next)"Data binding":dataBinding%
