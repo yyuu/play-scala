@@ -38,11 +38,11 @@ And there are no guarantees at all that this MetaModel is correct. Even if the c
 
 h3. Take Control of your SQL code
 
-bq. Object Relationnal Mapper work well for trivial cases. But when you have to deal with complex schemas or existing databases, you will spend most of your time to fighting with your ORM to make it generate the SQL queries you want.
+bq. Object Relational Mappers work well for trivial cases. But when you have to deal with complex schemas or existing databases, you will spend most of your time to fighting with your ORM to make it generate the SQL queries you want.
 
-Writing yourself SQL queries can be tedious for a simple 'Hello World' application, but for any real life application, you will eventually save time and simplify your code by taking the full control of your SQL code.
+Writing SQL queries by hand can be tedious for a simple 'Hello World' application, but for any real life application, you will eventually save time and simplify your code by taking full control of your SQL code.
 
-Now, let's see of to manage an SQL database with Play Scala.
+Now, let's see how to manage an SQL database with Play Scala.
 
 h2. Executing SQL requests
 
