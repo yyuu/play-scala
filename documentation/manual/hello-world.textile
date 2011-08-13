@@ -129,7 +129,7 @@ The template content seems pretty light. In fact, this is because it calls other
 
 The first line defines the template parameters: a template is a function that generates a *play.template.Html* return value. In this case, the template has a single @title@ parameter of type @String@, so the type of this template is @(String) => Html@.
 
-Then this template call another template called @main@, that take two parameters: a @String@ and an @Html@ block.
+Then this template calls another template called @main@, that takes two parameters: a @String@ and an @Html@ block.
 
 Open the **helloworld/app/views/main.scala.html** file that defines the @main@ template:
 
