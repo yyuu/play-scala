@@ -93,7 +93,7 @@ p(note). Note that all parameter type names must be fully qualified.
 
 h2. Looping
 
-You can use the Scala @for comprehension@, is a pretty standard way. Just note that the template compiler will just add a @yield@ keyword before your block:
+You can use the Scala @for comprehension@, in a pretty standard way. Just note that the template compiler will just add a @yield@ keyword before your block:
 
 bc. <ul>
 @for(p <- products) {
