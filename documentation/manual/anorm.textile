@@ -301,7 +301,7 @@ And we can simply use **Country** as @Country@ parser:
 
 bc. val countries:List[Country] = SQL("select * from Country").as(Country*)
 
-@Magic@ provides automatically a set of methods that can generate basic SQL queries:
+@Magic@ automatically provides a set of methods that can generate basic SQL queries:
 
 bc. val c:Long = Country.count().single()
 val c:Long = Country.count("population > 1000000").single()
@@ -313,7 +313,7 @@ val c:Option[Country] = Country.find("code = {c}").on("c" -> "FRA").first()
 
 bc. Country.update(Country(Id("FRA"), "France", 59225700, Some("Nicolas S.")))
 
-p(note). The @create@ method performs an INSERT into the database and try to retrieve the primary key from the ResultSet statement. This is useful for an auto_increment primary key field. However, if your application sets the primary key value and not the database, you must use the @insert@ method.
+p(note). The @create@ method performs an INSERT into the database and tries to retrieve the primary key from the ResultSet statement. This is useful for an auto_increment primary key field. However, if your application sets the primary key value and not the database, you must use the @insert@ method.
 
 Finally, let's write the missing @City@ and @CountryLanguage@ case classes, and make a more complex query:
 
