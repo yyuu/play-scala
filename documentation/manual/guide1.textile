@@ -2,7 +2,7 @@ h1. Starting up the project
 
 h2. <a>Introduction</a>
 
-In this tutorial you will learn Play Scala by coding a real web application, from start to finish. In this application, we will try to use everything you would need in a real project, while introducing good practices for Play application development.
+In this tutorial you will learn Play Scala by coding a real web application, from start to finish. We will try to use everything you would need in a real project, while introducing good practices for Play application development.
 
 We have split the tutorial into several independent parts. Each part will introduce more complex features, and provide everything that a real project needs: validation, error handling, a complete security framework, an automated test suite, a shiny web interface, an administration area, etc.
 
@@ -10,7 +10,7 @@ p(note). **All the code** included in this tutorial can be used for your project
 
 h2. <a>The project</a>
 
-We have chosen to create yet another blog engine. It’s not a very imaginative choice but it will allow us to explore most of the functionality needed by a modern web application.
+We have decided to create yet another blog engine. It’s not a very imaginative choice but it will allow us to explore most of the functionality needed by a modern web application.
 
 To make things a bit more interesting, we will include the ability to manage several users with different roles (editor, admin).
 
