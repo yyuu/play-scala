@@ -125,7 +125,7 @@ bc. @(title:String)
     
 }
 
-The template content seems pretty light. In fact, this is because it call other templates to generate the welcome page. 
+The template content seems pretty light. In fact, this is because it calls other templates to generate the welcome page. 
 
 The first line defines the template parameters: a template is a function that generates a *play.template.Html* return value. In this case, the template has a single @title@ parameter of type @String@, so the type of this template is @(String) => Html@.
 
