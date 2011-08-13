@@ -1,6 +1,6 @@
 h1. Play Scala
 
-Welcome to the Play Scala documentation. This documentation is intended for the **0.9.1 release** of the Scala module and may significantly differs from previous versions. 
+Welcome to the Play Scala documentation. This documentation is intended for the **0.9.1 release** of the Scala module and may differ significantly from previous versions. 
 
 Play Scala enables you to use the Scala language for your application keeping key properties of the Play framework. It uses a more functional and Scala idiomatic style of programming without giving up on simplicity and developer friendliness.
 
