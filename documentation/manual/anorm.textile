@@ -143,7 +143,7 @@ bc. SQL("Select name,indepYear from Country")().collect {
     case Row(name:String, Some(year:Short)) => name -> year
 }
 
-If you try to match this column as @Short@ it won't be able to parse @Null@ cases. If you try to retrieve the column content as @Short@ directly from the dictionnary:
+If you try to match this column as @Short@ it won't be able to parse @Null@ cases. If you try to retrieve the column content as @Short@ directly from the dictionary:
 
 bc. SQL("Select name,indepYear from Country")().map { row =>
     row[String]("name") -> row[Short]("indepYear")
