@@ -32,9 +32,9 @@ Sometimes we will provide you with prefilled SQL statements. But the idea is not
 
 h3. A type safe DSL to generate SQL is a mistake
 
-bq. Some argue that a type safe DSL is better since all your queries are checked by the compiler. Unfortunately the compiler check your queries based on a MetaModel definition that you often write yourself by 'mapping' your data structure to the database schema.
+bq. Some argue that a type safe DSL is better since all your queries are checked by the compiler. Unfortunately the compiler checks your queries based on a MetaModel definition that you often write yourself by 'mapping' your data structure to the database schema.
 
-And there are no guarantees at all that this MetaModel is correct. Even if the compiler says that you code and your queries are correctly typed, it can still miserably fail at runtime because of a mismatch in your actual database definition.
+And there are no guarantees at all that this MetaModel is correct. Even if the compiler says that your code and your queries are correctly typed, it can still fail miserably at runtime because of a mismatch in your actual database definition.
 
 h3. Take Control of your SQL code
 
