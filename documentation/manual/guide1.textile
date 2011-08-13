@@ -54,7 +54,7 @@ bc. $ play install scala
 
 h2. <a>Project creation</a>
 
-Now that Play is correctly installed, it’s time to create the blog application. Creating a Play application is pretty easy and fully managed by the play command line utility. This allows for standard project layouts between all Play applications.
+Now that Play is correctly installed, it’s time to create the blog application. Creating a Play application is pretty easy and fully managed by the @play@ command line utility. This allows for standard project layouts between all Play applications.
 
 Open a new command line and type:
 
