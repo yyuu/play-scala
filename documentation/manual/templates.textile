@@ -14,11 +14,11 @@ h2. Overview
 
 A Play Scala template is a simple text file text file, that contains small blocks of Scala code. It can generate any text-based format (HTML, XML, CSV, etc.). 
 
-It’s particularely designed to feel comfortable to those used to working with HTML, allowing Web designers to work with.
+They're particularly designed to feel comfortable to those used to working with HTML, allowing Web designers to work with them.
 
 They are compiled as standard Scala functions, following a simple naming convention: 
 
-bq. If you create a *views/Application/index.scala.html* template file, it will generate a @views.Application.html.index@ function.
+bq. If you create a *views/Application/index.scala.html* template file, Play will generate a @views.Application.html.index@ function.
 
 Here is for example, a classic template content:
 
