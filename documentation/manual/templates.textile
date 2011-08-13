@@ -138,7 +138,7 @@ bc. @connected match {
 
 h2. Declaring reusable blocks
 
-You can create reusable code block (or sub template):
+You can create reusable code blocks (or sub template):
 
 bc. @display(product:models.Product) = {
     @product.name ($@product.price)
