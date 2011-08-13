@@ -57,13 +57,13 @@ bc. Hello @customer.name!
       ^^^^^^^^^^^^^^
         Scala code
 
-Because the template engine will automatically detect the end of your code block by analysing your code, it only allow for simple statements. If you want to insert a multi-token statement, just make it more explicit using brackets:
+Because the template engine will automatically detect the end of your code block by analysing your code, it only allows for simple statements. If you want to insert a multi-token statement, just make it more explicit using brackets:
 
 bc. Hello @(customer.firstName + customer.lastName)!
       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
                     Scala Code
 
-You can also use curly bracket, like in plain Scala code, to write a multi-statements block:
+You can also use curly brackets, like in plain Scala code, to write a multi-statements block:
 
 bc. Hello @{val name = customer.firstName + customer.lastName; name}!
       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
