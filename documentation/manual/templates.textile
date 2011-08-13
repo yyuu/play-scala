@@ -101,7 +101,7 @@ bc. <ul>
 } 
 </ul>
 
-But as you probably know, here the @for comprehension@ is just syntaxic sugar for a classic map:
+But as you probably know, here the @for comprehension@ is just syntactic sugar for a classic map:
 
 bc. <ul>
 @products.map { p =>
