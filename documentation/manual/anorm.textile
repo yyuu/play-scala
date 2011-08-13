@@ -149,7 +149,7 @@ bc. SQL("Select name,indepYear from Country")().map { row =>
     row[String]("name") -> row[Short]("indepYear")
 }
 
-It will produce an @UnexpectedNullableFound(COUNTRY.INDEPYEAR)@ exception if it encounter a null value. So you need to map it properly to an @Option[Short]@, as:
+This will produce an @UnexpectedNullableFound(COUNTRY.INDEPYEAR)@ exception if it encounters a null value. So you need to map it properly to an @Option[Short]@, as:
 
 bc. SQL("Select name,indepYear from Country")().map { row =>
     row[String]("name") -> row[Option[Short]]("indepYear")
