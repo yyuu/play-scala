@@ -160,7 +160,7 @@ bc. @title(text:String) = @{
 
 h2. Import statements
 
-You can import whatever you want at the begining of your template (or of a sub template):
+You can import whatever you want at the beginning of your template (or of a sub template):
 
 bc. @(customer:models.Customer, orders:Seq[models.Order])
  
