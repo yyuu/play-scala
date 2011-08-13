@@ -169,7 +169,7 @@ bc. val count:Long = SQL("select count(*) from Country").as(scalar[Long])
 
 Let's write a more complicated parser:
 
-@str("name") ~< int("population") *@, will parse the content of the **name** column as String, then the content of the **population** column as @Int@, and will repeat for each row. Here we use **~<** to combine several parsers that read the same row.
+@str("name") ~< int("population") *@, will parse the content of the **name** column as a String, then the content of the **population** column as an @Int@, and will repeat for each row. Here we use **~<** to combine several parsers that read the same row.
 
 bc. val populations:List[String~Int] = {
     SQL("select * from Country").as( str("name") ~< int("population") * )
@@ -191,9 +191,9 @@ bc. val populations:List[String~Int] = {
     )
 }
 
-When you parse a *ResultSet* using @as(…)@ it must consume all the input. If your parser doesn't consume all the available input, an error will be thrown. It avoids to have your parser fails silently.
+When you parse a *ResultSet* using @as(…)@ it must consume all the input. If your parser doesn't consume all the available input, an error will be thrown. This avoids having your parser fail silently.
 
-If you want to parse only a small part of the input, you can use @parse(…)@ instead of @as(…)@. However use it with caution, as it make it more difficult to detect errors in your code:
+If you want to parse only a small part of the input, you can use @parse(…)@ instead of @as(…)@. However, use it with caution, as it makes it more difficult to detect errors in your code:
 
 bc. val onePopulation:String~Int = {
     SQL("select * from Country").parse(
