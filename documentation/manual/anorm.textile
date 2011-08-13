@@ -201,7 +201,7 @@ bc. val onePopulation:String~Int = {
     )
 }
 
-Now let's try with a more complicated example. How to parse the result of the following query?
+Now let's try with a more complicated example. How should we parse the result of the following query?
 
 bc. select c.name, c.code, l.language from Country c
     join CountryLanguage l on l.CountryCode = c.Code
