@@ -107,7 +107,7 @@ object Application extends Controller {
 }
 
 
-You see that controller objects extend the **play.mvc.Controller** class. This class provides all useful methods for controllers. Also we have imported the @play.mvc._@ package that contain everything needed to write controllers.
+You can see that controller objects extend the **play.mvc.Controller** class. This class provides all useful methods for controllers. Also we have imported the @play.mvc._@ package that contain everything needed to write controllers.
 
 The index action is defined as a simple method of this object. This is how action methods are defined. They always return a value that is interpreted by the framework as the response value.  
 
