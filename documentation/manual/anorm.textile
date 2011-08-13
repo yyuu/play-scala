@@ -54,7 +54,7 @@ bc. import play.db.anorm._
 
 val result:Boolean = SQL("Select 1").execute()
 
-The @execute()@ method returns a @Boolean@ value indicating if the execution was succesful.
+The @execute()@ method returns a @Boolean@ value indicating if the execution was successful.
 
 To execute an update query, you can use @executeUpdate()@ that returns a @MayErr[IntegrityConstraintViolation,Int]@ value:
 
