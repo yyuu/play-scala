@@ -1,6 +1,6 @@
 h1. Learning Scala with Play
 
-Life’s too short to not learn Scala. The Play Scala module is the easiest way to learn it. Thanks to the interactive way Play will compile, execute and report errors on your Scala code, you can immediatly start to experiment Scala. 
+Life’s too short to not learn Scala. The Play Scala module is the easiest way to learn it. Thanks to the interactive way Play will compile, execute and report errors on your Scala code, you can immediately start to experiment with Scala. 
 
 h2. <a>Play with Scala</a>
 
