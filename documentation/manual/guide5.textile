@@ -12,7 +12,7 @@ As usual, we will start with a simple implementation. Add the **captcha** action
 
 bc. def captcha = Images.captcha
 
-Note that we can retuen the captcha object directly because the Images.Captcha class implements @java.io.InputStream@. 
+Note that we can return the captcha object directly because the Images.Captcha class implements @java.io.InputStream@. 
 
 p(note). **Don’t forget** to import **play.libs._**.
 
