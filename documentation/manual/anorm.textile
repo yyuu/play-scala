@@ -107,7 +107,7 @@ val countries = selectCountries().map(row =>
     row[String]("code") -> row[String]("name")
 ).toList
 
-In the following example we will count the number of Country in the database. So the resultSet will be a single row with a single column:
+In the following example we will count the number of Country objects in the database. So the resultSet will be a single row with a single column:
 
 bc. // First retrieve the first row
 val firstRow = SQL("Select count(*) as c from Country").apply().head
