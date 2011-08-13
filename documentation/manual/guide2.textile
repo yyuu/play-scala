@@ -390,7 +390,7 @@ bc.
  
 ...
 
-Actually, because the **data.yml** file is a litle big, you can "download it here":files/data.yml.
+Actually, because the **data.yml** file is a little big, you can "download it here":files/data.yml.
 
 Once we have the dummy data ready, loading it in is pretty easy:
 
