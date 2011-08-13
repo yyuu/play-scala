@@ -1,6 +1,6 @@
 h1. Testing your application
 
-Play Scala comes with "ScalaTest":http://www.scalatest.org/, that natively provide different styles of testing. 
+Play Scala comes with "ScalaTest":http://www.scalatest.org/, which natively provide different styles of testing. 
 
 As in Play Java, you must place your test dedicated Scala sources into the **test** directory, and run the application using @play test@ to enable the integrated Test runner.
 
