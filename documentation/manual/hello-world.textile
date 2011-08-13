@@ -259,11 +259,11 @@ def sayHello = {
 }
 ...
 
-Now our **sayHello** can return 2 distincts values. A @Html@ value in the case of there is a name provided by the form, or an @Action@ value if there is an error. An @Action@ value is used to redirect to another existing action method. Here we specify that we want to redirect to the @index@ action.
+Now our **sayHello** can return 2 distinct values. A @Html@ value is returned in the case where there is a name provided by the form, and an @Action@ value is returned if there is an error. An @Action@ value is used to redirect to another existing action method. Here we specify that we want to redirect to the @index@ action.
 
 Play will automatically check that the myName field is filled or will add an error object to the **errors** scope. Then if there is any error, we add a message to the **flash** scope and redirect to the **index** action.
 
-The flash scope allows to keep messages during action redirection.
+The flash scope allows Play to keep messages during action redirection.
 
 Now you just have to display the **error** message if any. Edit the **helloworld/app/views/Application/index.html**:
 
@@ -286,7 +286,7 @@ And check that it works:
 
 !images/guide1-page4!
 
-See how we take implicitely the flash parameter from the controller scope.
+See how we implicitly take the flash parameter from the controller scope.
 
 h2. <a>Writing an automated test suite</a>
 
