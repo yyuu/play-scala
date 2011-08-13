@@ -230,7 +230,7 @@ bc. @(level:String = "error")(body: (String) => Html)
     
 }
 
-And let's use it from any template:
+And let's use it from a template:
 
 bc. @import views.tags.html._
  
