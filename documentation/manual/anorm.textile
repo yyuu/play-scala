@@ -163,7 +163,7 @@ The "Scala Parsers API":http://www.scala-lang.org/api/current/scala/util/parsing
 
 p(note). First you need to import @play.db.anorm.SqlParser._@.
 
-Use the @as(…)@ method of the SQL statement to specify the parser you want to use. For example @scalar[Long]@ is a simple parser that knows how to parse a single column row as @Long@:
+Use the @as(…)@ method of the SQL statement to specify the parser you want to use. For example @scalar[Long]@ is a simple parser that knows how to parse a single column row as a @Long@:
 
 bc. val count:Long = SQL("select count(*) from Country").as(scalar[Long])
 
