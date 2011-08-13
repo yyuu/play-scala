@@ -287,7 +287,7 @@ bc. case class Country(
     code:Id[String], name:String, population:Int, headOfState:Option[String]
 )
 
-Note that we are not required to specify every existing table column in the case class. Only a subset is enough.
+Note that we are not required to specify every existing table column in the case class. Just a subset is enough.
 
 Now let's create an object that extends @Magic@ to automatically get a parser of @Country@:
 
