@@ -89,7 +89,7 @@ bc. object MyScalaApp {
 
 A Play application has several entry points, one for each URL. We call these methods **action** methods. Action methods are defined in several objects that we call **controllers**.
 
-Let’s see how the **controllers.Application** controller looks like. Open the **helloworld/app/controllers.scala** source file:
+Let’s see what the **controllers.Application** controller looks like. Open the **helloworld/app/controllers.scala** source file:
 
 bc. package controllers
  
