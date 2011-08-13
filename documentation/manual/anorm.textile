@@ -1,8 +1,8 @@
 h1. Anorm, SQL data access with Play Scala
 
-The Scala module includes a brand new data access layer called *Anorm* that uses plain SQL to make your database request and provides several API to parse and transform the resulting dataset.
+The Scala module includes a brand new data access layer called *Anorm* that uses plain SQL to make your database requests and provides several APIs to parse and transform the resulting dataset.
 
-bq. *Anorm is Not a Object Relational Mapper*
+bq. *Anorm is Not an Object Relational Mapper*
 
 p(note). In the following documentation, we will use the "MySQL world sample database":http://dev.mysql.com/doc/world-setup/en/world-setup.html.
 
