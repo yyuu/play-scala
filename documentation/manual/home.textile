@@ -4,7 +4,7 @@ Welcome to the Play Scala documentation. This documentation is intended for the 
 
 Play Scala enables you to use the Scala language for your application keeping key properties of the Play framework. It uses a more functional and Scala idiomatic style of programming without giving up on simplicity and developer friendliness.
 
-p(note). This version is still in beta but can already be used to create complete Play applications using Scala as main language. Most of the API is stabilized and future versions will just improve compatibility with the existing Play features.
+p(note). This version is still in beta but can already be used to create complete Play applications using Scala as main language. Most of the API is stabilized and future versions will just improve compatibility with existing Play features.
  
 "Check the roadmap to 1.0":roadmap.
 
