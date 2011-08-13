@@ -163,7 +163,7 @@ bc. @main(title = "Home") {
     </form>
 }
 
-p(note). Note that we use GET as form submission method, because the form submission does not have any side effect and is idempotent.
+p(note). Note that we use GET as the form submission method, because the form submission does not have any side effect and is idempotent.
 
 We use the **@action(…)** helper to ask Play to automatically generate the URL able to invoke the **Application.sayHello** action. 
 
