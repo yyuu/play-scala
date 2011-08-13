@@ -70,7 +70,7 @@ The **play new** command creates a new directory **yabe/** and populates it with
 
 * **conf/** contains all the configuration files for the application, especially the main **application.conf** file, the **routes** definition files, the **dependencies.yml** file, and the **messages** files used for internationalization.
 
-* **lib/** contains all optional Java or Scala libraries packaged as standard **.jar** files.
+* **lib/** contains any optional Java or Scala libraries packaged as standard **.jar** files.
 
 * **public/** contains all the publicly available resources, which includes JavaScript files, stylesheets and images directories.
 
@@ -96,7 +96,7 @@ h2. <a>Running the application</a>
 
 We can now test the newly-created application. Just return to the command line, go to the newly-created **yabe/** directory and type **play run**. Play will load the application and start a web server on port 9000.
 
-You can see the new application by opening a browser to "http://localhost:9000":http://localhost:9000. A new application has a standard welcome page that just tells you that it was successfully created.
+You can see the new application by opening a browser to "http://localhost:9000":http://localhost:9000. A new application has a standard welcome page to tell you that it was successfully created.
 
 !images/guide1-2!
 
