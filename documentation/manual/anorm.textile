@@ -6,13 +6,13 @@ bq. *Anorm is Not an Object Relational Mapper*
 
 p(note). In the following documentation, we will use the "MySQL world sample database":http://dev.mysql.com/doc/world-setup/en/world-setup.html.
 
-If you want to enable it for your application, follow the MySQL website instruction, and enable it for your application by adding the following configuration line in your **conf/application.conf** file:
+If you want to enable it for your application, follow the MySQL website instructions, and enable it for your application by adding the following configuration line in your **conf/application.conf** file:
 
 **db=mysql:root@world**
 
 h2. Overview
 
-It can feel strange to fallback to plain old SQL to access an SQL Database these days. In particular for Java developers that are accustomed to use high level Object Relational Mapper like Hibernate to completely hide this aspect.
+It can feel strange to fallback to plain old SQL to access an SQL Database these days, particularly for Java developers that are accustomed to use high level Object Relational Mapper like Hibernate to completely hide this aspect.
 
 Now if we agree that these tools are almost required in Java, we think that they are not needed at all wehen you have the power of a higher level programming language like Scala, and in the contrary they will quickly become counter productive.
 
