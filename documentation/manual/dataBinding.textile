@@ -43,4 +43,4 @@ p(note). Note that Play will automatically generate a default constructor for yo
 
 <hr>
 
-Next, there is some special features when %(next)"using Scala types in Play templates":templates%
+Next, there are some special features when %(next)"using Scala types in Play templates":templates%
