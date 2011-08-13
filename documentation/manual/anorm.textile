@@ -63,7 +63,7 @@ bc. val result = SQL("delete from City where id = 99").executeUpdate().fold(
     c => c + " rows were updated!"
 )
 
-Since Scala supports multiline String, feel free to use them for complex SQL statements:
+Since Scala supports multiline @String@s, feel free to use them for complex SQL statements:
 
 bc. var sqlQuery = SQL(
     """
