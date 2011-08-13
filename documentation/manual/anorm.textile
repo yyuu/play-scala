@@ -289,7 +289,7 @@ bc. case class Country(
 
 Note that we are not required to specify every existing table column in the case class. Just a subset is enough.
 
-Now let's create an object that extends @Magic@ to automatically get a parser of @Country@:
+Now let's create an object that extends @Magic@ to automatically get a parser for @Country@:
 
 bc. object Country extends Magic[Country]
 
