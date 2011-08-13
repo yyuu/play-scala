@@ -28,7 +28,7 @@ bq. SQL is already the best DSL to access relational databases. We don't need to
 
 If you try to abstract this point with another proprietary SQL-like DSL you will have to deal with several 'dialects' dedicated for each vendor (like Hibernate ones), and limit yourself by not using interesting features of a particular database.
 
-Sometimes we will provide you with prefilled SQL statements. But the idea is not to hide you the fact that we use SQL under the hood. Just save a bunch of characters to type for trivial queries, and you can always fallback to plain old SQL.
+Sometimes we will provide you with prefilled SQL statements. But the idea is not to hide from you the fact that we use SQL under the hood - it's that you can save a bunch of characters for trivial queries, and you can always fallback to plain old SQL.
 
 h3. A type safe DSL to generate SQL is a mistake
 
