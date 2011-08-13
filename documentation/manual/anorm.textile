@@ -119,7 +119,7 @@ h2. Using Pattern Matching
 
 You can also use Pattern Matching to match and extract the @Row@ content. In this case the column name doesn't matter. Only the order and the type of the parameters is used to match.
 
-The following example transform each row to the correct Scala type:
+The following example transforms each row to the correct Scala type:
 
 bc. case class SmallCountry(name:String)
 case class BigCountry(name:String)
@@ -131,7 +131,7 @@ val countries = SQL("Select name,population from Country")().collect {
     case Row(name:String, _) => SmallCountry(name)
 }
 
-Note that since @collect(…)@ ignore the cases where the partial function isn't defined, it allow your code to safely ignore rows that you don't expect.
+Note that since @collect(…)@ ignores the cases where the partial function isn't defined, it allows your code to safely ignore rows that you don't expect.
 
 h2. Dealing with Nullable columns
 
