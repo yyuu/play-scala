@@ -97,7 +97,7 @@ h2. Retrieving data using the Stream API
 
 The first way to access data coming from a **Select** query, is to use the Stream API.
 
-When you call @apply()@ on any SQL statement, you will receive a lazy @Stream@ of @Row@, where each row can be seen as a dictionary:
+When you call @apply()@ on any SQL statement, you will receive a lazy @Stream@ of @Row@s, where each row can be seen as a dictionary:
 
 bc. // Create an SQL query
 val selectCountries = SQL("Select * from Country")
