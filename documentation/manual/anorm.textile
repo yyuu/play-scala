@@ -18,9 +18,9 @@ Now if we agree that these tools are almost required in Java, we think that they
 
 h3. Using JDBC is a pain, but we provide a better API
 
-bq. We agree, using directly the JDBC API is tedious. Particularly in Java. You have to deal everywhere with checked exceptions and iterate over and over around the ResultSet to transform this raw dataset into your own data structure.
+bq. We agree, using the JDBC API directly is tedious. Particularly in Java. You have to constantly deal with checked exceptions and iterate over and over around the ResultSet to transform this raw dataset into your own data structure.
 
-But we provide a simpler API for JDBC, using Scala you don't need to bother with exceptions, and transforming data is really easy with a functional language; in fact it is the point of the Play Scala SQL access layer to provide several API to effectively transform JDBC data into other Scala structures.
+But we provide a simpler API for JDBC. Using Scala you don't need to bother with exceptions, and transforming data is really easy with a functional language; in fact it is the point of the Play Scala SQL access layer to provide several APIs to effectively transform JDBC data into other Scala structures.
 
 h3. You don't need another DSL to access relational Database
 
