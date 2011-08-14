@@ -2,7 +2,7 @@ h1. Starting up the project
 
 h2. <a>Introduction</a>
 
-In this tutorial you will learn Play Scala by coding a real web application, from start to finish. In this application, we will try to use everything you would need in a real project, while introducing good practices for Play application development.
+In this tutorial you will learn Play Scala by coding a real web application, from start to finish. We will try to use everything you would need in a real project, while introducing good practices for Play application development.
 
 We have split the tutorial into several independent parts. Each part will introduce more complex features, and provide everything that a real project needs: validation, error handling, a complete security framework, an automated test suite, a shiny web interface, an administration area, etc.
 
@@ -10,7 +10,7 @@ p(note). **All the code** included in this tutorial can be used for your project
 
 h2. <a>The project</a>
 
-We have chosen to create yet another blog engine. It’s not a very imaginative choice but it will allow us to explore most of the functionality needed by a modern web application.
+We have decided to create yet another blog engine. It’s not a very imaginative choice but it will allow us to explore most of the functionality needed by a modern web application.
 
 To make things a bit more interesting, we will include the ability to manage several users with different roles (editor, admin).
 
@@ -54,7 +54,7 @@ bc. $ play install scala
 
 h2. <a>Project creation</a>
 
-Now that Play is correctly installed, it’s time to create the blog application. Creating a Play application is pretty easy and fully managed by the play command line utility. This allows for standard project layouts between all Play applications.
+Now that Play is correctly installed, it’s time to create the blog application. Creating a Play application is pretty easy and fully managed by the @play@ command line utility. This allows for standard project layouts between all Play applications.
 
 Open a new command line and type:
 
@@ -70,7 +70,7 @@ The **play new** command creates a new directory **yabe/** and populates it with
 
 * **conf/** contains all the configuration files for the application, especially the main **application.conf** file, the **routes** definition files, the **dependencies.yml** file, and the **messages** files used for internationalization.
 
-* **lib/** contains all optional Java or Scala libraries packaged as standard **.jar** files.
+* **lib/** contains any optional Java or Scala libraries packaged as standard **.jar** files.
 
 * **public/** contains all the publicly available resources, which includes JavaScript files, stylesheets and images directories.
 
@@ -96,7 +96,7 @@ h2. <a>Running the application</a>
 
 We can now test the newly-created application. Just return to the command line, go to the newly-created **yabe/** directory and type **play run**. Play will load the application and start a web server on port 9000.
 
-You can see the new application by opening a browser to "http://localhost:9000":http://localhost:9000. A new application has a standard welcome page that just tells you that it was successfully created.
+You can see the new application by opening a browser to "http://localhost:9000":http://localhost:9000. A new application has a standard welcome page to tell you that it was successfully created.
 
 !images/guide1-2!
 
@@ -137,7 +137,7 @@ object Application extends Controller {
 
 Notice that controller objects extend the @play.mvc.Controller@ class.
 
-The index action is defined as a simple method of this object. This is how action methods are defined. They always return a value that will be infered by the framework to generate the proper HTTP response.  
+The index action is defined as a simple method of this object. This is how action methods are defined. They always return a value that will be inferred by the framework to generate the proper HTTP response.  
 
 The default index action is simple: it invokes the *views.Application.html.index* template and returns the generated HTML. Using a template is the most common way (but not the only one) to generate the HTTP response.
 
@@ -213,9 +213,9 @@ h2. <a>Setting-up the database</a>
 
 One more thing before we start coding: for the blog engine, we are going to need a database. For development purposes, Play comes with a stand alone SQL database management system called H2. This is the best way to start a project before switching to a more robust database (if needed). You can choose to have either an in-memory database or a filesystem database that will keep your data between application restarts.
 
-Becuase we will be initially doing a lot of testing and changes in the application model, it’s probably better to use an in-memory database so we always start with a fresh data set.
+Because we will be initially doing a lot of testing and changes in the application model, it’s probably better to use an in-memory database so we always start with a fresh data set.
 
-To set-up the database, open the **yabe/conf/application.conf** file and uncomment this line:
+To set up the database, open the **yabe/conf/application.conf** file and uncomment this line:
 
 bc. db=mem
 

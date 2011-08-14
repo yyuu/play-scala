@@ -89,7 +89,7 @@ bc. object MyScalaApp {
 
 A Play application has several entry points, one for each URL. We call these methods **action** methods. Action methods are defined in several objects that we call **controllers**.
 
-Let’s see how the **controllers.Application** controller looks like. Open the **helloworld/app/controllers.scala** source file:
+Let’s see what the **controllers.Application** controller looks like. Open the **helloworld/app/controllers.scala** source file:
 
 bc. package controllers
  
@@ -107,11 +107,11 @@ object Application extends Controller {
 }
 
 
-You see that controller objects extend the **play.mvc.Controller** class. This class provides all useful methods for controllers. Also we have imported the @play.mvc._@ package that contain everything needed to write controllers.
+You can see that controller objects extend the **play.mvc.Controller** class. This class provides all useful methods for controllers. Also we have imported the @play.mvc._@ package that contain everything needed to write controllers.
 
 The index action is defined as a simple method of this object. This is how action methods are defined. They always return a value that is interpreted by the framework as the response value.  
 
-The default index action is simple: it invoke the *views.Application.html.index* template and returns the generated HTML. Using a template is the most common way (but not the only one) to generate the HTTP response.
+The default index action is simple: it invokes the *views.Application.html.index* template and returns the generated HTML. Using a template is the most common way (but not the only one) to generate the HTTP response.
 
 Templates are special Scala source files that live in the **/app/views** directory. 
 
@@ -125,11 +125,11 @@ bc. @(title:String)
     
 }
 
-The template content seems pretty light. In fact, this is because it call other templates to generate the welcome page. 
+The template content seems pretty light. In fact, this is because it calls other templates to generate the welcome page. 
 
 The first line defines the template parameters: a template is a function that generates a *play.template.Html* return value. In this case, the template has a single @title@ parameter of type @String@, so the type of this template is @(String) => Html@.
 
-Then this template call another template called @main@, that take two parameters: a @String@ and an @Html@ block.
+Then this template calls another template called @main@, that takes two parameters: a @String@ and an @Html@ block.
 
 Open the **helloworld/app/views/main.scala.html** file that defines the @main@ template:
 
@@ -163,7 +163,7 @@ bc. @main(title = "Home") {
     </form>
 }
 
-p(note). Note that we use GET as form submission method, because the form submission does not have any side effect and is idempotent.
+p(note). Note that we use GET as the form submission method, because the form submission does not have any side effect and is idempotent.
 
 We use the **@action(…)** helper to ask Play to automatically generate the URL able to invoke the **Application.sayHello** action. 
 
@@ -259,11 +259,11 @@ def sayHello = {
 }
 ...
 
-Now our **sayHello** can return 2 distincts values. A @Html@ value in the case of there is a name provided by the form, or an @Action@ value if there is an error. An @Action@ value is used to redirect to another existing action method. Here we specify that we want to redirect to the @index@ action.
+Now our **sayHello** can return 2 distinct values. A @Html@ value is returned in the case where there is a name provided by the form, and an @Action@ value is returned if there is an error. An @Action@ value is used to redirect to another existing action method. Here we specify that we want to redirect to the @index@ action.
 
 Play will automatically check that the myName field is filled or will add an error object to the **errors** scope. Then if there is any error, we add a message to the **flash** scope and redirect to the **index** action.
 
-The flash scope allows to keep messages during action redirection.
+The flash scope allows Play to keep messages during action redirection.
 
 Now you just have to display the **error** message if any. Edit the **helloworld/app/views/Application/index.html**:
 
@@ -286,7 +286,7 @@ And check that it works:
 
 !images/guide1-page4!
 
-See how we take implicitely the flash parameter from the controller scope.
+See how we implicitly take the flash parameter from the controller scope.
 
 h2. <a>Writing an automated test suite</a>
 

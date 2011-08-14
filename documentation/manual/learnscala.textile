@@ -1,10 +1,10 @@
 h1. Learning Scala with Play
 
-Life’s too short to not learn Scala. The Play Scala module is the easiest way to learn it. Thanks to the interactive way Play will compile, execute and report errors on your Scala code, you can immediatly start to experiment Scala. 
+Life’s too short to not learn Scala. The Play Scala module is the easiest way to learn it. Thanks to the interactive way Play will compile, execute and report errors on your Scala code, you can immediately start to experiment with Scala. 
 
 h2. <a>Play with Scala</a>
 
-**Play with Scala** is an application part of this module that allow you to interactively code and execute Scala code from your preferred text editor.
+**Play with Scala** is an application part of this module that allows you to interactively code and execute Scala code from your preferred text editor.
 
 To run it, go to **$PLAY_HOME/modules/scala/samples-and-test/play-with-scala** directory, and type:
 

@@ -183,7 +183,7 @@ bc. def postComment(postId:Long) = {
 
 As you can see we return an @Action@ value to indicate that we want to redirect to the @show(postId)@ action.
 
-Please note also that we use the @create@ method, and not the @insert@. The @Comment@ entity primary key id value is set by the database, not by the applicaton. If your application sets the id value, use the @insert@ method.
+Please note also that we use the @create@ method, and not the @insert@. The @Comment@ entity primary key id value is set by the database, not by the application. If your application sets the id value, use the @insert@ method.
 
 Let’s write the HTML form in the **show.html** template (after the **#{display /}** tag in fact):
 

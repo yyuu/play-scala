@@ -8,7 +8,7 @@ The model layer has a central position in a Play application (and in fact in all
 
 Because most model objects need to survive between application restarts, we have to save them in a persistent datastore. A common choice is to use a relational database. 
 
-The Scala module includes a brand new data access layer called "Anorm":anorm that uses plain SQL to make your database requests and provides several API to parse and transform the resulting dataset. 
+The Scala module includes a brand new data access layer called "Anorm":anorm that uses plain SQL to make your database requests and provides several APIs to parse and transform the resulting datasets. 
 
 There are several ways to use *Anorm*, depending on your needs. In this tutorial we will use the most advanced one where we will automatically map the result of our SQL queries to a set of *case classes* representing our data.
 
@@ -55,7 +55,7 @@ case class User(
     email: String, password: String, fullname: String, isAdmin: Boolean
 )
 
-As you see, this User *case class* matches our User table definition; and will help us to parse the result of our SQL queries involving the User table.
+As you see, this User *case class* matches our User table definition; and it will help us to parse the result of our SQL queries involving the User table.
 
 Now, in the same file, we will also define a *companion object* for the User class:
 
@@ -63,7 +63,7 @@ bc. object User extends Magic[User]
 
 p(note). You also need to import @play.db.anorm.defaults._@ to have access to the @Magic@ type.
 
-This *User* object inherits *Magic* that analyses the type it is parametrized by, and then offers a set of functionalities for parsing and running SQL queries. 
+This *User* object inherits *Magic* that analyses the type it is parameterized by, and then offers a set of functionalities for parsing and running SQL queries. 
 
 You can now refresh the application home page to see the result. In fact, unless you made a mistake, you should not see any change: Play has automatically compiled and loaded the User class, but this has not added any new feature to the application.
 
@@ -390,7 +390,7 @@ bc.
  
 ...
 
-Actually, because the **data.yml** file is a litle big, you can "download it here":files/data.yml.
+Actually, because the **data.yml** file is a little big, you can "download it here":files/data.yml.
 
 Once we have the dummy data ready, loading it in is pretty easy:
 

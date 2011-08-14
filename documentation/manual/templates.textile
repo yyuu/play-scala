@@ -1,6 +1,6 @@
 h1. Scala templates
 
-Play Scala comes with a new and really poweful Scala based template engine. The design of this new template engine is really inspired by ASP.NET Razor, especially:
+Play Scala comes with a new and really powerful Scala based template engine. The design of this new template engine is really inspired by ASP.NET Razor, especially:
 
 *Compact, Expressive, and Fluid*: Minimizes the number of characters and keystrokes required in a file, and enables a fast, fluid coding workflow. Unlike most template syntaxes, you do not need to interrupt your coding to explicitly denote server blocks within your HTML. The parser is smart enough to infer this from your code. This enables a really compact and expressive syntax which is clean, fast and fun to type.
 
@@ -14,11 +14,11 @@ h2. Overview
 
 A Play Scala template is a simple text file text file, that contains small blocks of Scala code. It can generate any text-based format (HTML, XML, CSV, etc.). 
 
-It’s particularely designed to feel comfortable to those used to working with HTML, allowing Web designers to work with.
+They're particularly designed to feel comfortable to those used to working with HTML, allowing Web designers to work with them.
 
 They are compiled as standard Scala functions, following a simple naming convention: 
 
-bq. If you create a *views/Application/index.scala.html* template file, it will generate a @views.Application.html.index@ function.
+bq. If you create a *views/Application/index.scala.html* template file, Play will generate a @views.Application.html.index@ function.
 
 Here is for example, a classic template content:
 
@@ -51,19 +51,19 @@ bc. val page:play.template.Html = views.Application.html.index(
 
 h2. Syntax: the magic '@' character
 
-The Scala template uses *'@'* as single special character. Each time this character is encountered, it indicates the begining of a Scala statement. It does not require you to explicitly close the code-block, and will infer it from your code:
+The Scala template uses *'@'* as a single special character. Each time this character is encountered, it indicates the beginning of a Scala statement. It does not require you to explicitly close the code-block, and will infer it from your code:
 
 bc. Hello @customer.name!
       ^^^^^^^^^^^^^^
         Scala code
 
-Because the template engine will automatically detect the end of your code block by analysing your code, it only allow for simple statements. If you want to insert a multi-token statement, just make it more explicit using brackets:
+Because the template engine will automatically detect the end of your code block by analysing your code, it only allows for simple statements. If you want to insert a multi-token statement, just make it more explicit using brackets:
 
 bc. Hello @(customer.firstName + customer.lastName)!
       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ 
                     Scala Code
 
-You can also use curly bracket, like in plain Scala code, to write a multi-statements block:
+You can also use curly brackets, like in plain Scala code, to write a multi-statements block:
 
 bc. Hello @{val name = customer.firstName + customer.lastName; name}!
       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -93,7 +93,7 @@ p(note). Note that all parameter type names must be fully qualified.
 
 h2. Looping
 
-You can use the Scala @for comprehension@, is a pretty standard way. Just note that the template compiler will just add a @yield@ keyword before your block:
+You can use the Scala @for comprehension@, in a pretty standard way. Just note that the template compiler will just add a @yield@ keyword before your block:
 
 bc. <ul>
 @for(p <- products) {
@@ -101,7 +101,7 @@ bc. <ul>
 } 
 </ul>
 
-But as you probably know, here the @for comprehension@ is just syntaxic sugar for a classic map:
+But as you probably know, here the @for comprehension@ is just syntactic sugar for a classic map:
 
 bc. <ul>
 @products.map { p =>
@@ -138,7 +138,7 @@ bc. @connected match {
 
 h2. Declaring reusable blocks
 
-You can create reusable code block (or sub template):
+You can create reusable code blocks (or sub template):
 
 bc. @display(product:models.Product) = {
     @product.name ($@product.price)
@@ -160,7 +160,7 @@ bc. @title(text:String) = @{
 
 h2. Import statements
 
-You can import whatever you want at the begining of your template (or of a sub template):
+You can import whatever you want at the beginning of your template (or of a sub template):
 
 bc. @(customer:models.Customer, orders:Seq[models.Order])
  
@@ -230,7 +230,7 @@ bc. @(level:String = "error")(body: (String) => Html)
     
 }
 
-And let's use it from any template:
+And let's use it from a template:
 
 bc. @import views.tags.html._
  

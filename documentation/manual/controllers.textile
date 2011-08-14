@@ -1,6 +1,6 @@
 h1. Writing Play controllers in Scala
 
-Play controllers are the most important part of any Play applications. A Play Scala application share the same concepts than a classical Play application but use a more functional way to describe actions.
+Play controllers are the most important part of any Play application. A Play Scala application has the same concepts as a classical Play application but uses a more functional way to describe actions.
 
 h2. Scala controllers are Objects
 
@@ -26,11 +26,11 @@ bc. package controllers {
     
 }
 
-Because Scala provides the native notion of **Singleton objects** we don't need to deal with Java static methods while keeping the ability to reference statically any action like @show(id)@.
+Because Scala provides the native notion of **Singleton objects** we don't need to deal with Java static methods while keeping the ability to reference statically an action like @show(id)@.
 
 h2. Action methods return values
 
-A Play controller usually uses imperative orders like @render(…)@ or @forbidden()@ to trigger the response generation. On the contrary, action methods written in Scala are seen as functions and must return a value. This value will be used by the framework to generate the HTTP response.
+A Play controller in Java usually uses imperative orders like @render(…)@ or @forbidden()@ to trigger response generation. However, action methods written in Scala are seen as functions and must return a value. This value will be used by the framework to generate the HTTP response.
 
 An action method can of course return several kinds of values depending on the request (like for example a @Template@ or an @Forbidden@ value). 
 
@@ -74,7 +74,7 @@ bc. def index = Text("Hello world!")
 
 h3. Json
 
-Returning an @Json@ value will generate a **200 OK** response filled with the text content. The response content type will be automatically set to **application/json**.
+Returning a @Json@ value will generate a **200 OK** response filled with the text content. The response content type will be automatically set to **application/json**.
 
 bc. def index = Json("{message: 'Hello world'}")
 
@@ -112,13 +112,13 @@ bc. def index = NoContent
 
 h3. Action
 
-If an action method return a @Action@ value, Play will redirect the Browser to the corresponding action, using the action method arguments to properly resolve the proper URL.
+If an action method returns a @Action@ value, Play will redirect the Browser to the corresponding action, using the action method arguments to properly resolve the URL.
 
 bc. def index = Action(show(3))
 
-Note that here @show(3)@ is a **by-name** parameter, and the corresponding methid will not been invoked. Play will resolve this call as an URL (typically something like **users/3**), and will issue an HTTP redirect to this URL. The action will then be invoked in a new request context.
+Note that here @show(3)@ is a **by-name** parameter, and the corresponding method will not be invoked. Play will resolve this call as a URL (typically something like **users/3**), and will issue an HTTP redirect to this URL. The action will then be invoked in a new request context.
 
-p(note). In a Java controller you achieve the same result by calling directly the corresponding action method. Using Scala **call by name** concept allow to keep the compiler checked and typesafe redirection without any language hack.
+p(note). In a Java controller you achieve the same result by directly calling the corresponding action method. Using Scala's **call by name** concept allows compiler checking and typesafe redirection without any language hacks.
 
 <hr>
 
@@ -128,7 +128,7 @@ Returning the @Redirect@ value will generate an empty **301 Moved Permanently** 
 
 bc. def index = Redirect("http://www.google.com")
 
-You can optionnaly specify a second argument to switch between **301** and **302** response status code.
+You can optionally specify a second argument to switch between the **301** and **302** response status code.
 
 bc. def index = Redirect("http://www.google.com", false)
 
@@ -160,7 +160,7 @@ Returning the @Unauthorized@ value will generate an empty **401 Unauthorized** r
 
 bc. def index = Unauthorized
 
-You can optionnaly specify a realm name:
+You can optionally specify a realm name:
 
 bc. def index = Unauthorized("Administration area")
 
@@ -172,9 +172,9 @@ Returning the @Forbidden@ value will generate an empty **403 Forbidden** respons
 
 bc. def index = Forbidden
 
-You can optionnaly specify an error message:
+You can optionally specify an error message:
 
-bc. def index = Forbidden("Unsufficient permissions")
+bc. def index = Forbidden("Insufficient permissions")
 
 <hr>
 
@@ -184,7 +184,7 @@ Returning the @NotFound@ value will generate an empty **404 Not Found** response
 
 bc. def index = NotFound
 
-You can optionnaly specify a resource name:
+You can optionally specify a resource name:
 
 bc. def index = NotFound("Article not found")
 
@@ -200,7 +200,7 @@ Returning the @Error@ value will generate an empty **500 Internal Server Error**
 
 bc. def index = Error
 
-You can optionnaly specify an error message:
+You can optionally specify an error message:
 
 bc. def index = Error("Oops…")
 
@@ -224,7 +224,7 @@ bc. def index = Images.captcha
 
 h2. Controller interceptors
 
-Controller interceptors work almost the same way than for Java controller. You simply have to annotate any controller method with the corresponding interceptor annotation:
+Controller interceptors work almost the same way as for Java controllers. You simply have to annotate any controller method with the corresponding interceptor annotation:
 
 bc. @Before def logRequests {
     println("New request…")
@@ -232,7 +232,7 @@ bc. @Before def logRequests {
 
 You see that here, the @logRequests@ method does not return any value. So the request execution will continue by invoking the next interceptors and eventually the action method.
 
-But you can also write some interceptor that return a value:
+But you can also write an interceptor that returns a value:
 
 bc. @Before def protectActions = {
     Forbidden
@@ -252,9 +252,9 @@ bc. @Before def protectActions = {
 
 h2. Mixing controllers using Traits
 
-Scala Traits can be used to compose controller more effeciently by mixing several aspects. You can define both action methods and interceptors in a controller Trait.
+Scala Traits can be used to compose controller more efficiently by mixing several aspects. You can define both action methods and interceptors in a controller Trait.
 
-For example the following **Secure** trait add a seucrity interceptor to any controller applying the Trait:
+For example the following **Secure** trait adds a security interceptor to any controller applying the Trait:
 
 bc. trait Secure {
     self:Controller =>
@@ -283,4 +283,4 @@ bc. object Application extends Controller with Secure {
 
 <hr>
 
-There is also small differences about %(next)"Data binding":dataBinding%
+There are also small differences about %(next)"Data binding":dataBinding%

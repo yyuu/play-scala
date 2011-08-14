@@ -4,7 +4,7 @@ Play Scala provides JSON support using the sjson and dispatch-json libraries.
 
 h2. Producing JSON output
 
-The simpliest way to produce JSON output is to use the @tojson@ function:
+The simplest way to produce JSON output is to use the @tojson@ function:
 
 bc. import play.libs.JSON.tojson
 val out = tojson(List[10, 20, 30, 40])

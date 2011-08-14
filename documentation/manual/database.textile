@@ -4,15 +4,15 @@ Most of your applications will need to access to a database. This page describe 
 
 h2. Using Anorm
 
-The Scala module includes a brand new data access layer called *Anorm* that uses plain SQL to make your database request and provides several API to parse and transform the resulting dataset. 
+The Scala module includes a brand new data access layer called *Anorm* that uses plain SQL to make your database requests and provides several APIs to parse and transform the resulting datasets. 
 
-We believe that it is the best way to access your relational databases from Scala and this component will be encouraged and fully integrated with the rest of the Play Scala stack.
+We believe that this is the best way to access your relational databases from Scala and this component will be encouraged and fully integrated with the rest of the Play Scala stack.
 
 Please check the "complete manual":anorm for more information.
 
 h2. Integrating other existing Database access librairies
 
-Perhaps you already use another existing Database access library for Scala and you want to keep using it from your Play application. Basically a Play application manage the JDBC connection for you, and provide your application with a simple @java.sql.Connection@ object that you can use to integrate any other existing framework you want.
+Perhaps you already use another existing database access library for Scala and you want to keep using it from your Play application. Basically a Play application manages the JDBC connection for you, and provides your application with a simple @java.sql.Connection@ object that you can use to integrate any other existing framework you want.
 
 For example, here are the few steps need to integrate "ScalaQuery":http://scalaquery.org/ with your Play application.
 
@@ -53,7 +53,7 @@ db=mem
 
 h3. 3. Create an SQL evolution Script to initialize your database
 
-Create the **db/evolutions** directory structure in your application if it doesn't already exists, and add a first evolution script **1.sql**:
+Create the **db/evolutions** directory structure in your application if it doesn't already exist, and add a first evolution script **1.sql**:
 
 bc. # Users schema
  
@@ -83,7 +83,7 @@ bc. …
 
 h3. Use ScalaQuery in your code
 
-Now let's write a simple action method that queries all the **Members** registred in our database:
+Now let's write a simple action method that queries all the **Members** registered in our database:
 
 bc. import play.mvc._
  
