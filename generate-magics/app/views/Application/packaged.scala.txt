@@ -1,0 +1,83 @@
+@(i:Int)
+@magics(i:Int) = {
+@ts = {@args("A")}
+@args(prefix:String, separator:String = ", ") = { @Range(1,i+1).map{i =>@prefix@i}.mkString(separator)}
+    abstract class AbstractMagicParser@(i)[@ts,R]( 
+        tableDescription:Option[Description@i]=None,
+        conventions: PartialFunction[AnalyserInfo,String] = defaultConvention)
+        (implicit @Range(1,i+1).map{i =>c@(i):ColumnTo[A@i]}.mkString(", "), r:Manifest[R]) extends MParser@(i)[@ts, R] {
+        @Range(1,i+1).map{ i =>
+            lazy val p@i = c@i}
+
+            lazy val typeName = r.erasure.getSimpleName
+            lazy val containerName = tableDescription.map(_.table).orElse(conventions.lift(TableC(typeName))).getOrElse(typeName)
+
+            def thisClass:Class[_] = implicitly[Manifest[this.type]].erasure
+
+
+            lazy val columnNames = tableDescription.flatMap(_.columns).getOrElse {
+                thisClass.getDeclaredMethods()
+                         .filter(_.getName()=="apply")
+                         .find(_.getParameterTypes().length == @i)
+                         .map(getParametersNames)
+                         .map( _.map(c =>  conventions(ColumnC(containerName,c)) ))
+                         .collect{case Seq(@args("a")) => (@args("a"))}
+                         .get
+
+           }
+    }
+
+    abstract class AbstractMagic@(i)[@args("A"), R](
+        tableDescription:Option[Description@i]=None,
+        conventions: PartialFunction[AnalyserInfo,String] = defaultConvention)
+       (implicit @Range(1,i+1).map{ i =>ptt@(i):(ColumnTo[A@i],ToStatement[A@i])}.mkString(", "), r:Manifest[R]) extends AbstractMagicParser@(i)[@args("A"), R](tableDescription = tableDescription, conventions = conventions)(
+@Range(1,i+1).map{i =>ptt@(i)._1}.mkString(", "),r) with  M@(i)[@args("A"), R]{
+ @Range(1,i+1).map{ i =>
+        lazy val pt@i = ptt@i }
+}
+
+    case class MagicParser@(i)[@args("A"), R](
+        cons: Function@(i)[@args("A"), R],
+        tableDescription:Option[Description@i]=None,
+        conventions: PartialFunction[AnalyserInfo,String] = defaultConvention)
+       (implicit @Range(1,i+1).map{i =>c@(i):ColumnTo[A@i]}.mkString(", "), r:Manifest[R]) extends AbstractMagicParser@(i)[@args("A"), R](tableDescription = tableDescription, conventions = conventions){
+           override def thisClass = cons.getClass
+           def apply(@Range(1,i+1).map{i =>a@i:A@i}.mkString(", ")):R = cons(@args("a"))
+
+}
+    case class Magic@(i)[@args("A"), R](
+        companion: Companion@(i)[@args("A"), R],
+        tableDescription:Option[Description@i]=None,
+        conventions: PartialFunction[AnalyserInfo,String] = defaultConvention)
+       (implicit @Range(1,i+1).map{ i =>ptt@(i):(ColumnTo[A@i],ToStatement[A@i])}.mkString(", "), r:Manifest[R]) extends AbstractMagic@(i)[@args("A"), R](
+                     tableDescription = tableDescription,
+                     conventions = conventions)(@args("ptt"),r){
+           override def thisClass = companion.getClass
+           def apply(@Range(1,i+1).map{i =>a@i:A@i}.mkString(", ")):R = companion(@args("a"))
+           def unapply(r:R):Option[(@args("A"))] = companion.unapply(r)
+    }        
+
+    case class Description@(i)(table:String,columns: Option[(@(List.fill(i)("String").mkString(", ")))]=None)
+
+    trait Companion@(i)[@args("A"), R]{
+         def apply(@Range(1,i+1).map{i =>a@i:A@i}.mkString(", ")):R
+         def unapply(r:R):Option[(@args("A"))]
+    }
+}
+package play.db
+
+package anorm {
+
+case class WithDefaults(defaultConvention: PartialFunction[AnalyserInfo,String] = asIs) {
+
+    import java.lang.reflect.Method
+
+    def getParametersNames(m:Method):Seq[String] = {
+            import scala.collection.JavaConversions._
+            play.classloading.enhancers.LocalvariablesNamesEnhancer.lookupParameterNames(m)
+    } 
+
+@Range(2,i+1).map(magics)
+
+}
+}

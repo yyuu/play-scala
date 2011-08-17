@@ -1,0 +1,100 @@
+@(i:Int)
+@ts = {@args("A")}
+@args(prefix:String, separator:String = ", ") = { @Range(1,i+1).map{i =>@prefix@i}.mkString(separator)}
+
+package play.db
+
+import play.utils.Scala.MayErr
+import play.utils.Scala.MayErr._
+
+package anorm {
+
+    trait MParser@(i)[@ts, R] extends ParserWithId[R] {
+    @Range(1,i+1).map { i =>
+        val p@i:ColumnTo[A@i]
+}
+        def apply(@Range(1,i+1).map{i =>a@i:A@i}.mkString(", ") ):R
+
+        val containerName:String
+        val columnNames:(@List.fill(i){String}.mkString(", "))
+
+        lazy val (@Range(1,i+1).map{i =>name@i}.mkString(" ,")) = columnNames
+
+        import SqlParser._
+        override def apply(input:Input):SqlParser.ParseResult[R] = 
+            (@Range(1,i+1).map{i =>
+             get[A@i](name@i)(p@i)}.mkString(" ~< ") ^^ { case @(Range(1,i+1).map("a"+_).mkString(" ~ ")) => apply(@Range(1,i+1).map{i=>a@i}.mkString(", "))} )(input)
+
+        val uniqueId : (Row=> MayErr[SqlRequestError,Any]) = null
+    }
+
+        trait M@(i)[@ts, R] {
+            self: MParser@(i)[@args("A"),R] =>
+            @Range(1, i+1).map{ i =>
+            val pt@i:(ColumnTo[A@i],ToStatement[A@i])}
+
+            def unapply(r:R):Option[(@ts)]
+            def unqualify(columnName:String) = columnName.split('.').last
+
+            def update(v:R)(implicit hasId: @Range(1,i+1).map{ i =>(A@i <:< Pk[_])}.mkString("|:|") ) = {
+
+                val all = ((v,hasId) match {
+                        case (self(@args("a")), (@args("e"," |:| "))) => 
+                            List ( @Range(1,i+1).map{i =>
+                                   (e@i, unqualify(name@i), toParameterValue(a@i)(pt@(i)._2))}.mkString(", "))
+                })
+
+                val (ids,toSet) = all.partition(_._1.isDefined)
+                    if(ids == all) throw new Exception("everything is a Pk, nothing left to set!")
+
+                val toUpdate = toSet.map(_._2).map(n => n+" = "+"{"+n+"}").mkString(", ")
+
+                import Sql._
+
+                sql("update "+containerName +" set "+toUpdate+
+                    " where "+ ids.map(_._2).map( n => n+" = "+"{"+n+"}").mkString(" and ") )
+                        .on(all.map(v =>  (v._2,v._3)): _* )
+                        .executeUpdate()
+        
+            }
+
+           def create(v:R)(implicit hasId: @Range(1,i+1).map{ i =>(A@i <:< Pk[_])}.mkString("|:|") ) :R = {
+
+                val all = ((v,hasId) match {
+                        case (self(@args("a")), (@args("e"," |:| "))) => 
+                            List ( @Range(1,i+1).map{i =>
+                                   (e@i, unqualify(name@i), toParameterValue(a@i)(pt@(i)._2))}.mkString(", "))
+                })
+
+                val (notSetIds,toSet) = all.partition(i => i._1.isDefined && i._3.aValue==NotAssigned)
+                if(notSetIds.length > 1) throw new Exception("multi ids not supported")
+                val toInsert = toSet.map(_._2)
+
+                import Sql._
+                import scala.util.control.Exception._
+                import SqlParser._
+
+                val idParser:SqlParser.Parser[_] = {
+                    SqlParser.RowParser(row =>
+                        row.asList.headOption.flatMap(a =>
+                            (if (a.isInstanceOf[Option[_]]) a else Option(a)).asInstanceOf[Option[_]]
+                        ).toRight(NoColumnsInReturnedResult)
+                    )
+                }
+
+                val (statement, ok) = sql("insert into "+containerName+" ( "+toInsert.mkString(", ")+" ) values ( "+toInsert.map("{"+_+"}").mkString(", ")+")")
+                    .on(all.map(v =>  (v._2,v._3)): _* )
+                    .execute1(getGeneratedKeys=true)
+
+                val rs = statement.getGeneratedKeys();
+                val id = idParser(StreamReader(Sql.resultSetToStream(rs))).get
+
+                val List(@args("a")) = all.map(_._3.aValue).map({case NotAssigned => Id(id); case other => other})
+                apply(@Range(1,i+1).map{i =>a@(i).asInstanceOf[A@i]}.mkString(", "))
+
+        
+        }
+    }
+
+}
+
