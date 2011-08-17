@@ -13,9 +13,13 @@ package object anorm {
     def SQL(stmt: String) = Sql.sql(stmt)
 
     val asIs :PartialFunction[AnalyserInfo,String] = {case ColumnC(t,f) => t+"."+f; case TableC(typeName) => typeName}
-    val defaults = Convention(asIs)
 
-//  implicit def statementInOut[A](implicit c:ColumnTo[A]):(ColumnTo[A],ToStatement[A]) = (c,null)
+    val defaults = new Convention(asIs) with WithDefaults{
+
+        override lazy val defaultConvention = asIs
+    }
+
+    implicit def statementInOut[A](implicit c:ColumnTo[A], ts:ToStatement[A]):(ColumnTo[A],ToStatement[A]) = (c,ts)
 
 }
 
@@ -786,12 +790,18 @@ package anorm {
                     case Some(o) => stmt.setObject(index, o)
                     case None => stmt.setObject(index, null)
                     case bd:java.math.BigDecimal => stmt.setBigDecimal(index,bd)
+                    case date:java.util.Date => stmt.setDate(index,new java.sql.Date(date.getTime()))
                     case o => stmt.setObject(index,o)
                 }
                 stmt
             }
 
             def set(s:java.sql.PreparedStatement,index:Int,aValue:T):Unit = setAny(index, aValue, s)
+        }
+
+        implicit val dateToStatement = new ToStatement[java.util.Date] {
+            def set(s:java.sql.PreparedStatement, index:Int, aValue:java.util.Date):Unit = s.setDate(index,new java.sql.Date(aValue.getTime()))
+
         }
 
         implicit def optionToStatement[A](implicit ts:ToStatement[A]):ToStatement[Option[A]] = new ToStatement[Option[A]] {
