@@ -310,13 +310,6 @@ package anorm {
     trait M[T] extends MParser[T] {
         self =>
 
-        protected def setAny(index:Int,value:Any,stmt:java.sql.PreparedStatement):java.sql.PreparedStatement = {
-          value match {
-            case bd:java.math.BigDecimal => stmt.setBigDecimal(index,bd)
-            case o => stmt.setObject(index,o)
-          }
-          stmt
-        }
         def anyParameter = ToStatement.anyParameter[Any]
 
         override val conventions: PartialFunction[AnalyserInfo,String] = asIs
