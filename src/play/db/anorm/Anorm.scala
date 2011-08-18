@@ -317,8 +317,7 @@ package anorm {
           }
           stmt
         }
-        def anyParameter = new ToStatement[Any]{
-            def set(s:java.sql.PreparedStatement,index:Int,aValue:Any):Unit = setAny(index, aValue, s)}
+        def anyParameter = ToStatement.anyParameter[Any]
 
         override val conventions: PartialFunction[AnalyserInfo,String] = asIs
 
