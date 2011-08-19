@@ -262,13 +262,24 @@ package anorm {
         implicit def flattenerTo11[T1,T2,T3,T4,T5,T6,T7,T8,T9,T10,T11] :TupleFlattener[(T1 ~ T2 ~T3 ~ T4 ~ T5 ~ T6 ~ T7 ~ T8 ~ T9 ~ T10 ~ T11) =>(T1,T2,T3,T4,T5,T6,T7,T8,T9,T10,T11)] = TupleFlattener[(T1 ~ T2 ~ T3 ~ T4 ~ T5 ~ T6 ~ T7 ~ T8 ~ T9 ~ T10 ~ T11) => (T1,T2,T3,T4,T5,T6,T7,T8,T9,T10,T11)]{ case (t1~t2~t3~t4~t5~t6~t7~t8~t9~t10~t11) => (t1,t2,t3,t4,t5,t6,t7,t8,t9,t10,t11) }
     }
 
+    trait ExtendSupport {
+        def extendExtractor[C](f:(Manifest[C] => Option[ColumnTo[C]])) :PartialFunction[Manifest[C],Option[ColumnTo[C]]]
+        def extendSetAny(original: ToStatement[Any]):ToStatement[Any]
+    }
+    object JustDefault extends ExtendSupport {
+        def extendExtractor[C](f:(Manifest[C] => Option[ColumnTo[C]])) :PartialFunction[Manifest[C],Option[ColumnTo[C]]] = { case _ if false => None }
+        def extendSetAny(original: ToStatement[Any]):ToStatement[Any] = original
+    }
 
-    case class Convention(conv:PartialFunction[AnalyserInfo,String]) {
+
+    case class Convention(conv:PartialFunction[AnalyserInfo,String], extendSupport: ExtendSupport = JustDefault) {
 
         case class Magic[T](override val tableName: Option[String] = None,
                             override val conventions: PartialFunction[AnalyserInfo,String] = conv)
                                (implicit val m: ClassManifest[T]) extends M[T] {
             def using(tableName:Symbol) = this.copy(tableName=Some(tableName.name))
+            override def extendExtractor[C](f:(Manifest[C] => Option[ColumnTo[C]])) :PartialFunction[Manifest[C],Option[ColumnTo[C]]] = extendSupport.extendExtractor(f)
+            override def anyParameter :ToStatement[Any] = extendSupport.extendSetAny(super.anyParameter)
         }
 
 
@@ -282,6 +293,7 @@ package anorm {
                                    override val conventions: PartialFunction[AnalyserInfo,String] = conv)
                                       (implicit val m:ClassManifest[T]) extends  MParser[T] with Analyser[T] {
             def using(tableName:Symbol) = this.copy(tableName=Some(tableName.name))
+            override def extendExtractor[C](f:(Manifest[C] => Option[ColumnTo[C]])) :PartialFunction[Manifest[C],Option[ColumnTo[C]]] = extendSupport.extendExtractor(f)
         }
 
     }

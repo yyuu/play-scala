@@ -128,7 +128,7 @@ class SqlTests extends UnitTestCase with ShouldMatchersForJUnit {
     SQL("select * from Task join Student on Task.id=Student.Task_Id").as(Task ~< Student) should be (SqlParser.~(new Task("some comment"),Student("1")))
   }
 
-  val withDef = new play.db.anorm.WithDefaults()
+  val withDef = play.db.anorm.defaults
   import withDef._
 
   case class BBB(id:String,comment:String)
