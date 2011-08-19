@@ -272,7 +272,7 @@ package anorm {
     }
 
 
-    case class Convention(conv:PartialFunction[AnalyserInfo,String], extendSupport: ExtendSupport = JustDefault) {
+    case class Convention(conv:PartialFunction[AnalyserInfo,String] = asIs, extendSupport: ExtendSupport = JustDefault) {
 
         case class Magic[T](override val tableName: Option[String] = None,
                             override val conventions: PartialFunction[AnalyserInfo,String] = conv)
