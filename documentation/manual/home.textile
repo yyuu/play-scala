@@ -69,4 +69,5 @@ Here is the Scala version of the well known **‘Yet Another Blog Engine’** Pl
 # "Building the first screen":guide3
 # "The comments page":guide4
 # "Setting up a Captcha":guide5
+# "Adding Tagging support":guide6
 # (to be continued)
