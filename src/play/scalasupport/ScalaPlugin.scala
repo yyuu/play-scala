@@ -30,6 +30,8 @@ class ScalaPlugin extends PlayPlugin {
 
         // Now scala is activated
         Logger.info("Scala support is active")
+
+        Logger.info("play-scala plugin version : "+playScalaPluginVersion)
     }
 
     override def onConfigurationRead() {
@@ -202,6 +204,13 @@ class ScalaPlugin extends PlayPlugin {
         } else {
             Right(Nil,Nil)
         }
+    }
+
+    /**
+     * The version number is set by Ant script at compile time in the MANIFEST.MF file, with standard java fields.
+     */
+    lazy val playScalaPluginVersion = {
+        classOf[ScalaPlugin].getPackage.getImplementationTitle + "-" + classOf[ScalaPlugin].getPackage.getImplementationVersion
     }
 
 }

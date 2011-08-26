@@ -2,6 +2,8 @@
 
 <project name="Scala" default="build" basedir=".">
 
+    <property name="play-scala.plugin.version" value="0.9.1" description="Default value, if the plugin was not build from local checked-out project"/>
+
     <path id="project.classpath">
         <fileset dir="lib">
             <include name="*.jar"/>
@@ -55,7 +57,7 @@
         </jar>
     </target>
 
-    <target name="build" depends="check,build-compiler">
+    <target name="build" depends="check,build-compiler,git.revision">
         <delete file="commands.pyc" />
         <delete dir="tmp" />
         <delete file="lib/play-scala.jar" />
@@ -82,14 +84,15 @@
 
         <jar destfile="lib/play-scala.jar" basedir="tmp/classes">
             <manifest>
-                <section name="Play">
-                    <attribute name="Specification-Title" value="Scala"/>
-                </section>
+                    <attribute name="Specification-Title" value="Play Scala module"/>
+                    <attribute name="Specification-Version" value="${repository.version}"/>
+                    <attribute name="Implementation-Title" value="play-scala"/>
+                    <attribute name="Implementation-Version" value="${repository.version}"/>
             </manifest>
         </jar>
     </target>
 
-    <target name="incremental" depends="check">
+    <target name="incremental" depends="check,git.revision">
 
         <java classname="play.scalasupport.build.ModuleBuilder" fork="true" maxmemory="1024m" failonerror="true">
             <jvmarg value="-Xms512m" />
@@ -108,9 +111,10 @@
 
         <jar destfile="lib/play-scala.jar" basedir="tmp/classes">
             <manifest>
-                <section name="Play">
-                    <attribute name="Specification-Title" value="Scala"/>
-                </section>
+                    <attribute name="Specification-Title" value="Play Scala module"/>
+                    <attribute name="Specification-Version" value="${repository.version}"/>
+                    <attribute name="Implementation-Title" value="play-scala"/>
+                    <attribute name="Implementation-Version" value="${repository.version}"/>
             </manifest>
         </jar>
 
@@ -163,6 +167,24 @@
                 </not>
             </condition>
         </fail>
+    </target>
+
+    <available file=".git" type="dir" property="git.present"/>
+
+    <!--Retrieves the git local revision number or returns play-scala.plugin.version if not found -->
+    <target name="git.revision" description="Store git revision in ${repository.version}" if="git.present">
+        <exec executable="git" outputproperty="git.revision" failifexecutionfails="false" errorproperty="">
+            <arg value="describe"/>
+            <arg value="--tags"/>
+            <arg value="--always"/>
+            <arg value="HEAD"/>
+        </exec>
+        <condition property="repository.version" value="${git.revision}" else="${play-scala.plugin.version}">
+            <and>
+                <isset property="git.revision"/>
+                <length string="${git.revision}" trim="yes" length="0" when="greater"/>
+            </and>
+        </condition>
     </target>
 
 </project>
