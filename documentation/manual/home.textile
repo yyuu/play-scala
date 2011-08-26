@@ -44,7 +44,7 @@ The Scala version of Play framework uses the same philosophy and concepts as the
 # "Scala templates":templates
 ## "Overview":templates#Overview
 ## "Syntax: the magic ‘@’ character":templates#Syntaxthemagiccharacter
-## "Template paramters":templates#Templateparameters
+## "Template parameters":templates#Templateparameters
 ## "Looping":templates#Looping
 ## "If-Blocks":templates#IfBlocks
 ## "Pattern Matching":templates#Patternmatching
