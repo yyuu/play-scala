@@ -143,4 +143,4 @@ Great!
 
 <hr>
 
-p(note). (to be continued)
+p(note). Next: %(next)"Adding Tagging support":guide6%.
