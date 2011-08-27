@@ -4,7 +4,7 @@ As our blog will contain more posts, it will become more and more difficult to r
 
 h2. <a name="model">The Tag model object</a>
 
-Let's set-up the database model. Create a new evolution script to update your database schema, */yabe/db/evolutions/4.sql*:
+Let’s set-up the database model. Create a new evolution script to update your database schema, @yabe/db/evolutions/4.sql@:
 
 bc. # --- !Ups
 CREATE TABLE Tag (
@@ -15,7 +15,7 @@ CREATE TABLE Tag (
 # --- !Downs
 DROP TABLE Tag;
 
-Reload, and apply the evolution. Now create the corresponding Scala structure for @Tag@ in the same models.scala file you used for @Post@ and @Author@:
+Reload, and apply the evolution. Now create the corresponding Scala structure for @Tag@ in the same @models.scala@ file you used for @Post@ and @Author@:
 
 bc. case class Tag(
     id: Pk[Long],
@@ -38,7 +38,7 @@ bc. object Tag extends Magic[Tag] {
     }
 }
 
-We use Anorm to lookup for the Tag by name. The @first()@ function returns an @Option[models.Tag]@ with either a @Tag@ or @None@ if there's no tag for this name. We use @getOrElse@ to either returns the @Tag@ if it was found or to execute the code in the else section. The @create()@ function from Anorm will insert a new @Tag@ into the Database. Because the last expression that is evaluated is the create, it will return the new @Tag@ automatically.
+We use Anorm to lookup for the Tag by name. The @first()@ function returns an @Option[models.Tag]@ with either a @Tag@ or @None@ if there is no tag for this name. We use @getOrElse@ to either return the @Tag@, if it was found, or to execute the code in the else section. The @create()@ function from Anorm will insert a new @Tag@ into the Database. Because the last expression that is evaluated is the create, it will return the new @Tag@ automatically.
 
 A less-verbose version of this code that is identical could be:
 
@@ -51,9 +51,9 @@ bc. object Tag extends Magic[Tag] {
 
 h2. <a name="tagging">Tagging posts</a>
 
-Now it’s time to link the new Tag model with the @Post@ one. A @Post@ contains many @Tags@ and a @Tag@ can be linked to may @Post@. Let’s add the correct relationship to the @Post@ class.
+Now it’s time to link the new @Tag@ model with the @Post@ model. A @Post@ contains many @Tags@ and a @Tag@ can be linked to many @Post@ objects. Let’s add the correct relationship to the @Post@ class.
 
-Create a new evolution script to update your database schema, */yabe/db/evolutions/5.sql*:
+Create a new evolution script to update your database schema, @yabe/db/evolutions/5.sql@:
 
 bc. --- Downs can be configured before Ups
     
@@ -74,7 +74,7 @@ CREATE TABLE TagsForPosts (
 
 Save the new evolution SQL script, reload your web browser and check that the script was applied.
 
-Let's create a new @TagsForPosts@ case class and its companion object :
+Let’s create a new @TagsForPosts@ case class and its companion object:
 
 bc. case class TagsForPosts(id:Pk[Long],
                             tag_id:Long,
@@ -89,9 +89,9 @@ Save your code and reload, it should compile.
 
 h2. <a name="helpers">Adding helpers</a>
 
-When you write a web application, try to enrich your domain to ease the development. A Controller should be as lightweight as possible. For our blog application, we need a method to tag a specific @Post@, and a method that will return the list of tags for a specific @Post@.
+When you write a web application, try to enrich your domain to ease development. A controller should be as lightweight as possible. For our blog application, we need a method to tag a specific @Post@, and a method that will return the list of tags for a specific @Post@.
 
-Edit the @Post case class@, not the companion object, and add a new function @tagItWith(name: String)@ :
+Edit the @Post case class@, not the companion object, and add a new function @tagItWith(name: String)@:
 
 bc. // In models.scala in the case class Post
 def tagItWith(name:String) = {
@@ -99,7 +99,7 @@ def tagItWith(name:String) = {
     TagsForPosts.link(tag.id(),id())
 }
 
-Edit the @TagsForPosts@ object and create a new @link@ function :
+Edit the @TagsForPosts@ object and create a new @link@ function:
 
 bc. object TagsForPosts extends Magic[TagsForPosts] {
     def apply(tag_id:Long,post_id:Long) = new TagsForPosts(NotAssigned,tag_id,post_id)
@@ -121,9 +121,9 @@ bc. object TagsForPosts extends Magic[TagsForPosts] {
     }
 }
 
-This code is a little bit more complex. We want to insert a new line in @TagsForPosts@. We need first to check that the specified @tag_id@ and @post_id@ exists. Once we are sure that both objects exist, we can insert a new @TagsForPosts@. But what should we do if there's already an entry? Well we will just return the @TagsForPosts@ id and that's it.
+This code is a little bit more complex. We want to insert a new line in @TagsForPosts@. We need first to check that the specified @tag_id@ and @post_id@ exist. Once we are sure that both objects exist, we can insert a new @TagsForPosts@. But what should we do if there’s already an entry? Well we will just return the @TagsForPosts@ ID and that’s it.
 
-We need also another helper method on the @Post@ object companion. Add this new function to the object :
+We need also another helper method on the @Post@ object companion. Add this new function to the object:
 
 bc. object Post extends Magic[Post] {
     // ... some other def
@@ -137,13 +137,13 @@ bc. object Post extends Magic[Post] {
         """).on("name"->name).as(Post *)
 }
 
-The @findTaggedWith@ method search for @Post@ by @Tag@ name and returns a new List of @Post@ or Nil if nothing was found.
+The @findTaggedWith@ method searches for @Post@ instances by @Tag@ name and returns a new List of @Post@ or @Nil@ if nothing was found.
 
-Time for test. Let's see if it works. Open @Tests.scala@ and add a new test at the end of the file :
+Time for tests. Let’s see if it works. Open @Tests.scala@ and add a new test at the end of the file:
 
 bc.    it should "support Tags" in {
         User.create(User(Id(1), "nmartignole@touilleur-express.fr", "secret1", "Nicolas", false))
-        val postJava=Post.create(Post(NotAssigned, "My first post", "Java and Scala : yes it rocks!", new Date, 1))
+        val postJava=Post.create(Post(NotAssigned, "My first post", "Java and Scala: yes it rocks!", new Date, 1))
         val javaTag = Tag.create(Tag("Java"))
         val scalaTag = Tag.create(Tag("Scala"))
         
@@ -167,17 +167,16 @@ bc.    it should "support Tags" in {
         postScala.tagItWith("Scala")
         Post.findTaggedWith("Scala").length should be(2)
         
-        // Let's see what happens when we delete a Post
+        // Let’s see what happens when we delete a Post
         Post.delete("where id={pid}").on("pid" -> postJava.id()).executeUpdate()
         Post.findTaggedWith("Scala").length should be(1)
     }
 
-Reload and check in your browser : it should work.
+Reload and check in your browser: it should work.
 
-h2. <a>How to return the list of Post that match a List of Tags?</a>
+h2. <a>How to return the list of posts that match a list of tags?</a>
 
-Well, we won’t use it in our blog right now, but what if we wanted to retrieve posts tagged with several tags? It’s a little bit easier than the JPA version, thanks to Scala.
-The tricky part is that we have to use a @having count@ statement to filter only posts that have exactly **all tags** from the joined view.
+Well, we won’t use it in our blog right now, but what if we wanted to retrieve posts tagged with several tags? It’s a little bit easier than the JPA version, thanks to Scala. The tricky part is that we have to use a @having count@ statement to filter only posts that have exactly **all tags** from the joined view.
 
 bc. def findTaggedWith(tagNames:List[String]):List[Post] = {
     println(tagNames.mkString("','"))
@@ -188,7 +187,7 @@ bc. def findTaggedWith(tagNames:List[String]):List[Post] = {
             +") group by p.id having count(t.id) = {size}").on("size"->tagNames.length).as(Post *)
 }
 
-Add a new test in @Tests.scala@. We create a postScala item, that is tagged with "Scala". Then we create a new Post tagged as "Scala" and "NoSQL". The @findTaggedWith@ should returns only the 2nd post if we lookup for "Scala" and "NoSQL" tags: 
+Add a new test in @Tests.scala@. We create a @postScala@ item that is tagged with ‘Scala’. Then we create a new @Post@ tagged as ‘Scala’ and ‘NoSQL’. The @findTaggedWith@ should only return the second post if we look up the ‘Scala’ and ‘NoSQL’ tags: 
 
 bc. it should "retrieves a list of Post for a List of Tags" in {
     User.create(User(Id(1), "nmartignole@touilleur-express.fr", "secret1", "Nicolas", false))
@@ -209,6 +208,4 @@ h2. <a name="cloud">The Tag cloud</a>
 
 Where we have tags, we need a tag cloud. Let’s add a method to the @Tag@ class to generate the tag cloud:
 
-[To be continued]
-
-p(note). (to be continued)
+p(note). To be continued…
