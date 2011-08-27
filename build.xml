@@ -4,6 +4,7 @@
 
     <property name="play-scala.plugin.version" value="0.9.1" description="Default value, if the plugin was not built from local checked-out project"/>
 
+
     <path id="project.classpath">
         <fileset dir="lib">
             <include name="*.jar"/>
