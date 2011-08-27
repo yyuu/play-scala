@@ -207,7 +207,7 @@ class ScalaPlugin extends PlayPlugin {
     }
 
     /**
-     * The version number is set by Ant script at compile time in the MANIFEST.MF file, with standard java fields.
+     * The version number is set by the Ant script at compile time in the MANIFEST.MF file, with standard Java fields.
      */
     lazy val playScalaPluginVersion = {
         classOf[ScalaPlugin].getPackage.getImplementationTitle + "-" + classOf[ScalaPlugin].getPackage.getImplementationVersion

@@ -2,7 +2,7 @@
 
 <project name="Scala" default="build" basedir=".">
 
-    <property name="play-scala.plugin.version" value="0.9.1" description="Default value, if the plugin was not build from local checked-out project"/>
+    <property name="play-scala.plugin.version" value="0.9.1" description="Default value, if the plugin was not built from local checked-out project"/>
 
     <path id="project.classpath">
         <fileset dir="lib">
@@ -144,7 +144,7 @@
         </antcall>
 
         <echo message="*****************" />
-        <echo message="All test passed !" />
+        <echo message="All tests passed!" />
         <echo message="*****************" />
 
     </target>
