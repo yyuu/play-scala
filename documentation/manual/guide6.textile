@@ -142,7 +142,7 @@ The @findTaggedWith@ method searches for @Post@ instances by @Tag@ name and retu
 Time for tests. Let’s see if it works. Open @Tests.scala@ and add a new test at the end of the file:
 
 bc.    it should "support Tags" in {
-        User.create(User(Id(1), "nmartignole@touilleur-express.fr", "secret1", "Nicolas", false))
+        User.create(User(Id(1), "bob@gmail.com", "secret1", "Bob Morane", false))
         val postJava=Post.create(Post(NotAssigned, "My first post", "Java and Scala: yes it rocks!", new Date, 1))
         val javaTag = Tag.create(Tag("Java"))
         val scalaTag = Tag.create(Tag("Scala"))
@@ -190,7 +190,7 @@ bc. def findTaggedWith(tagNames:List[String]):List[Post] = {
 Add a new test in @Tests.scala@. We create a @postScala@ item that is tagged with ‘Scala’. Then we create a new @Post@ tagged as ‘Scala’ and ‘NoSQL’. The @findTaggedWith@ should only return the second post if we look up the ‘Scala’ and ‘NoSQL’ tags: 
 
 bc. it should "retrieves a list of Post for a List of Tags" in {
-    User.create(User(Id(1), "nmartignole@touilleur-express.fr", "secret1", "Nicolas", false))
+    User.create(User(Id(1), "bob@gmail.com", "secret1", "Bob Morane", false))
     val postScala=Post.create(Post(NotAssigned, "My SCala post", "Scala  for dummies", new Date, 1))
     postScala.tagItWith("Scala")
     
@@ -206,6 +206,266 @@ bc. it should "retrieves a list of Post for a List of Tags" in {
 
 h2. <a name="cloud">The Tag cloud</a>
 
-Where we have tags, we need a tag cloud. Let’s add a method to the @Tag@ class to generate the tag cloud:
+Where we have tags, we need a tag cloud. Let’s add a method to the @Tag@ object to generate the tag cloud. The Scala version is simplier than the Java/JPA version. We don't need to use the JPQL new/map tricks. We will use the Parser Combinator, a very powerful feature of play-scala.
+
+Add a new function @getTag@ in @TagsForPosts@ companion object:
+
+bc. def getCloud:List[(String,Long)] = {
+    SQL(""" 
+            SELECT t.name, count(p.id) as totalPosts 
+            FROM Post p
+            JOIN TagsForPosts tfp on p.id=tfp.post_id
+            JOIN Tag t ON tfp.tag_id=t.id
+            GROUP BY t.name ORDER BY t.name  
+            """).as(str("name") ~< long("totalPosts") ^^ flatten *)
+} 
+
+Add a new test in @Tests.scala@ that creates 3 entries, and check that the Tag cloud is Java=2, Scala=1 and JEE=1:
+
+bc. it should "returns a Tag Cloud" in {
+    User.create(User(Id(1), "bob@gmail.com", "secret1", "Bob Morane", false))
+    
+    val postJava=Post.create(Post(NotAssigned, "My first post", "Java 7 is out!", new Date, 1))
+    postJava.tagItWith("Java")
+    postJava.tagItWith("JEE")
+    
+    val postScalaJava =Post.create(Post(NotAssigned, "Another post", "Java and Scala : yes it rocks!", new Date, 1))
+    postScalaJava.tagItWith("Java")
+    postScalaJava.tagItWith("Scala")
+    
+    val cloud:List[(String,Long)]=TagsForPosts.getCloud
+    
+    cloud.length should be(3)
+    
+    cloud.map { tagAndTotal =>
+        tagAndTotal match {
+            case ("Java",cpt)  => cpt should be(2)
+            case ("Scala",cpt) => cpt should be(1)
+            case ("JEE",cpt) => cpt should be(1)
+            case (_,cpt) => cpt should be(0)
+        }
+    }
+}
+
+Reload and execute the test in your browser to validate your code.
+
+h2. <a name="bootstrap">Updating the bootstrap to tag some posts</a>
+
+We can now use the new tagging stuff to add one more way to browse the blog. As always, to work efficiently we need to add a bunch of test tags to our initial data set.
+
+Modify the @/yabe/conf/initial-data.yml@ file to add some tags to the tests posts at the beginning of the file. For example:
+
+bc. 
+- !!models.Tag
+    id:             !!Id[Long] 1
+    name:           Play
+    
+- !!models.Tag
+    id:             !!Id[Long] 2
+    name:           Architecture 
+     
+- !!models.Tag
+    id:             !!Id[Long] 3
+    name:           Test 
+    
+- !!models.Tag
+    id:             !!Id[Long] 4
+    name:           MVC 
+...
+
+To create the relationship between a @Tag@ and a @Post@ we will create some @TagsForPosts@ entries at the end of the file:
+
+bc. ...
+- !!models.TagsForPosts
+    id: !!NotAssigned
+    tag_id: 1
+    post_id: 1
+    
+- !!models.TagsForPosts
+    id: !!NotAssigned
+    tag_id: 1
+    post_id: 2
+    
+- !!models.TagsForPosts
+    id: !!NotAssigned
+    tag_id: 3
+    post_id: 2 
+     
+- !!models.TagsForPosts
+    id: !!NotAssigned
+    tag_id: 4
+    post_id: 3  
+...
+
+We need to declare 2 more entities in the bootstrap. Add 2 new lines in the @yabe/app/boostrap.scala@ file, one line to read and create @Tag@ and one line to read and create @TagsForPosts@: 
+
+bc. import play.jobs._
+    
+@OnApplicationStart class BootStrap extends Job {
+    
+    override def doJob {
+        
+        import models._
+        import play.test._
+        
+        // Import initial data if the database is empty
+        if(User.count().single() == 0) {
+            Yaml[List[Any]]("initial-data.yml").foreach { 
+                _ match {
+                    case u:User => User.create(u)
+                    case p:Post => Post.create(p)
+                    case c:Comment => Comment.create(c)
+                    case t:Tag => Tag.create(t) 
+                    case tfp:TagsForPosts => TagsForPosts.create(tfp) 
+                }
+            }
+        }        
+    }
+}
+
+You need to restart your application to force loading of the new initial data set. The Posts are now correctly tagged but we haven't updated the UI yet.  	
+
+h2. <a name="ui">Updating the UI to display tags</a>
+
+Let's see how we can now display our tags on the web page. First, we will update the @Post@ case class and add a new metho, @getTags@. This method returns the list of @Tags@ for the current @Post@:
+
+bc. 
+case class Post(id: Pk[Long], title: String, content: String, postedAt: Date, author_id: Long) {
+    // some other functions
+    // ...
+    
+    // Returns the list of Tag for this Post    
+    def getTags:List[String]={
+     SQL("""SELECT T.NAME FROM TAG t 
+            JOIN TagsForPosts tfp ON tfp.tag_id=t.id 
+            JOIN Post p on p.id=tfp.post_id 
+            WHERE p.id={id}")
+        .on("id"->id())
+        .as(str("tag.name") *)
+    }
+}
+
+This function selects all tag's name for a specific @Post@ and returns a @List[String]@. 
+
+Time to update the @display.scala.html@ tag now. We will use a different technique here. Instead of specifying a new template parameter, we can also call directly helper's method on object.
+Add a new span for Tags after the @&lt;div class="post-metadata"&gt;@ section :
+
+bc. @(post:(models.Post,models.User,Seq[models.Comment]), mode: String = "full")
+    
+@commentsTitle = {
+    @if(post._3) {
+        @post._3.size comments, latest by @post._3(0).author
+    } else {
+        no comments
+    }
+}
+     
+<div class="post @mode">
+    <h2 class="post-title">
+        <a href="@action(controllers.Application.show(post._1.id()))">@post._1.title</a>
+    </h2>
+    <div class="post-metadata">
+        <span class="post-author">by @post._2.fullname</span>,
+        <span class="post-date">
+            @post._1.postedAt.format("dd MMM yy")
+        </span>
+        @if(mode != "full") {
+            <span class="post-comments">
+                @commentsTitle
+            </span>
+        }
+    
+    <span class="post-tags">
+            - Tagged 
+             @post._1.getTags.mkString(",")
+     </span>
+         
+    </div>
+    @if(mode != "teaser") {
+        <div class="post-content">
+            <div class="about">Detail: </div>
+            @Html(post._1.content.replace("\n", "<br>"))
+        </div>
+    }
+</div>
+
+Let's explain what we added to the display template:
+
+bc. <span class="post-tags">
+        - Tagged 
+         @post._1.getTags.mkString(",")
+</span>
+
+The @post._1@ returns the current @Post@. We apply the @getTags@ function that returns a @List[String]@. Finally, we use the @mkString@ of <a href="ttp://www.scala-lang.org/api/current/index.html#scala.collection.immutable.List">scala.collection.immutable.List</a> to transform the List of String to one single String, where each token is separated by a quote.
+
+In this section you added a new helper method and updated the display tag. We will now see how we could create a new @action@ in our controller to show all posts by tag.
+
+h2. <a name="uiAction">Adding a new action to display all posts by tag name</a>
+
+To complete this tutorial, we will now create a new action that will display all posts for a specific tag. First, we will create a new action in the @Application@ controller, then we will update the @display.scala.html@ tag:
+
+bc. <span class="post-tags">
+        - Tagged 
+        @post._1.getTags.map{ tag=>
+            <a href="@action(controllers.Application.listTagged(tag))">@tag</a>
+    }
+</span>
+
+And create the action method on the **Application** controller:
+
+bc. ...
+    def listTagged(tag:String) = {
+        Post.findTaggedWith(tag)
+    }
+...
+
+As always we create a specific route to keep clean URI:
+
+bc. GET     /posts/{tag}                    Application.listTagged
+
+Well, we have a problem because we have an existing route that conflicts with this new one. These two routes will match the same URI:
+
+bc. GET     /posts/{id}                     Application.show
+GET     /posts/{tag}                    Application.listTagged
+
+But because we’ll assume that an **id** is numeric and a **tag** is not, we can easily solve the situation using a regular expression to restrict the first route:
+
+bc. GET     /posts/{<[0-9]+>id}             Application.show
+GET     /posts/{tag}                    Application.listTagged 
+
+This will work if and only if the @def listTagged@ parameter's name is @tag@. 
+
+Reload and select a post, then select a tag, it should displays a List of @Post@ in your web browser. This is a little bit easier to test than the Java version. 
+
+To complete this tutorial we will define the @listTagged@. Create the @/yabe/app/views/Application/listTagged.scala.html@ template that will be used by the new listTagged action:
+
+bc. @(posts:(List[models.Post]),tag:String)()
+    
+@main(title = "Posts tagged with "+tag) {
+<div id="newPost">
+    @posts.length match {
+        case 1 => {
+            <h3>There is one post tagged '@tag'</h3>
+        }
+        case 0 => {
+            <h3>No post tagged '@tag'</h3>
+        }
+        case x => {
+            <h3>There are @posts.length posts tagged '@tag'</h3>
+        }
+    }
+    
+    <ul>
+        @posts.map { post =>
+        <li><a href="@action(controllers.Application.show(post.id()))">@post.title</a> <em>@post.postedAt.format("dd/MM/yyyy")</em>
+        </li>
+        }
+    </ul>
+</div>
+}
+
+Developer Note : the @posts.length@  does not work in v0.9.1 of play-scala. You will need to upgrade to the latest version of play-scala.
+
+This is the end of this section.
 
 p(note). To be continued…

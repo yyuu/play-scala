@@ -14,10 +14,10 @@ import play.jobs._
                     case u:User => User.create(u)
                     case p:Post => Post.create(p)
                     case c:Comment => Comment.create(c)
+                    case t:Tag => Tag.create(t)
+                    case tfp:TagsForPosts => TagsForPosts.create(tfp)
                 }
             }
         }        
-        
     }
-    
 }
