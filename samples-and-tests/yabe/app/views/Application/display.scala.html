@@ -22,6 +22,14 @@
                 @commentsTitle
             </span>
         }
+        
+    <span class="post-tags">
+            - Tagged 
+             @post._1.getTags.map{ tag=>
+                    <a href="@action(controllers.Application.listTagged(tag))">@tag</a>
+            }
+     </span>
+         
     </div>
     @if(mode != "teaser") {
         <div class="post-content">
@@ -56,4 +64,4 @@
     </div>
     
 }
- 
+        

@@ -53,7 +53,13 @@ case class Post(
     def tagItWith(name:String) = {
         val tag=Tag.findOrCreateByName(name)
         TagsForPosts.link(tag.id(),id())
-    }      
+    }    
+    
+    def getTags:List[String]={
+     SQL("SELECT T.NAME FROM TAG t JOIN TagsForPosts tfp on tfp.tag_id=t.id join Post p on p.id=tfp.post_id where p.id={id}")
+        .on("id"->id())
+        .as(str("tag.name") *)
+    }
 
 }
 
@@ -78,7 +84,6 @@ object Post extends Magic[Post] {
             """
         ).as( Post ~< User ~< Post.spanM( Comment ) ^^ flatten * )
 
-
     def byIdWithAuthorAndComments(id: Long):Option[(Post,User,List[Comment])] =
         SQL(
             """
@@ -88,7 +93,7 @@ object Post extends Magic[Post] {
                 where p.id = {id}
             """
         ).on("id" -> id).as( Post ~< User ~< Post.spanM( Comment ) ^^ flatten ? )
-
+    
     def findTaggedWith(name:String):List[Post] =
         SQL("""
             select * from Post p
@@ -126,8 +131,10 @@ case class Tag(id:Pk[Long],name:String)
 
 object Tag extends Magic[Tag] {
     def apply(name:String) = new Tag(NotAssigned,name)
-    def findOrCreateByName(name:String):Tag =
+    
+    def findOrCreateByName(name:String):Tag = 
         Tag.find("name={pname}").on("pname"->name).first().getOrElse(Tag.create(Tag(name)))
+    
 }
 
 case class TagsForPosts(id:Pk[Long],tag_id:Long,post_id:Long)
@@ -149,5 +156,16 @@ object TagsForPosts extends Magic[TagsForPosts] {
                 }
             }
         ) yield newKey
+    }
+    
+    
+    def getCloud:List[(String,Long)] = {
+          SQL(""" 
+                SELECT t.name, count(p.id) as totalPosts 
+                FROM Post p
+                JOIN TagsForPosts tfp on p.id=tfp.post_id
+                JOIN Tag t ON tfp.tag_id=t.id
+                GROUP BY t.name ORDER BY t.name  
+                """).as(str("name") ~< long("totalPosts") ^^ flatten *)
     }
 }

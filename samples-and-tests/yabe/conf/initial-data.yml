@@ -1,4 +1,21 @@
 
+- !!models.Tag
+    id:             !!Id[Long] 1
+    name:           Play
+
+- !!models.Tag
+    id:             !!Id[Long] 2
+    name:           Architecture 
+ 
+- !!models.Tag
+    id:             !!Id[Long] 3
+    name:           Test 
+
+- !!models.Tag
+    id:             !!Id[Long] 4
+    name:           MVC 
+ 
+ 
 - !!models.User
     id:             !!Id[Long] 1
     email:          bob@gmail.com
@@ -35,7 +52,7 @@
     author_id:      1
     postedAt:       2011-01-27
     content:        >
-                    Well, it's just a test.
+                    Well, it's just a test. This article should be tagged with Test.
 
 - !!models.Post       
     id:             !!Id[Long] 3             
@@ -73,3 +90,23 @@
                     This post is useless ?
     postedAt:       2011-02-28
     post_id:        2
+
+- !!models.TagsForPosts
+    id: !!NotAssigned
+    tag_id: 1
+    post_id: 1
+    
+- !!models.TagsForPosts
+    id: !!NotAssigned
+    tag_id: 1
+    post_id: 2
+        
+- !!models.TagsForPosts
+    id: !!NotAssigned
+    tag_id: 3
+    post_id: 2 
+
+- !!models.TagsForPosts
+    id: !!NotAssigned
+    tag_id: 4
+    post_id: 3              

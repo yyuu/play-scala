@@ -186,5 +186,30 @@ class BasicTests extends UnitFlatSpec with ShouldMatchers with BeforeAndAfterEac
         Post.findTaggedWith(List("NoSQL")).length should be(1)
         Post.findTaggedWith(List("Scala","NoSQL")).length should be(1)
     }
+    
+    it should "returns a Tag Cloud" in {
+        User.create(User(Id(1), "nmartignole@touilleur-express.fr", "secret1", "Nicolas", false))
+        
+        val postJava=Post.create(Post(NotAssigned, "My first post", "Java 7 is out!", new Date, 1))
+        postJava.tagItWith("Java")
+        postJava.tagItWith("JEE")
+        
+        val postScalaJava =Post.create(Post(NotAssigned, "Another post", "Java and Scala : yes it rocks!", new Date, 1))
+        postScalaJava.tagItWith("Java")
+        postScalaJava.tagItWith("Scala")
+        
+        val cloud:List[(String,Long)]=TagsForPosts.getCloud
+        
+        cloud.length should be(3)
+        
+        cloud.map { tagAndTotal =>
+            tagAndTotal match {
+                case ("Java",cpt)  => cpt should be(2)
+                case ("Scala",cpt) => cpt should be(1)
+                case ("JEE",cpt) => cpt should be(1)
+                case (_,cpt) => cpt should be(0)
+            }
+        }
+    }
 
 }

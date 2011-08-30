@@ -56,4 +56,7 @@ object Application extends Controller {
         captcha
     }
     
+    def listTagged(tag:String) = {
+        html.listTagged( Post.findTaggedWith(tag),tag)
+    }
 }
