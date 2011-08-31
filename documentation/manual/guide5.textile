@@ -67,7 +67,15 @@ bc. def show(id: Long) = {
     }
 }
 
-And now the form in the **/yable/app/views/Application/show.scala.html** template:
+Add the **randomID** field to the **/yable/app/views/Application/show.scala.html** template:
+
+bc. @(
+    post:(models.Post, models.User, Seq[models.Comment]),
+    pagination:(Option[models.Post], Option[models.Post]),
+    randomID:String
+)...
+
+Then update the form:
 
 bc. ...
 <p>
