@@ -462,7 +462,7 @@ package play.templates {
                         case Display(exp) => (if(previous.isEmpty) Nil else previous :+ ",") :+ "_display_(List(" :+ visit(Seq(exp), Nil) :+ "))"
                         case ScalaExp(parts) => previous :+ parts.map {
                             case s@Simple(code) => Source(code, s.pos)
-                            case b@Block(whitespace, args,content) => Nil :+ Source(whitespace + "{" + args.getOrElse(""), b.pos) :+ "List(" :+ visit(content, Nil) :+ ")}"
+                            case b@Block(whitespace,args,content) => Nil :+ Source(whitespace + "{" + args.getOrElse(""), b.pos) :+ "_display_(List(" :+ visit(content, Nil) :+ "))}"
                         }
                     })
                 case Nil => previous
