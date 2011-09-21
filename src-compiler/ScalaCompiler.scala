@@ -50,7 +50,7 @@ class PlayScalaCompiler(app: File, libs: File, classpath: List[File], output: Fi
     // then you get Either(compilationError, (updatedClasses,removedClasses))    
     def update(sources:List[File]):Either[CompilationError,(List[ClassDefinition], List[ClassDefinition])] = {        
         try {
-            val inputs = SbtCompiler.inputs(classpath, sources, output, Nil/*Seq("-verbose")*/, Seq("-g"), 1, order)(compilers, SbtLogger)        
+            val inputs = SbtCompiler.inputs(classpath, sources, output, Nil/*Seq("-verbose")*/, Seq("-g"),_root_.sbt.inc.Locate.definesClass, 1, order)(compilers,SbtLogger)        
             
             val result = SbtCompiler(inputs, SbtLogger)
             val (stamps,relations) = result.stamps -> result.relations
@@ -149,6 +149,7 @@ class PlayScalaCompiler(app: File, libs: File, classpath: List[File], output: Fi
 
         def getScala(version: String): xsbti.ScalaProvider = getScala(version, "")
         def getScala(version: String, reason: String): xsbti.ScalaProvider = new ScalaProvider(version)
+        
 
         lazy val topLoader = classOf[String].getClassLoader
         val updateLockFile = new File(tmpDirectory, "boot.lock")
@@ -157,6 +158,7 @@ class PlayScalaCompiler(app: File, libs: File, classpath: List[File], output: Fi
         
         // We don't use SBT dependencies management… so will allow a bunch of null here
         def ivyHome = null
+        def ivyRepositories() = Array() // FIXME
 
         class ScalaProvider(val version: String) extends xsbti.ScalaProvider with Provider {
             
@@ -200,7 +202,8 @@ class PlayScalaCompiler(app: File, libs: File, classpath: List[File], output: Fi
 
                     def component(componentID: String) = {
                         componentID match {
-                            case "compiler-interface-bin_2.8.1.final" => Array(new File(libs, "../dlib/compiler-interface-bin-0.9.10.jar"))
+                            case "compiler-interface-bin_2.8.1.final" => Array(new File(libs, "../dlib/compiler-interface-bin-0.11.0-RC1.jar"))
+                            case "compiler-interface-bin_2.9.1.final" => Array(new File(libs, "../dlib/compiler-interface-bin-0.11.0-RC1.jar"))
                             case _ => Array[File]()
                         }
                     }
@@ -210,6 +213,15 @@ class PlayScalaCompiler(app: File, libs: File, classpath: List[File], output: Fi
                     }
 
                     def lockFile = new File(tmpDirectory, "components.lock")
+                    
+                    // FIXME
+                    
+                    def addToComponent( componentID : String, components : Array[File]) = {
+                        throw new Exception("Not implemented")
+                    }
+                    def componentLocation(id : String) = {
+                        throw new Exception("Not implemented")
+                    }
 
                 }
             }
