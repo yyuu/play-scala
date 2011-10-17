@@ -12,7 +12,7 @@ In fact, before coding the first screen we need one more thing. Working on a web
 
 One way to inject default data into the blog is to load a fixture file at application load time. To do that we will create a Bootstrap Job. A Play job is something that executes itself outside of any HTTP request, for example at the application start or at specific interval using a CRON job.
 
-Let’s create the **/yabe/app/bootsrap.scala** file to define a job that will load a set of default data using **Fixtures**:
+Let’s create the **/yabe/app/bootstrap.scala** file to define a job that will load a set of default data using **Fixtures**:
 
 bc. import play.jobs._
     
