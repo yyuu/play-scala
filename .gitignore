@@ -17,3 +17,4 @@ h2
 .classpath
 .project
 .settings
+lib_old/*
